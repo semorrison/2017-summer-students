@@ -1,0 +1,208 @@
+To Do: 
+
+ - define the natural numbers as an inductive type. 
+   <https://xenaproject.wordpress.com/2017/10/31/building-the-non-negative-integers-from-scratch/>.
+ - read a little bit about dependent type theory. 
+   <http://adam.chlipala.net/cpdt/> is more advanced and focuses on Coq.
+ - prove addition of natural numbers is commutative.
+ - learn Lean basic tactics: "intros", "induction", "have", "rewrite", etc. 
+ - Teach each other what we've learnt. Write small demos of particular tactics. 
+
+Possible Later Goals:
+ - small library for some basic areas of mathematics (suggestions: primality, binomial coefficients, finite group theory, vector spaces).
+ - Kevin Buzzard's Xena project. <https://xenaproject.wordpress.com/>.
+ - After building a small library, develop tactics to simplify the proofs in that problem domain.
+ - "literate tactics”, which generate proofs in Lean, and output human readable comments explaining what they are doing. <https://arxiv.org/abs/1309.4501>.
+ - If you want to learn a lot of category theory, then contribute to the category theory library <https://github.com/semorrison/lean-category-theory>
+
+
+------------------------------------------------------------
+#check t : check that t is well-formed and show its type
+#print t : print info about t
+#reduce t : use the kernel reduction to reduce t to normal form
+#eval t : use the bytecode evaluator to evaluate t
+------------------------------------------------------------
+constant c : α 
+axiom c : α 
+constants a b c : α 
+axioms a b c : α 
+
+def c : α := t 
+
+theorem c : p := t
+lemma c : p := t
+  similar to def, but intended to be used when c has type p, and p has type Prop.
+
+example : α := t
+  elaborates t and checks that it has type α (often a proposition).
+  Simulates a definition/theorem without naming it or adding it to the environment.
+
+#reduce  let y := 2 + 2, z := y + y in z * z   -- 64
+------------------------------------------------------------
+variable declarations are used in subsequent definitions or theorems. 
+
+When Lean detects variable names occurring in a definition or theorem, either in the type or the body, it inserts (and only inserts) these variables, and all the variables they depend on, into the local context. 
+They are inserted in the order that they were declared.
+
+Variables only used in a tactic block are not automatically included, since the meaning of a name in the context of a tactic block cannot be predicted at parse time. 
+You can force the inclusion of a variable or list of variables in every declaration using “include”. To undo it, use “omit”.
+
+Namespaces cannot be opened within a section. They live in the outer levels.
+
+Namespaces organize data. Sections declare variables for insertion in theorems.
+
+“variable”, “open” has scope limited to the local namespace/section.
+
+------------------------------------------------------------
+“argument” is “context”
+“∀” is “Π”
+
+assume h : p, t
+λ h : p, t
+
+have h : p, from s, t 
+(λ h : p, t) s
+
+suffices h : p, from s, t 
+(λ h : p, s) t
+
+show p, from t 
+(t : p)
+------------------------------------------------------------
+Lean has a hierarchy of non-cumulative type universes: Sort 0, Sort 1, Sort 2, Sort 3, ...
+
+Sort 0 = Sort = Prop
+Sort 1 = Type 0 = Type
+Sort 2 = Type 1
+…
+
+Sort 0 : Sort 1
+Sort u : Sort (u + 1)
+
+
+“α is a type” means α : Type u for some u. If t : α, we may call t “data”.
+“p is a proposition” means p : Prop. An expression t : p is a “proof of p”.
+------------------------------------------------------------
+Type theory of Lean is “Calculus of Constructions with inductive types”.
+
+Every term has a computational behavior, and supports a notion of reduction, or normalization. Two terms that reduce to the same value are “definitionally equal”. They are considered “the same” by the underlying logic,
+
+If p : Prop, s : p, t : p, then s and t are definitionally equal, so there’s at most 1 proof for any proposition. “proof irrelevance”, it means that even though proofs t : p are ordinary objects in dependent type theory, they carry no information beyond the fact that p is true.
+
+For #eval, Lean extracts bytecode from terms in a computationally pure fragment of the logical framework. #reduce relies on Lean kernel, responsible for checking and verifying the correctness. trustworthy, but inefficient, compared to #eval.
+
+------------------------------------------------------------
+Implicit arguments:
+Some arguments can be inferred from the context. Use underscore to let it be filled automatically.
+
+To make the argument to be implicit (not explicit) by default, put it in {}
+
+def ident {α : Type u} (x : α) := x
+
+Lean can instantiate implicit arguments very well, they can be used to infer function types, predicates, and even proofs. 
+Instantiating “holes”/“placeholders” in a term is “elaboration”. 
+
+
+vec_add 
+represent a function that adds two vectors of natural numbers of the same length
+vec_reverse 
+represent a function that reverses its argument. 
+
+Use implicit arguments. 
+Declare some variables and check some expressions involving the constants that you have declared.
+------------------------------------------------------------
+Anywhere an expression is expected, Lean will accept a tactic block:
+begin 
+  <tactic>,
+  ...
+  <tactic>
+end
+
+by <tactic>
+is the same as a tactic block of length 1
+
+Each tactic acts on >= 1 goals. 
+
+A goal has form a : α ⊢ p
+a : α is the context, and p is the target type. When used to prove a theorem, p is a Prop.
+
+At the start, there is a goal that consists of the local context and the target type. Individual tactics can change goals and introduce new subgoals. 
+
+A tactic block is done when no subgoals remain, that is, when an expression of the target type is made.
+
+Tactics can fail and throw errors. Other tactics may catch it.
+
+Results produced by tactics are checked by the kernel. A tactic block may produce a term that fails to type check.
+
+Tactics are themselves Lean expressions of a special tactic type. This makes it possible to implement Lean tactics in Lean itself.
+
+Tactic combinators build compound tactics from simpler ones.
+------------------------------------------------------------
+The second implicit parameter to eq.subst, which provides the context in which the substitution is to occur, has type α → Prop. Inferring this predicate requires higher-order unification. Determining if a higher-order unifier exists is undecidable in general, thus eq.subst doesn’t always work automatically.
+------------------------------------------------------------
+
+When Lean starts, it imports library init folder.
+
+import foo bar.baz.blah
+imports the files foo.lean and bar/baz/blah.lean, where the descriptions are interpreted relative to the Lean search path. Information as to how the search path is determined can be found on the documentation pages. By default, it includes the standard library directory, and (in some contexts) the root of the user’s local project. 
+
+
+Within the section, t1 is an abbreviation for @t1 α r transr, which is to say, these arguments are held fixed until the section is closed. On the plus side, this means that you do not have to specify the explicit arguments r and transr when you write t1 h₂ h₃ h₄, in contrast to the previous example. But it also means that you cannot specify other arguments in their place. In this example, making r a parameter is appropriate if r is the only binary relation you want to reason about in the section. In that case, it would make sense to introduce temporary infix notation like ≼ for r, and we will see in Section 6.6 how to do that. On the other hand, if you want to apply your theorems to arbitrary binary relations within the section, you should make r a variable.
+
+
+------------------------------------------------------------
+weak implicit argument:
+
+t : Π {x : α}, β x, x has been marked as an implicit argument to t. This means that whenever you write t, a “hole” is inserted, so t is replaced by @t _. Notice that implicit arguments are in the front and always inserted eagerly, unless you write @t.
+
+{{y : ℕ}} specifies that a placeholder should only be added before a subsequent explicit argument.
+
+f : (x : ℕ) {{y : ℕ}} (z : ℕ)
+f 7 would be parsed as is, whereas f 7 3 would be parsed as f 7 _ 3.
+------------------------------------------------------------
+every concrete type other than the universes and every type constructor other than Pi is an inductive type. 
+The type universes, Pi types, and inductive types: everything else follows from those.
+
+inductive foo : Sort u
+| constructor₁ : ... → foo
+| constructor₂ : ... → foo
+...
+| constructor_n : ... → foo
+
+each ... can be any Pi type constructed from foo and previously defined types, in which foo can only appear as the “target” of the Pi type.
+
+Introduction rules for an inductive type are just the constructors. 
+The elimination rules provide for a principle of recursion on the type.
+
+------------------------------------------------------------
+rec_on and cases_on are generated automatically for any inductive type. They are protected to avoid name clashes. 
+
+cases_on <inductive type object> 
+         <what to do when it’s constructed by constructor 1>
+         <what to do when it’s constructed by constructor 2>
+         …
+         <what to do when it’s constructed by constructor n>
+
+-- example:
+inductive prod (α : Type u) (β : Type v)
+| mk : α → β → prod
+
+def fst {α : Type u} {β : Type v} (p : α × β) : α :=
+prod.rec_on p (λ a b, a)
+
+
+A type, like prod, that has only one constructor is like a tuple, where the type of subsequent arguments can depend on the type of the initial argument. 
+The keyword “structure” can be used to define such an inductive type as well as its projections (getters):
+
+structure prod (α β : Type) :=
+mk :: (fst : α) (snd : β)
+
+Algebraic structures are often defined as a structure. For example, a semigroup is: 
+
+structure Semigroup :=
+  (carrier : Type u) -- the elements
+  (mul : carrier → carrier → carrier) -- the multiplication function
+  (mul_assoc : ∀ a b c, mul (mul a b) c = mul a (mul b c)) -- given any three elements, returns a proposition saying that mul is associative on these elements.
+
+an example semigroup is lists of a certain type, under appending operation.
+#check semigroup.mk list.append list.append_assoc
