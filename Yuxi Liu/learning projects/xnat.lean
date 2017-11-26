@@ -232,6 +232,13 @@ begin
   unfold less
 end
 
+theorem zero_less_succ (b : xnat) : zero < succ b :=
+begin
+  have : zero ≠ succ b, 
+    apply zero_ne_succ,
+  exact (zero_less_b_iff_ne_zero (succ b)).elim_right this
+end
+
 -- why is this not in the library
 theorem iff_congruence {a b c : Prop} : (a ↔ b) → (b ↔ c) → (a ↔ c) :=
 begin
@@ -322,29 +329,41 @@ begin
   existsi a_1, refl
 end
 
+lemma a_less_b_succ (a b : xnat) : 
+  (succ a < b → a < b) ∧ (a < b → a < succ b) := 
+begin
+  induction b with b Hb,
+    apply and.intro,
+      intro,
+      cases a,
+        apply (a_not_less_zero (succ zero)), assumption,
+        have : false, apply (a_not_less_zero (succ (succ a))), assumption,
+        exfalso, assumption,
+    intro, 
+    have : false, apply (a_not_less_zero a), assumption,
+    exfalso, assumption,
+  apply and.intro,
+    intro,
+    unfold less at a_1,
+    exact (Hb.elim_right a_1),
+  induction a with a Ha,
+    intro, apply zero_less_succ,
+  intro, unfold less at a_1, unfold less,
+end
+
 theorem a_less_b_iff_add (a b : xnat) : a < b ↔ ∃ t : xnat, b = a + succ t :=
 begin
   constructor,
   intro halb,
   induction a with a Ha,
-    -- "rw zero_add" gave an error
-    -- maybe Lean doesn't know how to rewrite inside ∃
-    suffices : ∃ (t : xnat), b = succ t,
-      cases this,
-      existsi a,
-      rw zero_add,
-      assumption,
-    apply a_less_b_then_succ zero b, assumption,
-    
-end
-
-theorem succ_a_less_b (a b : xnat) : succ a < b → a < b := 
-begin
-  intro hsalb,
+    induction b with b Hb,
+      have : false, from halb, contradiction,
+    existsi b, rw zero_add,
   induction b with b Hb,
-    unfold less at hsalb, contradiction,
-
+    have : false, from halb, contradiction,
+  
 end
+
 
 theorem inequality_A2 (a b c : xnat) : a < b → b < c → a < c := 
 begin
