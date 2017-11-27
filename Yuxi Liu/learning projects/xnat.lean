@@ -319,8 +319,23 @@ begin
   right, right, existsi (succ a_1), assumption
 end
 
--- I can't believe how stupid Lean is.
-theorem a_less_b_then_succ (a b : xnat) : a < b → ∃ t : xnat, b = succ t :=
+theorem less_irrefl (a : xnat) : ¬(a < a) :=
+begin
+  induction a with a Ha,
+    apply a_not_less_zero,
+  unfold less, assumption
+end
+
+theorem less_asymm (a b : xnat) : a < b → ¬(b < a) := 
+begin
+  intros halb hbla,
+  induction a with a Ha,
+    have : ¬(b < zero), apply a_not_less_zero, 
+    contradiction,
+  -- ??
+end
+
+/- theorem a_less_b_then_succ (a b : xnat) : a < b → ∃ t : xnat, b = succ t :=
 begin
   intro hb,
   cases b,
@@ -362,13 +377,13 @@ begin
   induction b with b Hb,
     have : false, from halb, contradiction,
   
-end
+end -/
 
 
 theorem inequality_A2 (a b c : xnat) : a < b → b < c → a < c := 
 begin
   intros halb hblc,
-  
+  admit
 end
 
 theorem inequality_A3 (a b : xnat) : 
