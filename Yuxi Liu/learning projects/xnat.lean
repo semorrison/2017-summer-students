@@ -379,7 +379,6 @@ begin
   
 end -/
 
-
 theorem inequality_A2 (a b c : xnat) : a < b → b < c → a < c := 
 begin
   intros halb hblc,
@@ -393,4 +392,7 @@ theorem inequality_A3 (a b : xnat) :
 theorem inequality_A4 (a b : xnat) : zero < a → zero < b → zero < a * b := sorry
 
 -- theorem division_theorem : ∀ n m : ℕ, ∃! q r : ℕ, n = m * q + r ∧ r < m := 
+
+
+
 end xnat
