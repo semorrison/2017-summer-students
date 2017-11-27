@@ -395,4 +395,6 @@ theorem inequality_A4 (a b : xnat) : zero < a → zero < b → zero < a * b := s
 
 
 
+
+
 end xnat
