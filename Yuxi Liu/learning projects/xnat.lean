@@ -232,6 +232,7 @@ begin
   unfold less
 end
 
+-- 0 < b + 1
 theorem zero_less_succ (b : xnat) : zero < succ b :=
 begin
   have : zero ≠ succ b, 
@@ -239,7 +240,7 @@ begin
   exact (zero_less_b_iff_ne_zero (succ b)).elim_right this
 end
 
--- why is this not in the library
+/- Some prop logic theorems that ought to be in the library -/
 theorem iff_congruence {a b c : Prop} : (a ↔ b) → (b ↔ c) → (a ↔ c) :=
 begin
   intros,
@@ -248,7 +249,6 @@ begin
   exact a_1.elim_right (a_2.elim_right a_3)
 end
 
--- whyyyyyyyyyyy
 universe u
 theorem any_then_exists_iff {α : Type u} {p q : α → Prop} : 
   (∀ (t : α), p t ↔ q t) → ((∃ (t : α), p t) ↔ ∃ (t : α), q t) :=
@@ -326,28 +326,32 @@ begin
   unfold less, assumption
 end
 
-theorem less_asymm (a b : xnat) : a < b → ¬(b < a) := 
+theorem less_asymm : ∀ (a b : xnat), a < b → ¬(b < a) := 
 begin
-  intros halb hbla,
+  intro a, -- It can't be expanded out completely! The induction would fail.
   induction a with a Ha,
+    intro b,
+    intros halb,
     have : ¬(b < zero), apply a_not_less_zero, 
+    assumption,
+  -- now induct!
+  intro b,
+  induction b with b Hb,
+    intro hsa0,
+    have : ¬(succ a < zero), apply a_not_less_zero,
     contradiction,
-  -- ??
+  intro hsasb, intro hsbsa,
+  unfold less at hsasb,
+  unfold less at hsbsa,
+  exact (Ha b) hsasb hsbsa,
 end
 
-/- theorem a_less_b_then_succ (a b : xnat) : a < b → ∃ t : xnat, b = succ t :=
-begin
-  intro hb,
-  cases b,
-    have h1 : ¬(a < zero), apply a_not_less_zero,
-    contradiction,
-  existsi a_1, refl
-end
-
-lemma a_less_b_succ (a b : xnat) : 
+lemma a_less_b_succ : ∀ (a b : xnat),
   (succ a < b → a < b) ∧ (a < b → a < succ b) := 
 begin
+  intros a b, revert a,
   induction b with b Hb,
+    intro a,
     apply and.intro,
       intro,
       cases a,
@@ -357,15 +361,18 @@ begin
     intro, 
     have : false, apply (a_not_less_zero a), assumption,
     exfalso, assumption,
+  intro a,
   apply and.intro,
     intro,
     unfold less at a_1,
-    exact (Hb.elim_right a_1),
+    exact ((Hb a).elim_right a_1),
   induction a with a Ha,
     intro, apply zero_less_succ,
   intro, unfold less at a_1, unfold less,
+  exact (Hb a).elim_right a_1
 end
 
+/-
 theorem a_less_b_iff_add (a b : xnat) : a < b ↔ ∃ t : xnat, b = a + succ t :=
 begin
   constructor,
@@ -376,9 +383,8 @@ begin
     existsi b, rw zero_add,
   induction b with b Hb,
     have : false, from halb, contradiction,
-  
-end -/
-
+end
+-/
 theorem inequality_A2 (a b c : xnat) : a < b → b < c → a < c := 
 begin
   intros halb hblc,
