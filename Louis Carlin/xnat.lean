@@ -113,4 +113,66 @@ split,
         exact Hk h2,
 end
 
+-- TODO: add_cancel_right
+
+definition mul : xnat → xnat → xnat
+| n zero := zero
+| n (succ p) := n + mul n p
+
+notation a * b := mul a b
+
+#reduce one * one
+
+theorem mul_zero (a : xnat) : a * zero = zero :=
+begin
+refl
+end
+
+theorem zero_mul (a: xnat) : zero * a = zero :=
+begin
+induction a with t ht,
+    refl,
+    unfold mul,
+    rw [zero_add],
+    exact ht
+end
+
+theorem mul_one (a : xnat) : a * one = a :=
+begin
+unfold one,
+rw mul,
+rw mul_zero,
+rw add_zero
+end
+
+theorem one_mul (a : xnat) : one * a = a :=
+begin
+induction a with t ht,
+refl,
+unfold mul,
+rw ht,
+rw one_add_eq_succ,
+end
+/-
+theorem right_distrib (a b c : xnat) : a * (b + c) = a*b +a*c :=
+begin
+induction a with t ht,
+    rw [zero_mul, zero_mul, zero_mul, zero_add],
+
+end
+-/
+
+theorem right_distrib (a b c : xnat) : a * (b + c) = a*b +a*c :=
+begin
+induction b with k hk,
+    induction c with l hl,
+        rw [zero_add, mul_zero, zero_add], -- refl works here
+        rw [zero_add, mul_zero, zero_add], -- refl does not work here (invalid apply tactic, failed to unify)
+        rw <- add_succ,
+        unfold mul,
+        rw hk,
+        exact eq.symm (add_assoc a (a*k) (a*c))
+end
+
+
 end xena
