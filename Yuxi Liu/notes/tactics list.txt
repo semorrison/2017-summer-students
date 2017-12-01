@@ -1,0 +1,45 @@
+apply <expr> -- matches <expr> output type with the goal, removes the goal, then adds any argument it cannot synthesize to the list of goals
+exact <expr> -- solves the goal that’s definitionally equal to <expr>
+assumption -- same as exact, but only uses the local context 
+fapply -- same as apply, but keeps the exact order of goals
+
+repeat {<tactics block>}
+
+-- for relations
+symmetry, transitivity, refl
+-- similar to “apply eq.symm”, “apply eq.trans”, “apply eq.refl”, but works for any relation with the right attributes, not just “eq”
+
+-- for \-> 
+intro <hypothesis> -- breaks the goal “a -> b”, puts a into local context, and replaces the goal with b. Similar to “assume”. 
+intros <hypothesis> <hypothesis> ...
+revert <hypothesis> -- moves the hypothesis, and any dependent on it, into the goal
+
+generalize h : a = b -- change b to a in the goal, adds h to the local context
+
+-- for decomposing inductive types
+cases h with hleft hright -- decomposes \or, and \and
+constructor
+left, right 
+
+“cases” decomposes any element of inductive type; 
+“constructor” uses the first constructor of an inductive type, 
+“left” and “right” can be used with inductively defined types with exactly two constructors.
+
+existsi <variable name> -- same as constructor, but only for an \exists goal, and allows you to name the variable, instead of leaving it implicit
+
+contradiction -- checks local context for contradiction, then gets the goal by exfalso
+
+-- using both tactics and terms style proof
+apply and exact takes arbitrary terms, which can be proven in a block of term-styled proof ending with “show …, from …“
+and “show …, from …” can be done instead as “show …, { <tactics block> }”
+
+“show” tactic selects the goal to be solved.
+in tactic mode, “from” is “exact”
+
+"have" tactic breaks one goal into two subgoals.
+“have …, from <term>” can be done instead as “from …, <tactics>”
+
+-- new tactics
+
+meta def solve_conjunction : tactic unit :=
+`[ repeat { any_goals { split <|> assumption }} ]
