@@ -174,5 +174,41 @@ induction b with k hk,
         exact eq.symm (add_assoc a (a*k) (a*c))
 end
 
+theorem left_distrib (a b c : xnat) : (a + b) * c = a * c + b * c :=
+begin
+induction c with n hn,
+    unfold mul,
+    refl,
+    rw [←add_one_eq_succ,right_distrib,hn,right_distrib,right_distrib],
+    rw [mul_one,mul_one,mul_one],
+    rw [add_assoc,←add_assoc (b*n),add_comm (b*n),←add_assoc,←add_assoc,←add_assoc],
+end
 
+theorem mul_assoc (a b c : xnat) : (a * b) * c = a * (b * c) :=
+begin
+induction c with t ht,
+    rw [mul_zero, mul_zero, mul_zero],
+    unfold mul,
+    rw [right_distrib,ht]
+end
+
+theorem mul_comm (a b : xnat) : a * b = b * a :=
+begin
+induction b with t ht,
+    rw [zero_mul, mul_zero],
+    unfold mul,
+    rw ht,
+    -- rw <- one_mul, --(why doesn't this work?)
+    have h2 : one * a = a, by rw one_mul, 
+    have h3 : one * a + t * a = a + t * a, from (add_cancel_right  (one*a) a (t * a)).elim_left h2,
+    rw <- left_distrib at h3,
+    rw one_add_eq_succ at h3,
+    exact eq.symm h3
+end
+
+--theorem add_cancel_right ( a b t : xnat) : a = b ↔ a + t = b + t :=
+
+variable z : xnat
+#check eq.refl z
 end xena
+
