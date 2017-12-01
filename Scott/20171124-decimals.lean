@@ -9,3 +9,4 @@ import analysis.real
 
 #check (1.2 : ℝ)
 #eval (1.2 : ℝ)
+#reduce (1.2 : ℝ)
