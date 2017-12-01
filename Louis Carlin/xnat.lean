@@ -208,7 +208,26 @@ end
 
 --theorem add_cancel_right ( a b t : xnat) : a = b ↔ a + t = b + t :=
 
-variable z : xnat
-#check eq.refl z
+definition lt : xnat → xnat → Prop
+| zero zero := false
+| (succ m) zero := false
+| zero (succ p) := true
+| (succ m) (succ p) := lt m p
+
+notation a < b := lt a b
+
+theorem inequality_A1 (a b t : xnat) : a < b → a + t < b + t :=
+begin
+induction t with k hk,
+    intro h1,
+    rw [add_zero, add_zero],
+    exact h1,
+
+    intro h1,
+    unfold add,
+    unfold lt,
+    exact hk h1
+end
+
 end xena
 
