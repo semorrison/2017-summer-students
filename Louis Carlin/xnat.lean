@@ -84,6 +84,33 @@ induction b with t Ht,
     rw [add_succ],
 end
 
+theorem eq_iff_succ_eq_succ (a b : xnat) : succ a = succ b ↔ a = b :=
+begin
+split,
+    exact succ.inj, -- what is succ.inj? (injectivity?)
+assume H : a = b,
+rw [H]
+end
 
+#check succ.inj
+
+theorem add_cancel_right ( a b t : xnat) : a = b ↔ a + t = b + t :=
+begin
+split,
+    assume hab : a = b,
+    rw [hab],
+    
+    induction t with k Hk,
+        --assume h1 : a + zero = b + zero
+        intro h1, -- syntactic sugar to do the same thing
+        rw eq.symm (add_zero a),
+        rw eq.symm (add_zero b),
+        exact h1,
+
+        intro h2,
+        unfold add at h2,
+        rw eq_iff_succ_eq_succ at h2,
+        exact Hk h2,
+end
 
 end xena
