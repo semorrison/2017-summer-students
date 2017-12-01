@@ -229,5 +229,50 @@ induction t with k hk,
     exact hk h1
 end
 
+-- open classical -- is it possible without this?
+
+lemma zero_or_not (a : xnat) : a = zero ∨ ∃ p : xnat, a = succ p := sorry 
+
+lemma succ_lt (a b : xnat) : succ a < b → a < b :=
+begin
+induction a with t ht,
+    intro h1,
+    
+end
+
+lemma less_than_zero (a : xnat) : a < zero → false :=
+begin
+intro h1,
+cases a,
+
+end
+
+#check zero < zero
+
+lemma inequality_lemma (a b : xnat) : a < b → ∃ t : xnat, a + t = b :=
+begin
+induction a with k hk,
+    intro h1,
+    have h2 : zero + b = b, by rw zero_add,
+    exact exists.intro b h2,
+
+    intro h1,
+    -- b = succ p
+    cases b,
+    exact absurd h1,
+
+end
+
+variable z : xnat
+#reduce z < zero
+#reduce one < zero
+
+theorem inequality_A2 (a b c : xnat) : a < b → b < c → a < c :=
+begin
+intros h1 h2,
+--cases and a bunch of induction?
+end
+
+
 end xena
 
