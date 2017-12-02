@@ -1,3 +1,5 @@
+import order.basic
+
 open nat
 
 def f : ℕ → ℕ 
@@ -118,6 +120,49 @@ begin
   left, apply less_1, assumption
 end
 
+lemma not_less_then_geq (n m : ℕ) : ¬n < m → m ≤ n :=
+begin
+  intro nnlm,
+  rw ←not_lt_iff, assumption
+end
+
+#check @sub_lt
+
+lemma less_sub (n m t : ℕ) : n < m ∧ ¬(n < t) → n - t < m - t :=
+begin
+  intro h,
+  have nlm : n < m, from h.elim_left,
+  have tlen : t ≤ n, 
+    apply not_less_then_geq, exact h.elim_right,
+  have tlm : t < m, from calc t ≤ n : tlen
+                            ... < m : nlm, 
+  have mt0 : 0 < m - t, 
+    apply nat.sub_pos_of_lt, assumption,
+  have mn0 : 0 < m - n,
+    apply nat.sub_pos_of_lt, assumption,
+  have mtmnlmt : (m - t) - (m - n) < (m - t), 
+    apply sub_lt, repeat { assumption },
+  have ntmnemt : (n - t) + (m - n) = m - t, from calc
+    (n - t) + (m - n) = (m - n) + (n - t) : by rw add_comm
+                  ... = (m - n) + n - t : by {
+                    rw nat.add_sub_assoc, assumption,
+                  }
+                  ... = n + (m - n) - t : by rw add_comm
+                  ... = m - t : by {
+                    rw add_sub_of_le, apply lt_le, assumption,
+                  }, 
+  have : n - t = (m - t) - (m - n), from calc
+    n - t = (n - t) + (m - t) - (m - t) : by rw nat.add_sub_cancel
+      ... = (n - t) + (m - t) - ((n - t) + (m - n)) : by rw ntmnemt
+      ... = (n - t) + (m - t) - (n - t) - (m - n) : by rw nat.sub_sub
+      ... = (m - t) + (n - t) - (n - t) - (m - n) : by rw add_comm
+      ... = (m - t) - (m - n) : by rw nat.add_sub_cancel,
+  rw this,
+  apply sub_lt_of_pos_le,
+    assumption,
+  apply @nat.sub_le_sub_left, assumption
+end
+
 example : ∀ n m : ℕ, (m < n → f m = f (m % 2)) :=
 begin
   intro n,
@@ -133,15 +178,20 @@ begin
     cases m01 with m0 m1,
       rw m0, refl,
     rw m1, refl,
-  have : ∃ t : ℕ, m = t + 2, by admit, -- unpack < somehow. Help?
-  cases this with t hmt,
+  have hmt2 : ∃ t : ℕ, m = t + 2, 
+    have h2leqm : 2 ≤ m,
+      rw ←not_lt_iff, assumption,
+    rw le_add at h2leqm,
+    cases h2leqm with t ht,
+    existsi t, rw ht, simp,
+  cases hmt2 with t hmt,
   rw hmt, 
   have : (t + 2) % 2 = t % 2, by simp,
     rw this,
   have : t < n, by calc t = t + (2 - 2) : by simp
                       ... = t + 2 - 2 : by simp
                       ... = m - 2 : by rw hmt
-                      ... < succ n - 2 : by admit -- use (m < succ n) and (¬m < 2)
+                      ... < succ n - 2 : by { apply less_sub, cc }
                       ... = n - 1 : by refl
                       ... ≤ n : by apply pred_le,
   have ftft2 : f t = f (t % 2), from Hn t this,
