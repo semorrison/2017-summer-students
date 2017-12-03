@@ -66,9 +66,39 @@ definition test3 := set_n 3
 -- set α is sugar for (α → Prop)
 #reduce test3 2
 
-definition test4 : set (set nat):= set.powerset test3
+definition test4 : set (set nat) := set.powerset test3
 #reduce test4
 
+-- Is this definition of set strong enough? Try namesets?
+
 theorem binomial_coefficients_subsets_bijection (n k : nat) : false := sorry
+
+-- Define injective/surjective
+definition inj  {α β : Type} (f : α → β) : Prop := ∀ x y : α, f x = f y → x = y
+definition surj {α β : Type} (f : α → β) : Prop := ∀ y : β, ∃ x : α, f x = y
+
+#check inj (λ n : nat, n) 
+#reduce inj (λ n : nat, n) 
+
+-- Show the id function on natural numbers is injective
+example : inj (λ n : nat, n) :=
+begin
+unfold inj,
+intros x y hxy,
+exact hxy
+end
+
+-- Show the id function on natural numbers is surjective
+example : surj (λ n : nat, n) :=
+begin
+unfold surj,
+intro y,
+have h1: y = y, by refl,
+exact exists.intro y h1
+end
+
+-- Bijection
+definition bij {α β : Type} (f : α → β) : Prop
+:= inj f ∧ surj f
 
 end binomials
