@@ -1,15 +1,12 @@
-namespace list
-  constant cons   : Π {α : Type u}, α → list α → list α
-  constant nil    : Π {α : Type u}, list α
-  constant append : Π {α : Type u}, list α → list α → list α
-end list
+open classical
 
-open hide.list
-
-variable  α : Type
-variable  a : α
-variables l1 l2 : list α
-
-#check cons a nil
-#check append (cons a nil) l1
-#check append (append (cons a nil) l1) l2
+variable p : Prop
+example (h : ¬(p ∧ q)) : ¬p ∨ ¬q :=
+or.elim (em p)
+  (assume hp : p,
+    or.inr
+      (show ¬q, from
+        assume hq : q,
+        h ⟨hp, hq⟩))
+  (assume hp : ¬p,
+    or.inl hp)
