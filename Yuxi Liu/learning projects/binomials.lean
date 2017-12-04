@@ -1,44 +1,114 @@
 open nat
 
 /- summation -/
--- Is this already in the library?
-def summation (f : ℕ → ℕ) : ℕ → ℕ -- starts at 0
+def summation (f : ℕ → ℕ) : ℕ → ℕ
 | 0 := f 0
 | (succ m) := f (succ m) + (summation m) -- why is type of summation changed?
-example (n : ℕ) : summation (λ _, 1) n = n + 1 := sorry 
-theorem arithmetic_sum (n : ℕ) : summation id n = (n + 1) * n / 2 := sorry
+example (n : ℕ) : summation (λ _, 1) n = n + 1 := 
+begin
+  induction n with n Hn,
+    refl,
+  unfold summation,
+  rw Hn, 
+  simp
+end
+
+#print nat.div
+#print nat.mod
+
+theorem arithmetic_sum (n : ℕ) : summation id n = (n + 1) * n / 2 := 
+begin
+  induction n with n Hn,
+    refl,
+  unfold summation,
+  rw Hn, simp,
+  exact calc succ n + n * (n + 1) / 2 
+        = ((succ n) * 2 + n * (n + 1)) / 2 : by admit
+    ... = ((succ n) * 2 + n * succ n) / 2 : by simp
+    ... = ((succ n) * 2 + succ n * n) / 2 : by rw (mul_comm (succ n) n)
+    ... = ((succ n) * (2 + n)) / 2 : by rw left_distrib
+    ... = ((succ n) * (succ n + 1)) / 2 : by simp,
+end
 
 def summation_from_to (f : ℕ → ℕ) (m n : ℕ) : ℕ :=
-  if (m = 0) 
+  if (m > n) 
   then summation f n
-  else (summation f n) - (summation f (m - 1))
+  else summation (λ x, f (x + m)) (n - m)
 
 /- product, factorial -/
-def product (f : ℕ → ℕ) : ℕ → ℕ -- starts at 1
-| 0 := 1
+def product (f : ℕ → ℕ) : ℕ → ℕ
+| 0 := f 0
 | (succ m) := f (succ m) * (product m)
-example (n m : ℕ) : product (λ _, n) m = n ^ m := sorry
+example (n m : ℕ) : product (λ _, n) m = n ^ (succ m) := 
+begin
+    induction m with m Hm,
+      unfold product, 
+      simp,
+    unfold product,
+    rw Hm, unfold pow, simp
+end
 
-def fact : ℕ → ℕ := product id
+def product_from_to (f : ℕ → ℕ) (m n : ℕ) : ℕ :=
+  if (m > n) 
+  then 1
+  else product (λ x, f (x + m)) (n - m)
+  -- unknown identifier?
+
+def fact : ℕ → ℕ := product_from_to id 1
 
 /- binomial coefficients -/
-def binom (m n : ℕ) : ℕ :=
+def binom (n m : ℕ) : ℕ :=
+  if (n < m)
+  then 0
+  else (product_from_to id (n - m + 1) n) / (product_from_to id 1 m)
+
+lemma zero_product (n : ℕ) : product_from_to id 0 n = 0 :=
 begin
-  by_cases (n < m),
-    exact 0,
-  exact (fact n) / ((fact m) * (fact (n - m)))
+  unfold product_from_to, admit -- help
+end
+
+-- any product of k sequential integers is divisible by k!
+-- thus, the definition of binomial coefficient is integer.
+lemma binom_divisible (m k : ℕ) :
+  (product_from_to id 1 k) ∣ (product_from_to id m (m + k - 1)) :=
+begin
+  revert m,
+  induction k with k Hk,
+    intro m,
+    simp,
+    have : product_from_to id 1 0 = 1, 
+      unfold product_from_to, refl,
+    rw this, simp,
+  intro m, 
+  induction m with m Hm,
+    rw zero_product, simp,
+  have h1 : product_from_to id (succ m) (succ m + succ k - 1) = 
+    product_from_to id m (m + k) + (k + 1) * product_from_to id (m + 1) (m + k),
+      simp,
+      admit, -- help simplify
+  have h2 : product_from_to id 1 (succ k) = (k + 1) * product_from_to id 1 k,
+    admit, -- help simplify
+  rw [h1, h2],
+  have h3 : (k + 1) * product_from_to id 1 k ∣ product_from_to id m (m + k),
+    rw ←h2,
+    apply Hm,
+  have h4 : (k + 1) * product_from_to id 1 k ∣ (k + 1) * product_from_to id (m + 1) (m + k),
+    suffices h4' : product_from_to id 1 k ∣ product_from_to id (m + 1) (m + 1 + k - 1),
+      admit, -- help simplify
+    apply (Hk (m + 1)),
+  admit, -- help find lemma : (∀ n a b, ℕ), n ∣ a → n ∣ b → n ∣ (a + b)
 end
 
 example : binom 0 0 = 1 := rfl
-example : binom 1 1 = 1 := rfl
-example : binom 0 1 = 0 := rfl -- ??
-example : binom 1 0 = 1 := rfl -- ??
+example : binom 1 0 = 1 := rfl
+example : binom 0 1 = 0 := rfl
+example : binom 10 5 = 252 := by admit
+-- by refl
+-- deep recursion was detected at 'replace' 
+-- (potential solution: increase stack space in your system)
 
-theorem binom_divisible (m n : ℕ) : 
-  ((fact (succ m)) * (fact ((succ n) - (succ m)))) ∣ (fact (succ n)) := 
-begin
-  admit
-end
+lemma 
+
 
 theorem binom_div (n m : ℕ) : 
   (succ m) * (binom (succ n) (succ m)) = (succ n) * (binom n m) := 
