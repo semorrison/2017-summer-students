@@ -3,14 +3,16 @@ import .x20171204_lemmas
 
 definition fixed_length_binary_digits : Π (L : ℕ) (n : fin (2^L)), vector bool L
 | 0     _ := vector.nil
-| (l+1) n := (n.val % 2 = 1) :: (fixed_length_binary_digits l ⟨ n.val/2 , sorry ⟩ )
+| (l+1) n := (n.val % 2 = 1) :: (fixed_length_binary_digits l ⟨ n.val/2 , begin rw nat.div_lt_iff_lt_mul, exact n.is_lt, exact dec_trivial  end ⟩ )
 
 definition from_fixed_length_binary_digits : Π { L : ℕ } ( v : vector bool L ), fin (2^L) 
-| 0     _ := ⟨ 0, sorry ⟩ 
-| (l+1) v := ⟨ cond v.head 1 0 + 2 * (from_fixed_length_binary_digits v.tail).val, sorry ⟩ 
+| 0     _ := ⟨ 0, dec_trivial ⟩ 
+| (l+1) v := ⟨ cond v.head 1 0 + 2 * (from_fixed_length_binary_digits v.tail).val, begin have q := (from_fixed_length_binary_digits (vector.tail v)).is_lt, admit end ⟩ 
 
 lemma fixed_length_binary_digits_correct : Π (L : ℕ) (n : fin (2^L)), from_fixed_length_binary_digits (fixed_length_binary_digits L n) = n
 | 0 (⟨ n, p ⟩) := begin
+             unfold fixed_length_binary_digits,
+             unfold from_fixed_length_binary_digits,
              have q : n = 0, { norm_num at p, cases p, refl, cases a },
              rw q,
              refl 
