@@ -117,3 +117,21 @@ definition binary_list_cardinality {n : ℕ} : Finite (vector bool n) := {
                  end
   }
 }
+
+
+definition compose_bijections { U V W : Type } ( f :  Bijection U V ) ( g : Bijection V W ) : Bijection U W :=
+{
+  morphism := g.morphism ∘ f.morphism,
+  inverse := f.inverse ∘ g.inverse,
+  witness_1 := begin intros, unfold function.comp, rw g.witness_1, rw f.witness_1, end,
+  witness_2 := begin intros, unfold function.comp, rw f.witness_2, rw g.witness_2, end,
+}
+
+definition decidable_set (α : Type) := Σ X : set α, decidable_pred X
+
+definition powerset_bijection {n : ℕ} : Bijection (vector bool n) (decidable_set (fin n)) := {
+  morphism := λ v, ⟨ sorry, sorry ⟩,
+  inverse  := sorry,
+  witness_1 := sorry,
+  witness_2 := sorry
+}
