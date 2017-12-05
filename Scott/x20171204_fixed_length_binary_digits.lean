@@ -1,7 +1,6 @@
 import data.vector
 import .x20171204_lemmas
 
-
 definition fixed_length_binary_digits : Π (L : ℕ) (n : ℕ), vector bool L
 | 0     _ := vector.nil
 | (l+1) n := (n % 2 = 1) :: (fixed_length_binary_digits l (n/2))
@@ -71,3 +70,50 @@ apply vector.cons_head_tail,
 -- finally, discharge an easy condition:
 exact dec_trivial
 end
+
+lemma from_binary_digits_bound : Π { L : ℕ } ( v : vector bool L ), from_fixed_length_binary_digits v < 2^L :=
+begin
+  intros,
+  induction L,
+  unfold from_fixed_length_binary_digits,
+  exact dec_trivial,
+  unfold from_fixed_length_binary_digits,
+  have p := ih_1 v.tail,
+  admit
+end
+
+definition fin_of_binary_digits { L : ℕ } ( v : vector bool L ) : fin (2^L) :=
+⟨
+  from_fixed_length_binary_digits v,
+  from_binary_digits_bound v
+⟩
+
+structure Bijection ( U V : Type ) :=
+  ( morphism : U → V )
+  ( inverse  : V → U )
+  ( witness_1 : ∀ u : U, inverse (morphism u) = u )
+  ( witness_2 : ∀ v : V, morphism (inverse v) = v )
+
+class Finite ( α : Type ) :=
+  ( cardinality : nat )
+  ( bijection : Bijection α (fin cardinality) )
+
+definition binary_list_cardinality {n : ℕ} : Finite (vector bool n) := {
+  cardinality := 2^n,
+  bijection   := {
+    morphism := fin_of_binary_digits,
+    inverse  := λ p, fixed_length_binary_digits n p.val,
+    witness_1 := begin
+                   unfold fin_of_binary_digits, 
+                   simp, 
+                   exact fixed_length_binary_digits_correct' n
+                 end,
+    witness_2 := begin 
+                   unfold fin_of_binary_digits, 
+                   intros, 
+                   apply fin.eq_of_veq, 
+                   simp, 
+                   exact fixed_length_binary_digits_correct n v.val v.is_lt
+                 end
+  }
+}
