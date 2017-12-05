@@ -289,7 +289,13 @@ example : ¬(p ↔ ¬p) :=
 )
 
 -- (11) B
-example : ¬(p ↔ ¬p) := sorry
+-- How to prove it without classical logic?
+example : ¬(p ↔ ¬p) := 
+  assume h : p ↔ ¬p,
+  have hpnp : p → ¬p, from h.mp,
+  have hnpp : ¬p → p, from h.mpr,
+  
+  show false, from sorry
 
 
 -- (12)
@@ -307,45 +313,100 @@ example : (p → q) → (¬q → ¬p) :=
 
 -- (1)
 example : (p → r ∨ s) → ((p → r) ∨ (p → s)) := 
-(assume h : p → r ∨ s,
+assume h : p → r ∨ s,
   by_cases
   (assume hp : p,
     have hrs : r ∨ s, from h hp,
       or.elim hrs 
       (assume hr : r,
-        have hpr : p → r, from (assume hp : p, show r, from hr),
+        have hpr : p → r, from (assume hp, hr),
         show (p → r) ∨ (p → s), from or.inl hpr)
       (assume hs : s,
-        have hps : p → s, from (assume hp : p, show s, from hs),
+        have hps : p → s, from (assume hp, hs),
         show (p → r) ∨ (p → s), from or.inr hps)
   )
   (assume hnp : ¬p,
-  show (p → r) ∨ (p → s), from 
-    have false, from h hnp
-
-
-
-)
+    show (p → r) ∨ (p → s), from sorry)
 
 -- (2)
 example : ¬(p ∧ q) → ¬p ∨ ¬q := 
-(assume h : ¬(p ∧ q),
- 
+assume h : ¬(p ∧ q), 
+  by_cases
+  (assume hp : p,
+    by_cases 
+    (assume hq : q, show ¬p ∨ ¬q, from false.elim (h ⟨hp, hq⟩))
+    (assume hnq : ¬q, show ¬p ∨ ¬q, from or.inr hnq)
+  )
+  (assume hnp : ¬p,
+    show ¬p ∨ ¬q, from or.inl hnp)
+
+-- (3)
+example : ¬(p → q) → p ∧ ¬q := 
+assume h : ¬(p → q), 
+  by_cases
+  (assume hp : p,
+    by_cases 
+    (assume hq : q, 
+      have hpq : p → q, from (assume hp, hq),
+      show p ∧ ¬q, from false.elim (h hpq))
+    (assume hnq : ¬q, show p ∧ ¬q, from ⟨hp, hnq⟩)
+  )
+  (assume hnp : ¬p, 
+    show p ∧ ¬q, from sorry
+  )
+
+-- (4)
+example : (p → q) → (¬p ∨ q) := 
+assume h : p → q, 
+  by_cases
+  (assume hp : p, 
+    have hq : q, from h hp,
+    show ¬p ∨ q, from or.inr hq)
+  (assume hnp : ¬p,
+    show ¬p ∨ q, from or.inl hnp)
 
 
+-- (4)
+example : (¬q → ¬p) → (p → q) := 
+assume h : ¬q → ¬p, 
+  by_cases
+  (assume hq : q, 
+    assume hp : p,
+    show q, from hq)
+  (assume hnq : ¬q,
+    have hnp : ¬p, from h hnq,
+    assume hp : p,
+    show q, from absurd hp hnp)
 
-example : ¬(p → q) → p ∧ ¬q := sorry
-example : (p → q) → (¬p ∨ q) := sorry
-example : (¬q → ¬p) → (p → q) := sorry
-
+-- (5)
 example : p ∨ ¬p := em p
 
-example : (((p → q) → p) → p) := sorry
+-- (6)
+example : (((p → q) → p) → p) := 
+assume h : (p → q) → p,
+  by_cases 
+  (assume hpq : p → q,
+    show p, from h hpq)
+  (assume hnpq : ¬(p → q),
+    by_cases
+    (assume hp : p,
+    show p, from hp)
+    (assume hnp : ¬p,
+      by_cases 
+      (assume hq : q,
+      have hn : ¬p → q, from (assume hnp, hq),
+      show p, from sorry)
+      (assume hnq : ¬q,
+      have hnn : ¬p → ¬q, from (assume hnp, hnq),
+      show p, from sorry)
+    )
+  )
 
+-- (7) example
 example : ¬(p ∧ ¬q) → (p → q) :=
 assume h : ¬(p ∧ ¬q),
 assume hp : p,
 show q, from
   or.elim (em q)
-    (assume hq : q, hq)
-    (assume hnq : ¬q, absurd (and.intro hp hnq) h)
+    (assume hq : q, show q, from hq)
+    (assume hnq : ¬q, show q, from absurd (and.intro hp hnq) h)
