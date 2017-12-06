@@ -72,3 +72,18 @@ def add : my_nat -> my_nat -> my_nat
 | m (my_nat.succ n) := my_nat.succ (add m n)
 
 #eval add one one
+
+variables p : Prop
+example : ¬ (p ↔ ¬ p) :=
+begin
+intro h1,
+have h2 : p → ¬ p, from h1.mp,
+have h3: ¬ p → p, from h1.mpr,
+end
+
+example : (p ↔ ¬ p) → false :=
+begin
+intro h1,
+have h2 : p → p → false, from h1.mp,
+have h3: (p → false) → p, from h1.mpr,
+end
