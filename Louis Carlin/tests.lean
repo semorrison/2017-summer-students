@@ -84,6 +84,5 @@ end
 example : (p ↔ ¬ p) → false :=
 begin
 intro h1,
-have h2 : p → p → false, from h1.mp,
-have h3: (p → false) → p, from h1.mpr,
+apply iff.elim,
 end

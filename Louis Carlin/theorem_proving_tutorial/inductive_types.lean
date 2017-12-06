@@ -90,6 +90,25 @@ nat.rec_on n
 
 theorem commutativity (m n : nats) : add m n = add n m := sorry
 
+open weekday
+
+def day_of_number : ℕ → weekday 
+| 0 := sunday
+| 1 := monday
+| 2 := tuesday
+| 3 := wednesday
+| 4 := thursday
+| 5 := friday
+| 6 := saturday
+| (n + 7) := day_of_number n
+
+
+#reduce day_of_number (12 % 7)
+
+example (n : ℕ ) : day_of_number n = day_of_number (n % 7) :=
+begin
+exact weekday.cases_on
+end
 
 
 
