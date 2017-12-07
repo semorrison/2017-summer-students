@@ -244,7 +244,8 @@ lemma less_than_zero (a : xnat) : a < zero → false :=
 begin
 intro h1,
 cases a,
-
+show false, from h1,
+show false, from h1,
 end
 
 #check zero < zero
@@ -259,20 +260,33 @@ induction a with k hk,
     intro h1,
     -- b = succ p
     cases b,
-    exact absurd h1,
-
+    admit,
+    admit,
 end
 
 variable z : xnat
 #reduce z < zero
 #reduce one < zero
 
+lemma gt_zero (a : xnat) : zero < a → a ≠ zero := sorry
+
 theorem inequality_A2 (a b c : xnat) : a < b → b < c → a < c :=
 begin
 intros h1 h2,
---cases and a bunch of induction?
+cases a,
+cases b,
+exact h2,
+cases c,
+exact absurd h2 (less_than_zero (succ a)),
+unfold lt,
+
+
+
 end
 
+#check absurd
+variable b : xnat
+#reduce zero < succ b
 
 end xena
 
