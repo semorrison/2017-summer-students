@@ -110,6 +110,3 @@ begin
 exact weekday.cases_on
 end
 
-
-
-

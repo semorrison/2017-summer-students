@@ -214,6 +214,7 @@ definition lt : xnat → xnat → Prop
 | zero (succ p) := true
 | (succ m) (succ p) := lt m p
 
+
 notation a < b := lt a b
 
 theorem inequality_A1 (a b t : xnat) : a < b → a + t < b + t :=
@@ -233,12 +234,67 @@ end
 
 lemma zero_or_not (a : xnat) : a = zero ∨ ∃ p : xnat, a = succ p := sorry 
 
+open classical
+
+lemma lt_succ (a : xnat) : zero < succ a :=
+begin
+unfold lt,
+end
+
+lemma gt_zero (a : xnat) : zero < a → a ≠ zero :=
+begin
+intros h1 h2,
+rw h2 at h1,
+exact h1
+end
+
+lemma lt_nrefl ( a : xnat) : ¬ a < a :=
+begin
+intro,
+induction a with t ht,
+exact a_1,
+unfold lt at a_1,
+exact ht a_1,
+end
+
+lemma lt_succ ( a b : xnat) : a < b → succ a < b ∨ succ a = b :=
+begin
+intro h1,
+induction a with t ht,
+cases b,
+exact false.elim h1,
+cases a,
+have h2 : succ zero = succ zero, by refl,
+exact or.intro_right (succ zero < succ zero) h2,
+have h3 : succ zero < succ (succ a), by unfold lt,
+exact or.intro_left (succ zero = succ (succ a)) h3,
+-- succ (succ t) < succ b
+cases b,
+exact false.elim h1,
+
+
+end
+
+
+
 lemma succ_lt (a b : xnat) : succ a < b → a < b :=
 begin
-induction a with t ht,
-    intro h1,
+intro h1,
+induction b with t ht,
+exact false.elim h1,
+
+
+
+
+    
+    
     
 end
+
+/-induction a with t ht,
+    cases b,
+    exact false.elim h1,
+    exact lt_succ a,-/
 
 lemma less_than_zero (a : xnat) : a < zero → false :=
 begin
@@ -250,9 +306,24 @@ end
 
 #check zero < zero
 
-lemma inequality_lemma (a b : xnat) : a < b → ∃ t : xnat, a + t = b :=
+lemma inequality_lemma (a b : xnat) : a < b ↔ ∃ t : xnat, a + t = b :=
 begin
-induction a with k hk,
+apply iff.intro,
+    intro hab,
+    induction a with k hk,
+    have h2 : zero + b = b, by rw zero_add,
+    exact exists.intro b h2,
+    have h3 : ∃ n : xnat, b = succ n,  cases b,
+    exact false.elim hab,
+    have h4 : succ a = succ a, by refl,
+    exact exists.intro a h4,
+    
+
+
+
+end
+
+/-induction a with k hk,
     intro h1,
     have h2 : zero + b = b, by rw zero_add,
     exact exists.intro b h2,
@@ -261,28 +332,31 @@ induction a with k hk,
     -- b = succ p
     cases b,
     admit,
-    admit,
-end
+    admit,-/
 
 variable z : xnat
 #reduce z < zero
 #reduce one < zero
 
-lemma gt_zero (a : xnat) : zero < a → a ≠ zero := sorry
-
 theorem inequality_A2 (a b c : xnat) : a < b → b < c → a < c :=
 begin
 intros h1 h2,
-cases a,
+
+
+end
+
+/-cases a,
 cases b,
 exact h2,
 cases c,
 exact absurd h2 (less_than_zero (succ a)),
 unfold lt,
+cases b,
+exact false.elim h1,
+cases c,
+exact false.elim h2,
 
-
-
-end
+-/
 
 #check absurd
 variable b : xnat
