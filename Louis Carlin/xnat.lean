@@ -216,7 +216,7 @@ definition lt : xnat → xnat → Prop
 
 
 notation a < b := lt a b
-
+/-
 theorem inequality_A1 (a b t : xnat) : a < b → a + t < b + t :=
 begin
 induction t with k hk,
@@ -229,10 +229,19 @@ induction t with k hk,
     unfold lt,
     exact hk h1
 end
+-/
 
 -- open classical -- is it possible without this?
 
-lemma zero_or_not (a : xnat) : a = zero ∨ ∃ p : xnat, a = succ p := sorry 
+lemma zero_or_not (a : xnat) : a = zero ∨ ∃ p : xnat, a = succ p := 
+begin 
+induction a,
+left,
+refl,
+right,
+existsi a_a,
+refl,
+end
 
 open classical
 
@@ -257,39 +266,53 @@ unfold lt at a_1,
 exact ht a_1,
 end
 
+
+
 lemma lt_succ ( a b : xnat) : a < b → succ a < b ∨ succ a = b :=
 begin
-intro h1,
 induction a with t ht,
-cases b,
-exact false.elim h1,
-cases a,
-have h2 : succ zero = succ zero, by refl,
-exact or.intro_right (succ zero < succ zero) h2,
-have h3 : succ zero < succ (succ a), by unfold lt,
-exact or.intro_left (succ zero = succ (succ a)) h3,
--- succ (succ t) < succ b
-cases b,
-exact false.elim h1,
+have : b = zero ∨ ∃ p : xnat, b = succ p, from zero_or_not b,
+apply or.elim this,
+intros b0 blt,
+rw [b0] at blt,
+unfold lt at blt,
+exact false.elim blt,
+intro hp,
+exact 
+    exists.elim hp (assume p : xnat, assume hpb : b = succ p,
+    begin
+    intro h1,
+    have pzon : p = zero ∨ ∃ q : xnat, p = succ q, from zero_or_not p,
+    apply or.elim pzon,
+    intro pz,
+    rw [hpb, pz],
+    right,
+    refl,
 
+    intro hq,
+    left,
+    rw [hpb],
+    exact
+        exists.elim hq (assume q : xnat, assume hqp : p = succ q,
+        begin
+        rw [hqp],
+        unfold lt,
+        end)
+    end),
 
+intro h1,
 end
 
 
-
+/-
 lemma succ_lt (a b : xnat) : succ a < b → a < b :=
 begin
 intro h1,
 induction b with t ht,
 exact false.elim h1,
 
-
-
-
-    
-    
-    
 end
+-/
 
 /-induction a with t ht,
     cases b,
@@ -338,12 +361,14 @@ variable z : xnat
 #reduce z < zero
 #reduce one < zero
 
+/-
 theorem inequality_A2 (a b c : xnat) : a < b → b < c → a < c :=
 begin
 intros h1 h2,
 
 
 end
+-/
 
 /-cases a,
 cases b,
@@ -362,5 +387,56 @@ exact false.elim h2,
 variable b : xnat
 #reduce zero < succ b
 
-end xena
 
+
+def is_zero (n : xnat) : Prop := n = zero
+
+lemma zero_not_succ (n : xnat) : zero ≠ succ n := 
+  by apply xnat.no_confusion
+lemma succ_not_zero (n : xnat) : succ n ≠ zero := 
+begin
+  intro, 
+  have : ¬(zero = succ n), from zero_not_succ n,
+  exact this a.symm
+end
+
+instance zero_decidable : decidable_pred is_zero := 
+begin
+unfold decidable_pred,
+intro a,
+induction a with t ht,
+{
+    unfold is_zero,
+    simp,
+    exact decidable.true
+},
+{
+    unfold is_zero,
+    have :  ¬(succ t = zero), by apply succ_not_zero,
+    simp [this],
+    exact decidable.false
+}
+end
+ /-
+definition lt : xnat → xnat → Prop
+| zero zero := false
+| (succ m) zero := false
+| zero (succ p) := true
+| (succ m) (succ p) := lt m p
+-/
+
+instance lt_decidable ( a b : xnat ) : decidable (a < b) := 
+begin
+induction b with t ht,
+{
+    have : ¬ (a < zero), from less_than_zero a,
+    simp [this],
+    exact decidable.false,
+},
+{
+
+}
+
+end
+
+end xena
