@@ -43,7 +43,7 @@ def foo [bi : Bijection nat nat] : nat → nat := bi.morphism
 
 def abs_value : int → nat 
 | 0 := 0
-| i := if (i<0) then abs_value (-i) else nat.succ (abs_value (i-1)) using_well_founded
+| i := if (i<0) then abs_value (-i) else nat.succ (abs_value (i-1)) 
 
 #reduce abs_value (-5)
 
