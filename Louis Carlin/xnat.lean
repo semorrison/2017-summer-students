@@ -268,8 +268,9 @@ end
 
 
 
-lemma lt_succ ( a b : xnat) : a < b → succ a < b ∨ succ a = b :=
+lemma lt_succ : ∀ a b : xnat, a < b → succ a < b ∨ succ a = b :=
 begin
+intros a b,
 induction a with t ht,
 have : b = zero ∨ ∃ p : xnat, b = succ p, from zero_or_not b,
 apply or.elim this,
@@ -301,6 +302,7 @@ exact
     end),
 
 intro h1,
+exact ht h1
 end
 
 

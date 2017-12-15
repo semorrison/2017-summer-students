@@ -71,7 +71,7 @@ definition test4 : set (set nat) := set.powerset test3
 
 -- Is this definition of set strong enough? Try namesets?
 
-
+/-
 -- Define injective/surjective
 definition inj  {α β : Type} (f : α → β) : Prop := ∀ x y : α, f x = f y → x = y
 definition surj {α β : Type} (f : α → β) : Prop := ∀ y : β, ∃ x : α, f x = y
@@ -95,13 +95,14 @@ intro y,
 have h1: y = y, by refl,
 exact exists.intro y h1
 end
+-/
 
 -- Bijection
-definition bij {α β : Type} (f : α → β) : Prop
-:= inj f ∧ surj f
+ --definition bij {α β : Type} (f : α → β) : Prop
+-- := inj f ∧ surj f
 
-definition inj'  {γ δ : Type} {α : set γ} {β : set δ} (f : α → β) : Prop := ∀ x y, f x = f y → x = y ∧ α x ∧ α y
-definition surj' {α β : Type} (f : α → β) : Prop := ∀ y : β, ∃ x : α, f x = y
+-- definition inj'  {γ δ : Type} {α : set γ} {β : set δ} (f : α → β) : Prop := ∀ x y, f x = f y → x = y ∧ α x ∧ α y
+-- definition surj' {α β : Type} (f : α → β) : Prop := ∀ y : β, ∃ x : α, f x = y
 
-theorem binomial_coefficients_subsets_bijection (n k : nat) : ∃ f :  →  := sorry
+-- theorem binomial_coefficients_subsets_bijection (n k : nat) : ∃ f :  →  := sorry
 end binomials

@@ -152,7 +152,7 @@ instance fun_has_add' {α : Type u} {β : Type u} [has_add' β] :
 #print classes
 #print instances inhabited
 
-set_option trace.class_instances true
+--set_option trace.class_instances true
 set_option class.instance_max_depth 32
 
 @[priority std.priority.default+1]
@@ -160,5 +160,30 @@ instance i1 : prod nat nat :=
 ⟨ 1, 1 ⟩
 
 /- 10.6 -- Coercions using Type Classes -/
+
+instance bool_to_Prop : has_coe bool Prop :=
+⟨λ  b, b = tt ⟩ 
+
+#check has_coe -- has coersion
+
+#reduce if tt then 3 else 5 -- uses bool_to_Prop
+
+def list.to_set {α : Type u} : list α → set α
+| [] := ∅
+| (h::t) := {h} ∪ list.to_set t
+
+instance list_to_set_coe (α : Type u) :
+    has_coe (list α ) (set α) :=
+    ⟨list.to_set⟩
+
+def s : set nat := {1, 2}
+def l : list nat := [3,4]
+
+#check s ∪ l -- set nat
+-- #check s ∪ [3,2]
+#check s ∪ ([3,2] : list nat)
+
+#check s ∪ ↑[3,2]
+
 
 
