@@ -41,16 +41,24 @@ def foo [bi : Bijection nat nat] : nat → nat := bi.morphism
 #reduce (2 ∣ 5)
 #check  10 - 5
 
+/-
 def abs_value : int → nat 
 | 0 := 0
 | i := if (i<0) then abs_value (-i) else nat.succ (abs_value (i-1)) 
+-- Describe a well-founded relation on the integers
+-- |a| < |b|  (can't have reflexivity)
 
 #reduce abs_value (-5)
+-/
+
+#reduce int.sizeof 5
+#reduce int.sizeof (-6)
+#check int.sizeof 5
 
 instance nat_int_bijection : Bijection nat int :=
 {
     morphism := λ n : nat, if (2 ∣ n) then - (n/2) else (n+1)/2,
-    inverse := λ i : int, if (i <= 0) then (abs_value (2 * i)) else 2*i - 1, -- how to convert int to nat
+    inverse := λ i : int, if (i <= 0) then (int.sizeof (2 * i)) else int.sizeof (2*i - 1), -- how to convert int to nat
     witness_1 :=
         begin
             intro u,
