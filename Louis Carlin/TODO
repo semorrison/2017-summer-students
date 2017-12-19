@@ -6,3 +6,4 @@ Finish binomials
 Do primes
 
 Learn how to show something is decidable
+-- make xnat functions instance of decidable?
