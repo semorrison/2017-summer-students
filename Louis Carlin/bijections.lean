@@ -1,3 +1,4 @@
+import tactic.norm_num
 -- import data.rat 
 
 -- TODO
@@ -87,24 +88,55 @@ begin
     
 end
 
+#eval int.sizeof (0)
+
+open int
+
+
+instance {n:ℕ} (n > 0): Bijection nat (nat × fin n) :=
+begin
+admit
+end
+instance int_bijection' : Bijection int (nat × fin 2) := {
+    morphism := λ i : int, match i with 
+                           | of_nat n := (n, 0)
+                           | neg_succ_of_nat n := (n, 1)
+                           end,
+    inverse := sorry, -- see https://github.com/semorrison/lean-category-theory/blob/master/src/categories/util/finite.lean for an example of matching on fin n.
+    witness_1 := sorry,
+    witness_2 := sorry
+}
+
+-- set_option pp.all true
 instance nat_int_bijection : Bijection nat int :=
 {
     morphism := λ n : nat, if (2 ∣ n) then - (n/2) else (n+1)/2,
-    inverse := λ i : int, if (i <= 0) then (int.sizeof (2 * i)) else int.sizeof (2*i - 1), -- how to convert int to nat
+    inverse := λ i : int, if (i <= 0) then (nat_abs (2 * i)) else nat_abs (2*i - 1), -- how to convert int to nat
     witness_1 :=
         begin
             intro u,
+            -- by_cases (2 ∣ u),
+            -- {
+            --     simp [h],
+            -- }
+
+
             have h1 : 2 ∣ u ∨ ¬ 2 ∣ u, from em (2 ∣ u), 
             apply or.elim h1,
             {
                 intro d,
                 simp [d],
-                have h2 : (↑ u: int) ≥ 0, from geq_zero u,
-                have h3 : (↑ u: int)/2 ≥ 0, from sorry,
-                have h4 : (-(↑u / 2) : int)  ≤ 0, from sorry,
-                simp [h4],
-                
-                admit,
+                have h2 : 0 ≤ (↑ u: int) , from geq_zero u,
+                have h3 : 0 ≤ (↑ u: int)/2, from sorry, -- int.le_div_iff_mul_le _,
+                simp [h3],
+                rw ← int.mul_div_assoc,
+                rw int.mul_div_cancel_left,
+                simp,
+                norm_num,
+                have p : (2:ℤ) = ↑(2:ℕ), by norm_num,
+                rw p,
+                rw coe_nat_dvd,
+                assumption,
             },
             {
                 intro nd,
