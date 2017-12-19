@@ -11,7 +11,7 @@ definition from_fixed_length_binary_digits : Π { L : ℕ } ( v : vector bool L 
 
 lemma fixed_length_binary_digits_correct : Π (L : ℕ) (n : ℕ) (p : n < 2^L), from_fixed_length_binary_digits (fixed_length_binary_digits L n) = n
 | 0 n p := begin
-             have q : n = 0, { norm_num at p, cases p, refl, cases a },
+             have q : n = 0, { norm_num at p, cases p, refl, cases p_a },
              rw q,
              refl 
            end
@@ -19,7 +19,7 @@ lemma fixed_length_binary_digits_correct : Π (L : ℕ) (n : ℕ) (p : n < 2^L),
                  -- we unfold some definitions and simplify vector.head and vector.tail
                  unfold fixed_length_binary_digits,
                  unfold from_fixed_length_binary_digits,
-                 rw [ vector.head_cons, vector.tail_cons], -- TODO why aren't these marked as simp?
+                 rw [ vector.head_cons, vector.tail_cons ], -- TODO why aren't these marked as simp?
                  -- and then use induction
                  rw fixed_length_binary_digits_correct l (n/2),
                  -- finally we have to discharge two annoying conditions.
@@ -78,7 +78,7 @@ begin
   unfold from_fixed_length_binary_digits,
   exact dec_trivial,
   unfold from_fixed_length_binary_digits,
-  have p := ih_1 v.tail,
+  have p := L_ih v.tail,
   admit
 end
 

@@ -36,3 +36,15 @@ example : binom 10 5 = 252 :=
 begin
 refl
 end
+
+#eval binom 100 50
+
+example : binom 10 5 = 252 :=
+begin
+unfold binom,
+norm_num,
+unfold product_from_to,
+norm_num,
+unfold product,
+norm_num,
+end
