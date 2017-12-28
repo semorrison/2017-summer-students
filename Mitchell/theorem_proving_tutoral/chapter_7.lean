@@ -60,12 +60,10 @@ namespace list
 variable {α : Type}
 
 notation h :: t  := cons h t
+notation `[` h `]` := cons h nil
 
 def append (s t : list α) : list α :=
 list.rec t (λ x l u, x::u) s
-
-#check @list.rec
-#check @list.rec_on
 
 notation s ++ t := append s t
 
@@ -97,9 +95,17 @@ theorem append_assoc (r s t : list α) :
     ...               = x :: xs ++ (s ++ t)   : by refl
   end
 
-def length : Π {α : Type u}, list α → nat
-| _ nil := 0
-| _ (x :: xs) := 1 + length xs
+def length : list α → nat
+| nil := 0
+| (x :: xs) := 1 + length xs
+
+def concat : Π (x : α), list α → list α
+| a nil := [a]
+| a (h :: t) := h :: (concat a t)
+
+def reverse : list α → list α
+| nil := nil
+| (x :: xs) := concat x (reverse xs)
 
 theorem append_length (s t : list α) : 
   length (s ++ t) = length s + length t :=
@@ -108,6 +114,28 @@ theorem append_length (s t : list α) :
   simp only [nil_append, length, zero_add],
   
   simp [cons_append, length, Hs]
+  end
+
+theorem concat_sense (h : α) (t : list α) : concat h t = t ++ [h] :=
+  begin
+  induction t with x xs Ht,
+  refl,
+
+  simp [concat, cons_append, Ht]
+  end
+
+theorem eq_reverse_length (t : list α) : 
+  length (reverse t) = length t :=
+  begin
+  induction t with x xs Ht,
+  refl,
+
+  rw reverse,
+  rw concat_sense,
+  rw append_length,
+  rw [length, length, length],
+  rw Ht,
+  simp
   end
 
 end list
