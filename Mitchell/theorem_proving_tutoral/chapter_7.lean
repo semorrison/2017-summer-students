@@ -141,3 +141,7 @@ theorem eq_reverse_length (t : list α) :
 end list
 -- END
 end hide
+
+-- Exercise 3
+inductive law : Type
+| const n
