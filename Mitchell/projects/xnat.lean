@@ -16,6 +16,7 @@ definition add : xnat → xnat → xnat
 #reduce add (succ zero) (succ (succ zero))
 
 instance : has_zero xnat := has_zero.mk zero
+instance : has_one xnat := has_one.mk one
 notation a + b := add a b
 
 theorem add_zero (n : xnat) : n + zero = n := rfl
@@ -159,6 +160,22 @@ induction b with n Hn,
   rw Hn,
   rw one_mul
 end
+
+def pred : xnat → xnat
+| 0 := 0
+| (succ x) := x
+
+def sub : xnat → xnat → xnat
+| 0 _ := 0
+| n 0 := n
+| (succ n) (succ m) := sub n m
+
+def pow (b : xnat) : xnat → xnat
+| 0 := 1
+| (succ n) := pow n*b
+
+infix `-` := sub
+infix `^` := pow
 
 @[simp]
 definition lt : xnat → xnat → Prop 
