@@ -72,8 +72,8 @@ split,
     
     induction t with k ih,
       intro h1,
-      rw eq.symm (add_zero a),
-      rw eq.symm (add_zero b),
+      rw ← (add_zero a),
+      rw ← (add_zero b),
       exact h1,
       
       intro h2,
@@ -186,12 +186,17 @@ definition lt : xnat → xnat → Prop
 
 notation a < b := lt a b
 
+@[simp] lemma implication_is_reflexive (p : Prop) : (p → p) ↔ true :=
+begin
+simp,
+intros, exact a,
+end 
+
 @[simp]
 theorem inequality_A1 (a b t : xnat) : a < b → a + t < b + t :=
 begin
   induction t with n Hn,
     simp,
-    {intro h, exact h}, -- SCOTT. For some reason, this line is required in order to prove that a < b → a < b. Shouldn't this be contained in simp?
 
     rw [add_succ, add_succ],
     rw lt,

@@ -1,3 +1,5 @@
+import tactic.norm_num
+
 @[simp]
 def fact : ℕ → ℕ
 | 0 := 1
@@ -5,30 +7,36 @@ def fact : ℕ → ℕ
 
 notation a `!!` := fact a
 
-#reduce 5!!
+#reduce fact 5
 
 @[simp]
 def binom (n : ℕ) (k : ℕ) : ℕ := (n!!) / (((n-k)!!) * (k!!))
 
-notation a `choose` b := binom a b
+-- notation a `choose` b := binom a b
 
-#reduce 5 choose 3
+-- #reduce 5 choose 3
 
 def summation (f : ℕ → ℕ) : ℕ → ℕ
 | 0 := f 0
 | (n+1) := (f (n+1)) + (summation n) 
 
-theorem 
+lemma ex : binom 5 3 = 10 :=
+begin
+  norm_num,
+end
 
 theorem binom_sum {n : ℕ} : summation (binom n) n = 2 ^ n :=
     begin
     induction n with n hn,
-    unfold summation,
-    simp,
-    
-    unfold summation,
-    simp,
-    admit
+    case nat.zero {
+      unfold summation,
+      simp,
+    },
+    case nat.succ {
+      unfold summation,
+      simp,
+      admit
+    }
     end
 
 

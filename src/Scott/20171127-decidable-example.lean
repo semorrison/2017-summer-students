@@ -1,3 +1,5 @@
+import tactic.norm_num
+
 open nat
 
 def even : ℕ → Prop
@@ -5,11 +7,6 @@ def even : ℕ → Prop
 | (succ n) := ¬ (even n)
 
 example : even 6 := by { unfold even, simp }
-
-lemma not_not : ∀ p : Prop, p → ¬¬p :=
-begin
-  intro, intro, intro, contradiction
-end
 
 def infinitely_many_even_integers : ∀ n : ℕ, ∃ m ≥ n, even m :=
 begin
@@ -28,15 +25,15 @@ induction n,
     exact decidable.true
 },
 {
-  cases ih_1,
+  cases n_ih,
   {
     unfold even,
-    exact decidable.is_true a_1
+    exact decidable.is_true n_ih
   },
   {
     unfold even,
     refine decidable.is_false _,
-    apply not_not, assumption
+    apply not_not_intro, assumption
   }
 }
 end
@@ -58,10 +55,7 @@ begin
     existsi _,
     unfold even,
     assumption,
-    -- how do we obtain a proof that n + 1 ≥ n? This is pretty gross.
-    unfold ge,
-    unfold has_le.le,
-    exact less_than_or_equal.step (less_than_or_equal.refl n),
+    apply le_succ,
   }
 end
 
