@@ -20,11 +20,18 @@ variable (hf: is_homomorphism f)
 include hf
 
 @[simp]
-lemma one : f (1 : α) = 1 :=
+lemma one : f 1 = 1 :=
 calc
     f 1     = (f 1)⁻¹ * (f 1 * f 1)    : by simp
-    ...     = (f 1)⁻¹ * f (1*1)        : by rw ← hom_mul hf
-    ...     = 1                        : by simp
-end
+    ...     = 1                        : by rw ← hom_mul hf; simp
 
+@[simp]
+lemma inv : f a⁻¹ = (f a)⁻¹ :=
+calc
+    f a⁻¹ = (f a)⁻¹ * (f a * f a⁻¹)      : by simp
+    ...   = (f a)⁻¹ * f (a * a⁻¹)        : by rw hom_mul hf
+    ...   = (f a)⁻¹                      : by simp [one hf]
+
+end
 end is_homomorphism
+
