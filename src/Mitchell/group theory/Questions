@@ -1,0 +1,7 @@
+As I understand it, the notation [group A] is meant to look for an instance of a proof that A is a group.
+But I don't get any errors when I write [group nat]
+
+When to use structure vs class?
+
+Can I use an instance as a theorem? I've created preimage as an instance of a subgroup.
+I now want to use the fact that preimages are subgroups, but can't figure out how.
