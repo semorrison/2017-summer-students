@@ -10,17 +10,17 @@ universes u v w
 variables {α : Type u} {β : Type v} {γ : Type w}
 
 -- Structure or class?
-structure is_homomorphism [group α] [group β] (f : α → β) : Prop :=
+structure is_hom [group α] [group β] (f : α → β) : Prop :=
     (hom_mul : ∀ a b, f (a * b) = (f a) * (f b))
 
-attribute [simp] is_homomorphism.hom_mul
+attribute [simp] is_hom.hom_mul
 
-namespace is_homomorphism
+namespace is_hom
 variables [group α] [group β]
 variables {f : α → β} {a : α}
 
 section
-variable (hf: is_homomorphism f)
+variable (hf: is_hom f)
 include hf
 
 @[simp]
@@ -37,7 +37,7 @@ calc
     ...   = (f a)⁻¹                      : by simp [one hf]
 
 end
-end is_homomorphism
+end is_hom
 
 
 class is_subgroup [group α] (s : set α) : Prop := 
@@ -56,7 +56,7 @@ variables {s : set α} [is_subgroup s]
 instance trivial : is_subgroup ({1} : set α) :=
     by refine {..}; by simp {contextual := tt}
 
-instance image {f : α → β} (hf: is_homomorphism f) : is_subgroup (f '' s) := {
+instance image {f : α → β} (hf: is_hom f) : is_subgroup (f '' s) := {
     is_subgroup .
     mul_closed := assume a₁ a₂ ⟨b₁, hb₁, eq₁⟩ ⟨b₂, hb₂, eq₂⟩,
     ⟨b₁ * b₂, mul_closed hb₁ hb₂, by simp [eq₁, eq₂, hf.hom_mul]⟩,
@@ -65,18 +65,18 @@ instance image {f : α → β} (hf: is_homomorphism f) : is_subgroup (f '' s) :=
     ⟨b⁻¹, inv_closed hb, by simp [eq, hf.inv]⟩ 
 }
 
-instance preimage {f : β → α} (hf : is_homomorphism f) : is_subgroup (f ⁻¹' s) :=
+instance preimage {f : β → α} (hf : is_hom f) : is_subgroup (f ⁻¹' s) :=
     by refine {..}; simp [hf.hom_mul, hf.one, hf.inv] {contextual:=tt}
 
-def kernel {f : α → β} (hf: is_homomorphism f) : set α := {a | f a = 1}
+def kernel {f : α → β} (hf: is_hom f) : set α := {a | f a = 1}
 
-instance kernel_subg {f : α → β} (hf: is_homomorphism f) : is_subgroup (kernel hf) := 
+instance kernel_subg {f : α → β} (hf: is_hom f) : is_subgroup (kernel hf) := 
     by refine {..}; simp [kernel, hf.hom_mul, hf.one, hf.inv] {contextual:=tt}
 
 def left_coset  (a : α) {s : set α} [is_subgroup s] : set α := {b | ∃ (g : s), b = a * g}
 def right_coset {s : set α} [is_subgroup s] (a : α) : set α := {b | ∃ (g : s), b = g * a}
 
-lemma kernel_iff_equiv {f : α → β} (hf: is_homomorphism f) (a b : α) : f b = f a ↔ a⁻¹ * b ∈ kernel hf :=
+lemma kernel_iff_equiv {f : α → β} (hf: is_hom f) (a b : α) : f b = f a ↔ a⁻¹ * b ∈ kernel hf :=
 begin
     split,
     {
@@ -94,7 +94,7 @@ begin
     -- struggling with simp [mul_assoc]
 end
 
-theorem inj_iff_trivial_kernel {f : α → β} (hf: is_homomorphism f) : 
+theorem inj_iff_trivial_kernel {f : α → β} (hf: is_hom f) : 
     function.injective f ↔ kernel hf = {1} :=
 begin
     split,
@@ -119,5 +119,10 @@ begin
             ... = b               : by rw mul_assoc; simp [hbia]
     }
 end
+
+-- Not a particularly pretty definition, feel as though it could be improved
+-- Potentially by separating out conjugation invariance for a single term?
+class is_normal_subgroup {s : set α} [is_subgroup s] : Prop :=
+    (conj_inv : ∀ n ∈ s, ∀ g : α, g * n * g⁻¹ ∈ s)
 
 end is_subgroup
