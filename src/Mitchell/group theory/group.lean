@@ -45,7 +45,9 @@ class is_subgroup [group α] (s : set α) : Prop :=
     (inv_closed : ∀ {a}, a ∈ s → a⁻¹ ∈ s) 
     (mul_closed : ∀ {a b}, a ∈ s → b ∈ s → a * b ∈ s) 
 
-attribute [simp] is_subgroup.one_closed is_subgroup.inv_closed is_subgroup.mul_closed
+attribute [simp] is_subgroup.one_closed 
+                 is_subgroup.inv_closed 
+                 is_subgroup.mul_closed
 
 -- theorem int_subgroups (S : set ℤ) [group ℤ] [is_subgroup S] : ∃ a ∈ S, ∀ b ∈ S, a ∣ b := sorry
 
@@ -108,7 +110,19 @@ begin
         assume a ha,
         have hi : f a = f 1 := by simp [hf.one, ha],
         simp [h hi, hf.one],
-        admit
+        rw set.set_eq_def,
+        intros,
+        split,
+        {
+            simp,
+            exact ht x
+        },
+        {
+            simp,
+            intros,
+            rw a,
+            admit -- you should set things up so simp can finish this
+        }
     },
     {
         assume h a b,
