@@ -3,6 +3,8 @@
     in mathlib's module.lean
 -/
 
+-- Needs reorganisation - current order is just the order it was written
+
 import data.set.basic
 import init.function
 
@@ -81,12 +83,12 @@ begin
     split,
     {
         assume h,
-        simp [kernel, has_mem.mem, set.mem, set_of], -- Is there a tactic which does this?
+        simp [kernel],
         simp [hf.hom_mul, hf.inv, h]
     },
     {
         assume h,
-        simp [kernel, has_mem.mem, set.mem, set_of] at h,
+        simp [kernel] at h,
         calc
             f b = f (a * a⁻¹ * b)   : by simp; rw [mul_assoc]; simp [hf.hom_mul, h]
             ... = f a               : by rw [mul_assoc]; simp [hf.hom_mul, h]
@@ -94,6 +96,7 @@ begin
     -- struggling with simp [mul_assoc]
 end
 
+-- TODO: clean up proof
 theorem inj_iff_trivial_kernel {f : α → β} (hf: is_hom f) : 
     function.injective f ↔ kernel hf = {1} :=
 begin
@@ -103,12 +106,19 @@ begin
         assume h,
         have hx : ∃ x, x ∈ kernel hf := ⟨1, hf.one⟩,
         dsimp [kernel],
-        suffices ht : ∀ a, f a = 1 → a = 1, -- Doesn't work!
-        tactic.swap, -- Not necessary once suffices is working
-        assume a ha,
-        have hi : f a = f 1 := by simp [hf.one, ha],
-        simp [h hi, hf.one],
-        admit
+        rw set.set_eq_def,
+        simp [set.mem_set_of_eq],
+        assume x,
+        split,
+        {
+        assume hx,
+        have hi : f x = f 1 := by simp [hf.one, hx],
+        simp [h hi, hf.one]
+        },
+        {
+        assume hx,
+        simp [hx, hf.one]
+        }
     },
     {
         assume h a b,
@@ -122,7 +132,41 @@ end
 
 -- Not a particularly pretty definition, feel as though it could be improved
 -- Potentially by separating out conjugation invariance for a single term?
-class is_normal_subgroup {s : set α} [is_subgroup s] : Prop :=
+class is_normal_subgroup (s : set α) : Prop :=
+    (is_subgroup : is_subgroup s)
     (conj_inv : ∀ n ∈ s, ∀ g : α, g * n * g⁻¹ ∈ s)
+
+instance kernel_normal {f : α → β} (hf: is_hom f) : is_normal_subgroup (kernel hf) :=
+    by refine {..};
+    simp [kernel, hf.hom_mul, hf.one, hf.inv] {contextual:=tt};
+    apply (is_subgroup.kernel_subg hf)
+
+def center (α : Type u) [group α] : set α := {z | ∀ g, g * z = z * g}
+
+-- TODO: clean up proof
+instance center_subg : is_subgroup (center α) := {
+    is_subgroup .
+    one_closed := by simp [center],
+    mul_closed := begin -- Should be possible to make this more compact
+    assume a b ha hb g,
+    simp [center] at *,
+    simp [ha, hb]
+    end,
+    inv_closed := begin
+    assume a ha g,
+    simp [center] at *,
+    calc
+        g * a⁻¹ = a⁻¹ * (a * g) * a⁻¹     : by simp
+        ...     = a⁻¹ * (g * a) * a⁻¹     : by simp [ha g]
+        ...     = a⁻¹ * g * (a * a⁻¹)     : by rw [←mul_assoc, mul_assoc]
+        ...     = a⁻¹ * g                 : by simp
+    end
+}
+
+instance center_normal : is_normal_subgroup (center α) :=
+    by refine {..};
+    simp [center] {contextual:=tt};
+    apply is_subgroup.center_subg
+
 
 end is_subgroup
