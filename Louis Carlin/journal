@@ -1,0 +1,10 @@
+Tutorials, xena, etc
+
+trouble with sets (undecidable)
+
+Playing around with bijections (wanted to do combinatorics stuff)
+trouble trying to define abs and with coercion
+how to define bijection (my initial attempt vs scott's) 
+Typeclasses and inference
+Naive bijection nat int is tedious, Scott suggests composition
+How to show composition of bijections is bijection (notation is annoying)

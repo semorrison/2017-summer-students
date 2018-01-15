@@ -52,26 +52,9 @@ def abs_value : int → nat
 #reduce abs_value (-5)
 -/
 
-#reduce int.sizeof 5
-#reduce int.sizeof (-6)
-#check int.sizeof 5
-#print int.sizeof -- How does  this work?
-
-
-
-open classical
-
 lemma geq_zero (u : nat) : (↑ u : int) ≥ 0 :=
 begin
 exact dec_trivial
-end
-
-example : 5 ≥ 0 :=
-begin
-have h1 : 0 < 5, from dec_trivial,
-unfold ge,
-exact assume h2 : 5 < 0, 
-show false, from sorry
 end
 
 #check nat.less_than_or_equal
@@ -79,19 +62,23 @@ end
 #check lt_div_of_mul_lt
 -- lemma geq_div_of_mul_lt
 
-#check 2 ∣ 3 
-
-
-lemma div_mul_two  (u : int) : 2 ∣ u → 2 * (u / 2) = u :=
-begin
-    intro,
-    
-end
-
-#eval int.sizeof (0)
-
 open int
 
+instance bijection_composition {α β γ : Type}  [ab :Bijection α β] [bg : Bijection β γ] : Bijection α γ :=
+{
+    morphism := λ x : α, @Bijection.morphism β γ bg (@Bijection.morphism α β ab x),
+    inverse := λ x : γ, @Bijection.inverse α β ab (@Bijection.inverse β γ bg x),
+    witness_1 := 
+    begin
+       intro,
+       simp[@Bijection.witness_1], -- woah
+    end,
+    witness_2 := 
+    begin
+        intro,
+        simp[@Bijection.witness_2],
+    end
+}
 
 instance {n:ℕ} (n > 0): Bijection nat (nat × fin n) :=
 begin
@@ -107,7 +94,10 @@ instance int_bijection' : Bijection int (nat × fin 2) := {
     witness_2 := sorry
 }
 
+
+
 -- set_option pp.all true
+/-
 instance nat_int_bijection : Bijection nat int :=
 {
     morphism := λ n : nat, if (2 ∣ n) then - (n/2) else (n+1)/2,
@@ -126,8 +116,9 @@ instance nat_int_bijection : Bijection nat int :=
             {
                 intro d,
                 simp [d],
+                have h1 : (2:int) > 0, from dec_trivial,
                 have h2 : 0 ≤ (↑ u: int) , from geq_zero u,
-                have h3 : 0 ≤ (↑ u: int)/2, from sorry, -- int.le_div_iff_mul_le _,
+                have h3 : 0 ≤ (↑ u: int)/2, from int.div_le_div h1 h2 , -- int.le_div_iff_mul_le _,
                 simp [h3],
                 rw ← int.mul_div_assoc,
                 rw int.mul_div_cancel_left,
@@ -141,7 +132,7 @@ instance nat_int_bijection : Bijection nat int :=
             {
                 intro nd,
                 simp [nd],
-                have : (1 + ↑u) / 2 ≤ 0, from sorry
+                have : (1 + ↑u) / 2 ≥ 0, from sorry
             }
 
         end,
@@ -150,6 +141,8 @@ instance nat_int_bijection : Bijection nat int :=
             admit
         end
 }
+-/
+
 
 #check (1 : ℚ ) -- getting lag atm from importing stuff
 
