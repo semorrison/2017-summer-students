@@ -86,11 +86,7 @@ instance bijection_reverse_order {α β : Type} [f : Bijection α β ] : Bijecti
 -- int.mod_lt_of_pos
 --/home/louis/school/2017/sem2/2017-summer-students/_target/deps/mathlib/data/int/basic.lean
 
-
--- nat.mod_lt
-
-def a : fin 2 := ⟨ 1, dec_trivial⟩ 
-
+#check nat.div_eq_of_lt
 
 
 instance {n:ℕ} (h: n > 0): Bijection nat (nat × fin n) :=
@@ -110,9 +106,18 @@ instance {n:ℕ} (h: n > 0): Bijection nat (nat × fin n) :=
     begin
         intro,
         simp,
-        
+        -- WTS (a + b*n) / n = a/n + b
+        have h1 : v.snd.val/n = 0, from nat.div_eq_of_lt v.snd.is_lt, 
+        have h2 : (v.snd.val + v.fst * n) / n = (v.snd).val/n + v.fst, from add_mul_div_left,
+        rw [h2, h1, zero_add],
+        have h3 : v.snd.val < n, from v.snd.is_lt,
+        simp [nat.mod_eq_of_lt h3],
     end,
 }
+
+#check nat.mod_eq_of_lt
+
+-- mod_eq_of_lt
 
 -- int.mod_lt_of_pos
 
