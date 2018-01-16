@@ -1,5 +1,4 @@
 import tactic.norm_num
--- import data.rat 
 
 -- TODO
 -- prove equivalent def of bijection?
@@ -38,10 +37,6 @@ instance nat_nat_bijection : Bijection nat nat :=
 def foo [bi : Bijection nat nat] : nat → nat := bi.morphism
 #reduce foo 1 -- this requires Bijection to be a class not a structure
 
-
-#reduce (2 ∣ 5)
-#check  10 - 5
-
 /-
 def abs_value : int → nat 
 | 0 := 0
@@ -62,12 +57,12 @@ end
 #check lt_div_of_mul_lt
 -- lemma geq_div_of_mul_lt
 
-open int
 
-instance bijection_composition {α β γ : Type}  [ab :Bijection α β] [bg : Bijection β γ] : Bijection α γ :=
+
+instance bijection_composition {α β γ : Type}  [fab :Bijection α β] [fbg : Bijection β γ] : Bijection α γ :=
 {
-    morphism := λ x : α, @Bijection.morphism β γ bg (@Bijection.morphism α β ab x),
-    inverse := λ x : γ, @Bijection.inverse α β ab (@Bijection.inverse β γ bg x),
+    morphism := λ x : α, @Bijection.morphism β γ fbg (@Bijection.morphism α β fab x),
+    inverse := λ x : γ, @Bijection.inverse α β fab (@Bijection.inverse β γ fbg x),
     witness_1 := 
     begin
        intro,
@@ -80,10 +75,49 @@ instance bijection_composition {α β γ : Type}  [ab :Bijection α β] [bg : Bi
     end
 }
 
-instance {n:ℕ} (n > 0): Bijection nat (nat × fin n) :=
-begin
-admit
-end
+instance bijection_reverse_order {α β : Type} [f : Bijection α β ] : Bijection β α :=
+{
+    morphism := f.inverse,
+    inverse := f.morphism,
+    witness_1 := f.witness_2,
+    witness_2 := f.witness_1
+}
+
+-- int.mod_lt_of_pos
+--/home/louis/school/2017/sem2/2017-summer-students/_target/deps/mathlib/data/int/basic.lean
+
+
+-- nat.mod_lt
+
+def a : fin 2 := ⟨ 1, dec_trivial⟩ 
+
+
+
+instance {n:ℕ} (h: n > 0): Bijection nat (nat × fin n) :=
+{
+    morphism := λ x : nat, ( x / n, ⟨ x % n, nat.mod_lt x h⟩ ),
+    inverse := λ x : nat × fin n, x.1 * n + x.2.val,
+
+    witness_1 := 
+    begin
+        intro,
+        simp,
+        rw mul_comm,
+        simp[nat.mod_add_div ],
+    end,
+
+    witness_2 := 
+    begin
+        intro,
+        simp,
+        
+    end,
+}
+
+-- int.mod_lt_of_pos
+
+open int
+
 instance int_bijection' : Bijection int (nat × fin 2) := {
     morphism := λ i : int, match i with 
                            | of_nat n := (n, 0)
@@ -94,10 +128,14 @@ instance int_bijection' : Bijection int (nat × fin 2) := {
     witness_2 := sorry
 }
 
+instance int_nat_bijection : Bijection int nat :=
+begin
+admit
+end
 
 
 -- set_option pp.all true
-/-
+
 instance nat_int_bijection : Bijection nat int :=
 {
     morphism := λ n : nat, if (2 ∣ n) then - (n/2) else (n+1)/2,
@@ -141,7 +179,7 @@ instance nat_int_bijection : Bijection nat int :=
             admit
         end
 }
--/
+
 
 
 #check (1 : ℚ ) -- getting lag atm from importing stuff
