@@ -47,7 +47,9 @@ class is_subgroup [group α] (s : set α) : Prop :=
     (inv_closed : ∀ {a}, a ∈ s → a⁻¹ ∈ s) 
     (mul_closed : ∀ {a b}, a ∈ s → b ∈ s → a * b ∈ s) 
 
-attribute [simp] is_subgroup.one_closed is_subgroup.inv_closed is_subgroup.mul_closed
+attribute [simp] is_subgroup.one_closed 
+                 is_subgroup.inv_closed 
+                 is_subgroup.mul_closed
 
 -- theorem int_subgroups (S : set ℤ) [group ℤ] [is_subgroup S] : ∃ a ∈ S, ∀ b ∈ S, a ∣ b := sorry
 
@@ -134,7 +136,7 @@ end
 -- Potentially by separating out conjugation invariance for a single term?
 class is_normal_subgroup (s : set α) : Prop :=
     (is_subgroup : is_subgroup s)
-    (conj_inv : ∀ n ∈ s, ∀ g : α, g * n * g⁻¹ ∈ s)
+    (normal : ∀ n ∈ s, ∀ g : α, g * n * g⁻¹ ∈ s)
 
 instance kernel_normal {f : α → β} (hf: is_hom f) : is_normal_subgroup (kernel hf) :=
     by refine {..};
@@ -147,14 +149,14 @@ def center (α : Type u) [group α] : set α := {z | ∀ g, g * z = z * g}
 instance center_subg : is_subgroup (center α) := {
     is_subgroup .
     one_closed := by simp [center],
-    mul_closed := begin -- Should be possible to make this more compact
-    assume a b ha hb g,
-    simp [center] at *,
-    simp [ha, hb]
+    mul_closed := begin
+    intros a b ha hb g,
+    rw [center, set.mem_set_of_eq] at *,
+    rw [←mul_assoc, ha g, mul_assoc, hb g, ←mul_assoc]
     end,
     inv_closed := begin
     assume a ha g,
-    simp [center] at *,
+    simp [center] at *,  -- Should be possible to make this more compact
     calc
         g * a⁻¹ = a⁻¹ * (a * g) * a⁻¹     : by simp
         ...     = a⁻¹ * (g * a) * a⁻¹     : by simp [ha g]
@@ -163,10 +165,20 @@ instance center_subg : is_subgroup (center α) := {
     end
 }
 
-instance center_normal : is_normal_subgroup (center α) :=
-    by refine {..};
-    simp [center] {contextual:=tt};
-    apply is_subgroup.center_subg
+instance center_normal : is_normal_subgroup (center α) := {
+    is_normal_subgroup .
+    is_subgroup := is_subgroup.center_subg,
+    normal := begin
+    simp [center, set.mem_set_of_eq],
+    intros n ha g h,
+    calc
+        h * (g * n * g⁻¹) = h * n               : by simp [ha g, mul_assoc]
+        ...               = n * h               : by rw ha h
+        ...               = g * g⁻¹ * n * h     : by simp
+        ...               = g * n * g⁻¹ * h   : by rw [mul_assoc g, ha g⁻¹, ←mul_assoc]
+    end
+}
+    
 
 
 end is_subgroup
