@@ -8,3 +8,7 @@ how to define bijection (my initial attempt vs scott's)
 Typeclasses and inference
 Naive bijection nat int is tedious, Scott suggests composition
 How to show composition of bijections is bijection (notation is annoying)
+
+A good strategy is to look in the proof of integer lemmas because they are often based off nat lemmas
+had trouble pattern matching ( can't simply list all members of fin n?)
+stuck pattern matching inside proof (want to pattern match on nat \times fin 2)

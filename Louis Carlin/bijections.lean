@@ -1,4 +1,4 @@
-import tactic.norm_num
+-- import tactic.norm_num
 
 -- TODO
 -- prove equivalent def of bijection?
@@ -121,21 +121,34 @@ instance {n:ℕ} (h: n > 0): Bijection nat (nat × fin n) :=
 
 -- int.mod_lt_of_pos
 
+
 open int
 
-instance int_bijection' : Bijection int (nat × fin 2) := {
+
+instance int_natcrossfin_bijection : Bijection int (nat × fin 2) := {
     morphism := λ i : int, match i with 
-                           | of_nat n := (n, 0)
-                           | neg_succ_of_nat n := (n, 1)
+                           | of_nat n := (n, ⟨0, dec_trivial⟩)
+                           | neg_succ_of_nat n := (n, ⟨1, dec_trivial⟩ )
                            end,
-    inverse := sorry, -- see https://github.com/semorrison/lean-category-theory/blob/master/src/categories/util/finite.lean for an example of matching on fin n.
-    witness_1 := sorry,
-    witness_2 := sorry
+    inverse := λ x : nat × fin 2, match x with
+                            | (n, ⟨ 0 , _⟩ ) := of_nat n
+                            | (n, ⟨ m, _⟩ ) := neg_succ_of_nat n -- why does this require you to match to m instead of realising 0 and 1 are the only cases?
+                            end,
+     -- see https://github.com/semorrison/lean-category-theory/blob/master/src/categories/util/finite.lean for an example of matching on fin n.
+    witness_1 := 
+                        begin
+                            intro,
+                            cases u,
+                            simp [int_natcrossfin_bijection._match_1, int_natcrossfin_bijection._match_2],
+                            simp [int_natcrossfin_bijection._match_1, int_natcrossfin_bijection._match_2],
+                        end,
+    witness_2 := sorry -- I am having trouble pattern matching with nat × fin 2 here
 }
+
 
 instance int_nat_bijection : Bijection int nat :=
 begin
-admit
+-- how do I get lean to work this out for itself with what I have
 end
 
 
