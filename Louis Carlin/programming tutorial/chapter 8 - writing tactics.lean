@@ -180,4 +180,31 @@ by do
     -- ``(...) -- resolves names when tactic is defined
     -- ``(...) -- resolves names when tactic is executed
 
+
 /- 8.3 - Examples -/
+-- see init/meta/tactic.lean
+
+meta def find_same_type' : expr → list expr → tactic expr
+| e [] := failed
+| e (h :: hs) :=
+    do t ← infer_type h,
+        (unify e t >> return h) <|> find_same_type e hs -- what does unifying do? (8.6)
+
+meta def assumption : tactic unit := -- pretty cool
+do ctx ← local_context,
+    t ← target,
+    h ← find_same_type' t ctx,
+    exact h
+    <|> fail "assumption tactic failed"
+
+meta def first {α : Type} : list (tactic α ) → tactic α
+| [] := fail "first tactic failed, no more alternatives"
+| (t::ts) := t <|> first ts
+
+meta def repeat_at_most : nat → tactic unit → tactic unit
+| 0 _ := skip
+| (n+1) t :=
+    do t,
+     repeat_at_most n t <|> skip
+
+     /- 8.4 - Reduction-/
