@@ -179,6 +179,7 @@ instance center_normal : is_normal_subgroup (center α) := {
     end
 }
 
+
 -- TODO: Terrible! Needs significant clean up
 theorem normal_iff_eq_cosets (s : set α) [hs : is_subgroup s] : 
     is_normal_subgroup s ↔ ∀ g, left_coset g s = right_coset s g :=
@@ -187,7 +188,7 @@ theorem normal_iff_eq_cosets (s : set α) [hs : is_subgroup s] :
     {
         intros h g,
         have hlr : left_coset g s ⊆ right_coset s g,
-        {
+        { 
             simp [left_coset, right_coset],
             intros a n ha hn,
             let n₁ := g * n * g⁻¹,
@@ -230,3 +231,19 @@ theorem normal_iff_eq_cosets (s : set α) [hs : is_subgroup s] :
 
 
 end is_subgroup
+
+-- An alternative style:
+-- structure group_homomorphism {α β} (G : group α) (H : group β) :=
+--   ( map : α → β )
+
+-- structure subgroup {α} (G : group α) := 
+--   ( underlying_set : set α )
+--   (one_closed : (1 : α) ∈ underlying_set)
+--   (inv_closed : ∀ {a}, a ∈ underlying_set → a⁻¹ ∈ underlying_set) 
+--   (mul_closed : ∀ {a b}, a ∈ underlying_set → b ∈ underlying_set → a * b ∈ underlying_set) 
+
+-- def kernel {α β} {G : group α} {H : group β} (f: group_homomorphism G H) : subgroup G := {
+
+-- }
+
+

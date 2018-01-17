@@ -2,8 +2,8 @@ namespace binomials
 
 
 definition factorial : nat → nat
-| 0 := 1
-| (nat.succ n) := (nat.succ n) * (factorial n)
+| 0       := 1
+| (n + 1) := (n + 1) * (factorial n)
 
 #reduce factorial 5
 
