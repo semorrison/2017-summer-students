@@ -207,5 +207,27 @@ meta def repeat_at_most : nat → tactic unit → tactic unit
     do t,
      repeat_at_most n t <|> skip
 
-     /- 8.4 - Reduction-/
-     
+
+/- 8.4 - Reduction-/
+-- this chapter was incomplete
+
+set_option pp.beta false
+
+section
+    variables {α : Type} (a b : α)
+
+    example : (λ x : α, a) b = a :=
+    by do
+        goal ← target,
+        match expr.is_eq goal with
+        | (some (e₁, e₂)) := do 
+                                            trace e₁,
+                                            whnf e₁ >>= trace,
+                                            reflexivity
+        | none := failed
+        end
+
+end
+
+/- 8.5 - Metavariables and Unification -/
+-- also incomplete
