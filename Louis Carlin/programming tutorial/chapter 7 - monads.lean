@@ -1,3 +1,4 @@
+import system.io
 /- 7 - Monads
 
 
@@ -129,3 +130,24 @@ do write_x 5,
     return (y + 2)  
 
 #reduce foo init_reg
+
+/- 7.4 - The IO monad
+
+io is like a state monad with some supporting operations but opaque to lean
+-/
+
+-- import system.io
+open io
+
+#check (@put_str : Π [ioi : io.interface], string → io unit)
+#check (@get_line)
+
+#eval put_str "hello" >> put_str "world!" >> put_str (to_string (27 * 39)) -- what is wrong here?
+
+/- 7.5 - Related type classes 
+-/
+universe variables u v
+
+class functor' (F : Type u → Type v) : Type (max (u+1) v) :=
+(map : Π {α β : Type u}, (α → β) → F α → F β)
+
