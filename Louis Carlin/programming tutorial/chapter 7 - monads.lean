@@ -68,6 +68,64 @@ do a ← la,
 
 end two
 
-/- 7.3 0 The state monad -/
+/- 7.3 0 The state monad 
+
+m α = registers → α × registers
+
+Lean defines the state monad "state S" (for every type S) to be the monad that maps any type α to "S → α × S"
+
+return a = λ s, (a, s)
+
+sa : state S α
+f : α → state S β 
+bind sa f = λ s, match (sa s) with (a, s₀) := f a s₀
+-/
+
+def read {S : Type} : state S S :=
+λ s, (s,s)
+
+def write {S : Type} : S → state S unit :=
+λ s₀ s, ((), s₀)
+
+structure registers : Type := (x y z : ℕ)
+
+def init_reg : registers := registers.mk 0 0 0
+
+@[reducible] def reg_state := state registers
+
+def read_x : reg_state ℕ :=
+do s ← read, return (registers.x s)
+
+def read_y : reg_state ℕ :=
+do s ← read, return (registers.y s)
+
+def read_z : reg_state ℕ :=
+do s ← read, return (registers.z s)
 
 
+def write_x (n : ℕ) : reg_state unit :=
+do s ← read,
+    write (registers.mk n (registers.y s) (registers.z s))
+
+def write_y (n : ℕ) : reg_state unit :=
+do s ← read,
+    write (registers.mk (registers.x s)  n (registers.z s))
+
+def write_z (n : ℕ) : reg_state unit :=
+do s ← read,
+    write (registers.mk (registers.x s) (registers.y s) n)
+
+open nat
+
+def foo : reg_state ℕ :=
+do write_x 5,
+    write_y 7,
+    x ← read_x,
+    write_z (x + 3),
+    y ← read_y,
+    z ← read_z,
+    write_y (y + z),
+    y ← read_y,
+    return (y + 2)  
+
+#reduce foo init_reg
