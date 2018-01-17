@@ -188,7 +188,7 @@ theorem normal_iff_eq_cosets (s : set α) [hs : is_subgroup s] :
     {
         intros h g,
         have hlr : left_coset g s ⊆ right_coset s g,
-        { 
+        {
             simp [left_coset, right_coset],
             intros a n ha hn,
             let n₁ := g * n * g⁻¹,
@@ -222,9 +222,16 @@ theorem normal_iff_eq_cosets (s : set α) [hs : is_subgroup s] :
             },
             rw hg at hl,
             simp [right_coset] at hl,
-            admit
-        }
-        
+            cases hl with x hx,
+            cases hx with hxl hxr,
+            have : g * n * g⁻¹ = x,{
+            calc
+                g * n * g⁻¹ = x * (g * g⁻¹) : by rw [hxr, mul_assoc]
+                ...         = x             : by simp [mul_right_inv g]
+            },
+            rw this,
+            exact hxl
+        }      
     }
     end
     
