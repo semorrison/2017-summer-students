@@ -11,7 +11,7 @@ import init.function
 universes u v w
 variables {α : Type u} {β : Type v} {γ : Type w}
 
--- Structure or class?
+
 structure is_hom [group α] [group β] (f : α → β) : Prop :=
     (hom_mul : ∀ a b, f (a * b) = (f a) * (f b))
 
@@ -77,8 +77,8 @@ def kernel {f : α → β} (hf: is_hom f) : set α := {a | f a = 1}
 instance kernel_subg {f : α → β} (hf: is_hom f) : is_subgroup (kernel hf) := 
     by refine {..}; simp [kernel, hf.hom_mul, hf.one, hf.inv] {contextual:=tt}
 
-def left_coset  (a : α) {s : set α} [is_subgroup s] : set α := {b | ∃ (g : s), b = a * g}
-def right_coset {s : set α} [is_subgroup s] (a : α) : set α := {b | ∃ (g : s), b = g * a}
+def left_coset  (a : α) (s : set α) [is_subgroup s] : set α := {b | ∃ (g : s), b = a * g}
+def right_coset (s : set α) [is_subgroup s] (a : α) : set α := {b | ∃ (g : s), b = g * a}
 
 lemma kernel_iff_equiv {f : α → β} (hf: is_hom f) (a b : α) : f b = f a ↔ a⁻¹ * b ∈ kernel hf :=
 begin
@@ -133,7 +133,7 @@ begin
 end
 
 -- Not a particularly pretty definition, feel as though it could be improved
--- Potentially by separating out conjugation invariance for a single term?
+-- Potentially by defining a normal subset first?
 class is_normal_subgroup (s : set α) : Prop :=
     (is_subgroup : is_subgroup s)
     (normal : ∀ n ∈ s, ∀ g : α, g * n * g⁻¹ ∈ s)
@@ -175,9 +175,57 @@ instance center_normal : is_normal_subgroup (center α) := {
         h * (g * n * g⁻¹) = h * n               : by simp [ha g, mul_assoc]
         ...               = n * h               : by rw ha h
         ...               = g * g⁻¹ * n * h     : by simp
-        ...               = g * n * g⁻¹ * h   : by rw [mul_assoc g, ha g⁻¹, ←mul_assoc]
+        ...               = g * n * g⁻¹ * h     : by rw [mul_assoc g, ha g⁻¹, ←mul_assoc]
     end
 }
+
+-- TODO: Terrible! Needs significant clean up
+theorem normal_iff_eq_cosets (s : set α) [hs : is_subgroup s] : 
+    is_normal_subgroup s ↔ ∀ g, left_coset g s = right_coset s g :=
+    begin
+    split,
+    {
+        intros h g,
+        have hlr : left_coset g s ⊆ right_coset s g,
+        {
+            simp [left_coset, right_coset],
+            intros a n ha hn,
+            let n₁ := g * n * g⁻¹,
+            existsi n₁,
+            split,
+            { apply h.normal, assumption },
+            { simp, assumption },
+        },
+        have hrl : right_coset s g ⊆ left_coset g s, 
+        {
+            simp [right_coset, left_coset],
+            intros a n ha hn,
+            existsi g⁻¹ * n * (g⁻¹)⁻¹,
+            split,
+            { apply h.normal, assumption },
+            { rw inv_inv g, rw [←mul_assoc, ←mul_assoc], simp, assumption },
+        },
+        show left_coset g s = right_coset s g, from set.eq_of_subset_of_subset hlr hrl,
+    },
+    {
+        intros hg,
+        refine {..},
+        { assumption },
+        {
+            intros n hn g,
+            have hl : g * n ∈ left_coset g s, {
+                simp [left_coset],
+                existsi n,
+                split,
+                assumption, trivial
+            },
+            rw hg at hl,
+            simp [right_coset] at hl,
+            admit
+        }
+        
+    }
+    end
     
 
 
