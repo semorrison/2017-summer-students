@@ -1,0 +1,88 @@
+
+THE MATHLIB WAY
+
+class is_subgroup [group α] (s : set α) : Prop := 
+    (one_closed : (1 : α) ∈ s)
+    (inv_closed : ∀ {a}, a ∈ s → a⁻¹ ∈ s) 
+    (mul_closed : ∀ {a b}, a ∈ s → b ∈ s → a * b ∈ s) 
+
+namespace is_subgroup
+variables [group α] [group β]
+variables {s : set α} [is_subgroup s]
+
+class is_normal_subgroup (s : set α) : Prop :=
+    (is_subgroup : is_subgroup s)
+    (normal : ∀ n ∈ s, ∀ g : α, g * n * g⁻¹ ∈ s)
+
+def left_coset  (a : α) (s : set α) [is_subgroup s] : set α := {b | ∃ (g : s), b = a * g}
+def right_coset (s : set α) [is_subgroup s] (a : α) : set α := {b | ∃ (g : s), b = g * a}
+
+def center (α : Type u) [group α] : set α := {z | ∀ g, g * z = z * g}
+
+instance trivial : is_subgroup ({1} : set α)
+
+instance image {f : α → β} (hf: is_hom f) : is_subgroup (f '' s)
+
+instance preimage {f : β → α} (hf : is_hom f) : is_subgroup (f ⁻¹' s)
+
+def kernel {f : α → β} (hf: is_hom f) : set α := {a | f a = 1}
+
+instance kernel_subg {f : α → β} (hf: is_hom f) : is_subgroup (kernel hf)
+
+lemma kernel_iff_equiv {f : α → β} (hf: is_hom f) (a b : α) : f b = f a ↔ a⁻¹ * b ∈ kernel hf
+
+theorem inj_iff_trivial_kernel {f : α → β} (hf: is_hom f) : function.injective f ↔ kernel hf = {1}
+
+instance kernel_normal {f : α → β} (hf: is_hom f) : is_normal_subgroup (kernel hf)
+
+instance center_subg : is_subgroup (center α)
+
+instance center_normal : is_normal_subgroup (center α)
+
+theorem normal_iff_eq_cosets (s : set α) [hs : is_subgroup s] : 
+    is_normal_subgroup s ↔ ∀ g, left_coset g s = right_coset s g 
+
+end is_subgroup
+
+
+
+ALTERNATE WAY
+
+class subgroup (G : group α) := 
+    (set : set α)
+    (one_closed : (1 : α) ∈ set)
+    (inv_closed : ∀ {a}, a ∈ set → a⁻¹ ∈ set) 
+    (mul_closed : ∀ {a b}, a ∈ set → b ∈ set → a * b ∈ set) 
+
+namespace subgroup
+
+class normal_subgroup (G : group α) extends subgroup G :=
+    (normal : ∀ n ∈ set, ∀ g : α, g * n * g⁻¹ ∈ set)
+
+def left_coset  {G : group α} (a : α) (G' : subgroup G) := {b : α | ∃ (g : G'.set), b = a * g}
+def right_coset {G : group α} (G' : subgroup G) (a : α) := {b : α | ∃ (g : G'.set), b = g * a}
+
+def center (G : group α) : normal_subgroup := { set := {z | ∀ g, g * z = z * g}, ... }
+
+instance trivial (G : group α) : normal_subgroup G := { set := {(1 : α)}, ... }
+
+instance image {G : group α} {H : group β} (f : hom G H) (G' : subgroup G) : subgroup H := 
+    { set := (f.map '' G'.set), ... }
+
+instance preimage {G : group α} {H : group β} (f : hom G H) (H' : subgroup H) : subgroup G := 
+    { set := (f.map ⁻¹' H'.set), ... }
+
+instance preimage_normal {G : group α} {H : group β} (f : hom G H) (H' : normal_subgroup H) : normal_subgroup G := 
+    { set := (f.map ⁻¹' H'.set), ... }
+
+instance kernel {G : group α} {H : group β} (f : hom G H) : normal_subgroup G := subgroup.preimage_normal f (subgroup.trivial H)
+
+lemma kernel_iff_equiv {G : group α} {H : group β} (f : hom G H) (a b : α) : 
+    f.map b = f.map a ↔ a⁻¹ * b ∈ (subgroup.kernel f).set
+
+theorem inj_iff_trivial_kernel {G : group α} {H : group β} (f : hom G H) : function.injective f ↔ kernel f = trivial G
+
+-- I'm not quite sure how to express normal_iff_eq_cosets
+
+end subgroup
+
