@@ -8,6 +8,7 @@ import init.function
 universes u v w
 variables {α : Type u} {β : Type v} {γ : Type w}
 
+-- Structure or class?
 structure hom {α β} (G : group α) (H : group β) :=
     ( map : α → β )
     ( hom_mul : ∀ a b, map (a * b) = (map a) * (map b) )
