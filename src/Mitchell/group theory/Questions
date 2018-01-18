@@ -1,6 +1,0 @@
-As I understand it, the notation [group A] is meant to look for an instance of a proof that A is a group.
-But I don't get any errors when I write [group nat]
-
-When to use structure vs class?
-
-What to do long term - adding to mathlib?
