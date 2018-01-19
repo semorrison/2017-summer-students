@@ -4,6 +4,8 @@ An alternative structure for subgroups
 
 import data.set.basic init.function mitchell.group_theory.homomorphism2
 
+open set
+
 universes u v w
 variables {α : Type u} {β : Type v} {γ : Type w}
 
@@ -19,16 +21,22 @@ attribute [simp] subgroup.one_closed
 
 namespace subgroup
 
-instance trivial (G : group α) : subgroup G := {
-    subgroup .
+
+class normal_subgroup (G : group α) extends subgroup G :=
+    (normal : ∀ n ∈ set, ∀ g : α, g * n * g⁻¹ ∈ set)
+
+def left_coset  {G : group α} (a : α) (G' : subgroup G) := {b : α | ∃ (g : G'.set), b = a * g}
+def right_coset {G : group α} (G' : subgroup G) (a : α) := {b : α | ∃ (g : G'.set), b = g * a}
+
+instance trivial (G : group α) : normal_subgroup G := {
     set := {(1 : α)},
     one_closed := by simp,
     inv_closed := by simp,
-    mul_closed := by simp {contextual := tt}
+    mul_closed := by simp {contextual := tt},
+    normal := by simp
 }
 
 instance image {G : group α} {H : group β} (f : hom G H) (G' : subgroup G) : subgroup H := {
-    subgroup .
     set := (f.map '' G'.set),
     one_closed := ⟨1, G'.one_closed, f.one⟩,
     inv_closed := assume a ⟨b, hb, eq⟩,
@@ -38,22 +46,21 @@ instance image {G : group α} {H : group β} (f : hom G H) (G' : subgroup G) : s
 }
 
 instance preimage {G : group α} {H : group β} (f : hom G H) (H' : subgroup H) : subgroup G := {
-    subgroup .
     set := (f.map ⁻¹' H'.set),
     one_closed := by simp,
     inv_closed := by simp {contextual := tt},
     mul_closed := by simp {contextual := tt}
 }
 
-instance kernel {G : group α} {H : group β} (f : hom G H) : subgroup G := subgroup.preimage f (subgroup.trivial H)
+instance normal_preimage {G : group α} {H : group β} (f : hom G H) (H' : normal_subgroup H) : normal_subgroup G := { 
+    set        := (f.map ⁻¹' H'.set),
+    one_closed := by simp,
+    inv_closed := by simp {contextual := tt},
+    mul_closed := by simp {contextual := tt},
+    normal     := by simp; intros a ha g; apply H'.normal; assumption
+}
 
-def left_coset  {G : group α} (a : α) (G' : subgroup G) := {b : α | ∃ (g : G'.set), b = a * g}
-def right_coset {G : group α} (G' : subgroup G) (a : α) := {b : α | ∃ (g : G'.set), b = g * a}
-
-class normal_subgroup (G : group α) extends subgroup G :=
-    (normal : ∀ n ∈ set, ∀ g : α, g * n * g⁻¹ ∈ set)
-
-variables {G : group α} {H : group β} (f : hom G H)
+instance kernel {G : group α} {H : group β} (f : hom G H) : normal_subgroup G := subgroup.normal_preimage f (subgroup.trivial H)
 
 lemma kernel_iff_equiv {G : group α} {H : group β} (f : hom G H) (a b : α) : 
     f.map b = f.map a ↔ a⁻¹ * b ∈ (subgroup.kernel f).set :=
@@ -70,6 +77,57 @@ begin
         calc
             f.map b = f.map (a * a⁻¹ * b)   : by simp; rw [mul_assoc]; simp [f.hom_mul, h]
             ... = f.map a                   : by rw [mul_assoc]; simp [f.hom_mul, h]
+    }
+end
+
+lemma subgroup_setwise_equal {G : group α} (H H' : subgroup G) (h : H.set = H'.set) : H = H' :=
+begin
+induction H,
+induction H',
+have hs : H_set = H'_set := h,
+subst hs
+end
+
+lemma normal_subgroup_setwise_equal {G : group α} (H H' : normal_subgroup G) (h : H.set = H'.set) : H = H' :=
+begin
+induction H, induction H__to_subgroup with H_set,
+induction H', induction H'__to_subgroup with H'_set,
+have hs : H_set = H'_set := h,
+subst hs
+end
+
+theorem inj_iff_trivial_kernel {G : group α} {H : group β} (f : hom G H) : 
+    function.injective f.map ↔ subgroup.kernel f = subgroup.trivial G :=
+begin
+    split,
+    {
+        unfold function.injective,
+        assume h,
+        simp [subgroup.kernel, subgroup.trivial, subgroup.normal_preimage, set.preimage],
+        apply normal_subgroup_setwise_equal,
+        rw set.set_eq_def,
+        simp [set.mem_set_of_eq],
+        assume x,
+        split,
+        {
+        assume hx,
+        have hi : f.map x = f.map 1 := by simp [f.one, hx],
+        simp [h hi, f.one]
+        },
+        {
+        assume hx,
+        simp [hx, f.one]
+        }
+    },
+    {   
+        assume h a b,       
+        simp [kernel_iff_equiv f b a, h],
+        rw h,
+        simp [subgroup.set],
+        assume hbia,
+        calc
+            a   = b * b⁻¹ * a     : by simp 
+            ... = b               : by rw mul_assoc; simp [hbia]
     }
 end
 
