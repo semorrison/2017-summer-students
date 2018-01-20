@@ -12,3 +12,6 @@ How to show composition of bijections is bijection (notation is annoying)
 A good strategy is to look in the proof of integer lemmas because they are often based off nat lemmas
 had trouble pattern matching ( can't simply list all members of fin n?)
 stuck pattern matching inside proof (want to pattern match on nat \times fin 2)
+
+Talked with Scott and decided to fill out a bunch of algebra that isn't there (Euclidean domains)
+How do I fill out the fields of euclidean_domain which are inherited given \Z is (hopefully) already an integral_domain? 
