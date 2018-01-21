@@ -59,7 +59,7 @@ end
 
 
 
-instance bijection_composition {α β γ : Type}  [fab :Bijection α β] [fbg : Bijection β γ] : Bijection α γ :=
+theorem bijection_composition {α β γ : Type}  [fab :Bijection α β] [fbg : Bijection β γ] : Bijection α γ :=
 {
     morphism := λ x : α, @Bijection.morphism β γ fbg (@Bijection.morphism α β fab x),
     inverse := λ x : γ, @Bijection.inverse α β fab (@Bijection.inverse β γ fbg x),
@@ -75,7 +75,7 @@ instance bijection_composition {α β γ : Type}  [fab :Bijection α β] [fbg : 
     end
 }
 
-instance bijection_reverse_order {α β : Type} [f : Bijection α β ] : Bijection β α :=
+theorem bijection_reverse_order {α β : Type} [f : Bijection α β ] : Bijection β α :=
 {
     morphism := f.inverse,
     inverse := f.morphism,
