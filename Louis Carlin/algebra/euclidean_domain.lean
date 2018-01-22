@@ -12,7 +12,7 @@ class no_zero_divisors (α : Type u) extends has_mul α, has_zero α :=
 
 -/
 
-universes u v -- what are universes actually doing?
+universes u v
 
 
 class euclidean_domain (α : Type u) extends integral_domain α :=
@@ -25,66 +25,8 @@ class euclidean_domain (α : Type u) extends integral_domain α :=
 
 ( valuation : ∃ f : α → ℕ, ∀ a b, b = 0 ∨ f(remainder a b) < f b ) -- is using an or statement the nicest way to define this?
 
-set_option trace.class_instances true
-
-example : integral_domain ℤ := by apply_instance
-
-def a : integral_domain ℤ := by apply_instance
-#reduce a.one
-#check a.mul
-#reduce a.zero
-
-set_option trace.class_instances false
-
 /- nat_abs lemmas -/
 open int
-
-
--- theorem mod_lt (a : ℤ) {b : ℤ} (H : b ≠ 0) : a % b < abs b :=
--- by rw [← int.mod_abs]; exact int.mod_lt_of_pos _ (abs_pos_of_ne_zero H)
-
-#check nat_abs_of_nat
-
-
--- lemma bar (b : ℕ) : -of_nat b ≤ of_nat b :=
--- begin
--- transitivity (0 : ℤ),
--- simp,
--- simp,
--- end
-
--- @[simp] lemma foo (b : ℕ) : abs (of_nat b) = of_nat b :=
--- begin
--- unfold abs,
--- apply max_eq_left,
--- exact bar b,
--- end
-
--- -- set_option pp.notation false
-
--- lemma qux (b : ℕ ) : abs (int.neg_succ_of_nat b) = b + 1 :=
--- begin
--- unfold abs,
--- apply max_eq_right,
--- transitivity (0 : ℤ),
--- simp,
--- simp,
--- end
--- #check int.nat_abs_abs
--- lemma nat_abs_abs (b : ℤ) : nat_abs (abs b) = nat_abs b := 
--- begin
---     cases b,
---     {
---         simp,
---     },
---     {
---         simp,
---         rw qux,
---         erw ← of_nat_succ,
---         simp,
---     }
--- end
-
 
 lemma lt_nat_abs {a : ℤ} (b : ℤ) (H : a ≥ 0) : a < b → nat_abs a < nat_abs b := 
 begin
@@ -118,28 +60,7 @@ end
 
 /- Euclidean Domain instances-/
 
-
-
-
 open classical
-
-
--- theorem mod_lt_of_pos (a : ℤ) {b : ℤ} (H : b > 0) : a % b < b
-
-example : (5:int) > -5 := dec_trivial
--- example (n : nat) : of_nat n > -n := dec_trivial
-
-#reduce abs (-5:int) 
-
-#reduce (-5:int)/(2:int)
-#reduce ((-5):int)%(2:int)
-
--- lemma abs_equiv_nat_abs (z : ℤ) : of_nat (nat_abs z) = abs z :=
--- begin
---     cases z,
---     simp,
---     have h : of_nat z > -z, from dec_trivial, 
--- end
 
 instance int_euclidean_domain : euclidean_domain ℤ :=
 {
@@ -167,5 +88,68 @@ instance int_euclidean_domain : euclidean_domain ℤ :=
                         }
                      end
 }  
+
+instance field_euclidean_domain {α : Type} [fa: field α] : euclidean_domain α:= 
+{
+    fa with
+    eq_zero_or_eq_zero_of_mul_eq_zero := begin -- why doesn't lean infer this property if it is true of all fields?
+                                            intros,
+                                            
+                                            
+                                         end,
+    quotient := λ x y, x / y,
+    remainder := λ _ _, fa.zero,
+    
+    witness := begin
+                intros,
+                admit
+               end,
+    valuation := begin
+                    existsi (λ x : α,
+                    match x with
+                    | 0 := (0:ℕ),
+                    | _ := (1:ℕ)
+                    end
+                    ),
+                    simp,
+                 end
+}
+
+example : ∃ f : ℕ → ℕ, ∀ n : ℕ, f n > 1 :=
+begin
+    existsi (λ x:ℕ, match x with
+    | 0 := 1
+    | _ := 0
+    end)
+end
+
+/- gcd stuff -/
+
+structure common_divisor {α : Type} [R: comm_ring α] (a b : α) :=
+
+(value : α)
+
+(divides_a : value ∣ a) -- better names?
+
+(divides_b : value ∣ b)
+
+
+structure greatest_common_divisor {α : Type} [R: comm_ring α] (a b : α) extends common_divisor a b :=
+
+(greatest : ∀ d : common_divisor a b, d.value ∣ value)
+
+
+theorem cd_comm {α : Type} [R: comm_ring α] {a b : α}(d : common_divisor a b) : common_divisor b a :=
+{
+    value := d.value,
+    divides_a := common_divisor.divides_b d,
+    divides_b := common_divisor.divides_a d,
+}
+
+theorem gcd_comm {α : Type} [R: comm_ring α] {a b : α}(d : greatest_common_divisor a b) : greatest_common_divisor b a :=
+{
+    cd_comm d with 
+}
+
 
 
