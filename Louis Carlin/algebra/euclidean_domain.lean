@@ -3,6 +3,7 @@ import data.int.basic
 -- examples
 -- polynomials with ED coefficients are a ED
 -- make sure I'm using standard code style
+-- euclid's algorithm (extended)
 
 /-
 class integral_domain (α : Type u) extends comm_ring α, no_zero_divisors α, zero_ne_one_class α
@@ -142,14 +143,33 @@ structure greatest_common_divisor {α : Type} [R: comm_ring α] (a b : α) exten
 theorem cd_comm {α : Type} [R: comm_ring α] {a b : α}(d : common_divisor a b) : common_divisor b a :=
 {
     value := d.value,
-    divides_a := common_divisor.divides_b d,
-    divides_b := common_divisor.divides_a d,
+    divides_a := d.divides_b,
+    divides_b := d.divides_a,
 }
 
 theorem gcd_comm {α : Type} [R: comm_ring α] {a b : α}(d : greatest_common_divisor a b) : greatest_common_divisor b a :=
 {
-    cd_comm d with 
+    -- cd_comm d.to_common_divisor with -- This is hard
+    value := d.value,
+    divides_a := d.divides_b,
+    divides_b := d.divides_a,
+    greatest := begin
+                    admit,
+                end
 }
 
+-- theorem nat_gcd_gcd -- prove equivalence of definitions
 
+/- euclidean algorithm -/
 
+structure bezout_identity {α : Type} [R: comm_ring α] (a b : α):= 
+-- gcd = ax + by
+
+(x y : α) -- coefficients
+
+(gcd : greatest_common_divisor a b)
+
+(witness : gcd.value = a * x + b * y)
+
+def extended_euclidean_algorithm {α : Type} [euclidean_domain α] (a b : α) : bezout_identity a b :=
+sorry
