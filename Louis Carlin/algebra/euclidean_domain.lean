@@ -40,15 +40,25 @@ set_option trace.class_instances false
 open int
 
 
-theorem mod_lt (a : ℤ) {b : ℤ} (H : b ≠ 0) : a % b < abs b :=
-by rw [← int.mod_abs]; exact int.mod_lt_of_pos _ (abs_pos_of_ne_zero H)
-
-example (a : ℤ) {b : ℤ} (H : b ≠ 0) : nat_abs (a % b) < nat_abs (abs b) := sorry
-
-example (b : ℤ) : nat_abs (abs b) = nat_abs b := sorry
+-- theorem mod_lt (a : ℤ) {b : ℤ} (H : b ≠ 0) : a % b < abs b :=
+-- by rw [← int.mod_abs]; exact int.mod_lt_of_pos _ (abs_pos_of_ne_zero H)
 
 
-example {a : ℤ} (b : ℤ) (H : a ≥ 0) : a < b → nat_abs a < nat_abs b := 
+
+example (b : ℤ) : nat_abs (abs b) = nat_abs b := 
+begin
+    cases b,
+    {
+        simp,
+        
+    },
+    {
+
+    }
+end
+
+
+lemma lt_nat_abs {a : ℤ} (b : ℤ) (H : a ≥ 0) : a < b → nat_abs a < nat_abs b := 
 begin
     intro,
     cases a,
@@ -67,7 +77,13 @@ begin
     }
 end
 
- 
+lemma nat_abs_mod_lt_abs (a : ℤ) {b : ℤ} (H : b ≠ 0) : nat_abs (a % b) < nat_abs (abs b) := 
+begin
+    have h1 : a % b < abs b, from mod_lt a H,
+    have h2 : a % b ≥ 0, from mod_nonneg a H,
+    exact lt_nat_abs (abs b) h2 h1,
+end
+
 
 /- Euclidean Domain instances-/
 
