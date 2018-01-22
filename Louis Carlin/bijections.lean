@@ -149,10 +149,13 @@ instance int_natcrossfin_bijection : Bijection int (nat × fin 2) := {
 instance int_nat_bijection : Bijection int nat :=
 begin
 -- how do I get lean to work this out for itself with what I have
+admit
 end
 
 
 -- set_option pp.all true
+
+open classical
 
 instance nat_int_bijection : Bijection nat int :=
 {
@@ -172,9 +175,8 @@ instance nat_int_bijection : Bijection nat int :=
             {
                 intro d,
                 simp [d],
-                have h1 : (2:int) > 0, from dec_trivial,
                 have h2 : 0 ≤ (↑ u: int) , from geq_zero u,
-                have h3 : 0 ≤ (↑ u: int)/2, from int.div_le_div h1 h2 , -- int.le_div_iff_mul_le _,
+                have h3 : 0 ≤ (↑ u: int)/2, from sorry,--div_le_div h1 h2 , -- int.le_div_iff_mul_le _,
                 simp [h3],
                 rw ← int.mul_div_assoc,
                 rw int.mul_div_cancel_left,

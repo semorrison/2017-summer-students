@@ -15,3 +15,7 @@ stuck pattern matching inside proof (want to pattern match on nat \times fin 2)
 
 Talked with Scott and decided to fill out a bunch of algebra that isn't there (Euclidean domains)
 How do I fill out the fields of euclidean_domain which are inherited given \Z is (hopefully) already an integral_domain? 
+
+Problem : lemmas are for abs instead of nat_abs
+- prove abs lemmas for nat_abs
+- use abs then convert to nat

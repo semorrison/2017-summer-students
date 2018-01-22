@@ -36,13 +36,63 @@ def a : integral_domain ℤ := by apply_instance
 
 set_option trace.class_instances false
 
+/- nat_abs lemmas -/
 open int
+
+
+theorem mod_lt (a : ℤ) {b : ℤ} (H : b ≠ 0) : a % b < abs b :=
+by rw [← int.mod_abs]; exact int.mod_lt_of_pos _ (abs_pos_of_ne_zero H)
+
+example (a : ℤ) {b : ℤ} (H : b ≠ 0) : nat_abs (a % b) < nat_abs (abs b) := sorry
+
+example (b : ℤ) : nat_abs (abs b) = nat_abs b := sorry
+
+
+example {a : ℤ} (b : ℤ) (H : a ≥ 0) : a < b → nat_abs a < nat_abs b := 
+begin
+    intro,
+    cases a,
+    {
+        cases b,
+        {
+            simp,
+            exact lt_of_coe_nat_lt_coe_nat a_1
+        },
+        {
+            exact false.elim (by assumption),
+        }
+    },
+    {
+        exact false.elim (by assumption),
+    }
+end
+
+ 
+
+/- Euclidean Domain instances-/
+
+
+
+
 open classical
+
 
 -- theorem mod_lt_of_pos (a : ℤ) {b : ℤ} (H : b > 0) : a % b < b
 
-#reduce (5:int)/(0:int)
-#reduce (5:int)%(0:int)
+example : (5:int) > -5 := dec_trivial
+example (n : nat) : of_nat n > -n := dec_trivial
+
+#reduce abs (-5:int) 
+
+#reduce (-5:int)/(2:int)
+#reduce ((-5):int)%(2:int)
+
+lemma abs_equiv_nat_abs (z : ℤ) : of_nat (nat_abs z) = abs z :=
+begin
+    cases z,
+    simp,
+    have h : of_nat z > -z, from dec_trivial, 
+end
 
 instance int_euclidean_domain : euclidean_domain ℤ :=
 {
@@ -65,7 +115,7 @@ instance int_euclidean_domain : euclidean_domain ℤ :=
                         },
                         {
                             right,
-                            admit
+                            
                         -- mod_lt a h,
                         
                         }
