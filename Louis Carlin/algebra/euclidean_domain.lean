@@ -4,6 +4,7 @@ import data.int.basic
 -- polynomials with ED coefficients are a ED
 -- make sure I'm using standard code style
 -- euclid's algorithm (extended)
+-- should euclidean domain fill out has_div (and possibly other things)
 
 /-
 class integral_domain (α : Type u) extends comm_ring α, no_zero_divisors α, zero_ne_one_class α
