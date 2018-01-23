@@ -24,7 +24,13 @@ class euclidean_domain (α : Type u) extends integral_domain α :=
 
 ( witness : ∀ a b, (quotient a b) * b + (remainder a b) = a )
 
-( valuation : ∃ f : α → ℕ, ∀ a b, b = 0 ∨ f(remainder a b) < f b ) -- is using an or statement the nicest way to define this?
+-- ( valuation : ∃ f : α → ℕ, ∀ a b, b = 0 ∨ f(remainder a b) < f b )
+( valuation : ∃ f : α → ℕ, ∀ a b, b = 0 ∨ f(remainder a b) < f b )
+
+#reduce 2/5
+#reduce 2%5
+#reduce (-3:int)/(3)
+#reduce (3:int)%(-3)
 
 /- nat_abs lemmas -/
 open int
@@ -171,5 +177,12 @@ structure bezout_identity {α : Type} [R: comm_ring α] (a b : α):=
 
 (witness : gcd.value = a * x + b * y)
 
+def euclidean_algorithm_no_proof {α : Type} [euclidean_domain α] (a b : α) : α :=
+
+
 def extended_euclidean_algorithm {α : Type} [euclidean_domain α] (a b : α) : bezout_identity a b :=
 sorry
+
+lemma foo : ∃ n : nat, n = 5 := by {existsi 5, refl}
+
+
