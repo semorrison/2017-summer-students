@@ -24,8 +24,12 @@ class euclidean_domain (α : Type u) extends integral_domain α :=
 
 ( witness : ∀ a b, (quotient a b) * b + (remainder a b) = a )
 
--- ( valuation : ∃ f : α → ℕ, ∀ a b, b = 0 ∨ f(remainder a b) < f b )
 ( valuation : ∃ f : α → ℕ, ∀ a b, b = 0 ∨ f(remainder a b) < f b )
+
+-- (euclidean_function : α → ℕ)
+
+-- (witness_2 : ∀ a b, b=0 ∨ euclidean_function (remainder a b) < euclidean_function b)
+
 
 #reduce 2/5
 #reduce 2%5
@@ -177,9 +181,38 @@ structure bezout_identity {α : Type} [R: comm_ring α] (a b : α):=
 
 (witness : gcd.value = a * x + b * y)
 
+
+
+meta def nat_euclidean_algorithm_no_proof : nat → nat → nat
+| n 0 := n
+| n m := nat_euclidean_algorithm_no_proof m (n%m) -- problem: how to show well-founded?
+
+#eval nat_euclidean_algorithm_no_proof 21 14
+#eval nat_euclidean_algorithm_no_proof 14 22
+#reduce nat_euclidean_algorithm_no_proof 14 22
+
+structure bezout_nat :=
+(gcd x y : nat)
+
+meta structure eea_int_input :=
+(rp rc xp xc yp yc : ℤ)
+
+-- at each step we need:
+-- two previous remainders
+-- two previous coefficients
+-- previous quotient
+meta def int_extended_euclidean_algorithm_no_proof : eea_int_input → bezout_nat
+| (eea_int_input.mk rp 0 xp xc yp yc)  := {bezout_nat . gcd := rp, x := xp, y := yp}
+| (eea_int_input.mk rp rc xp xc yp yc)  := let q := (rp/rc) in int_extended_euclidean_algorithm_no_proof (eea_int_input.mk rc (rp-q*rc) xc (xp-q*xc) yc (yp -q*yc))
+
+--| (eea_int_input.mk rp rc xp xc yp yc qc)  := nat_extended_euclidean_algorithm_no_proof (eea_int_input.mk rc (rp-qc*rc) xc (xp-qc*xc) yc (yp -qc*yc) (rp/rc))
+
+-- #eval int_extended_euclidean_algorithm_no_proof (eea_int_input.mk 150 70 1 0 0 1 )
+-- #eval int_extended_euclidean_algorithm_no_proof (eea_int_input.mk 240 46 1 0 0 1 )
+
 def euclidean_algorithm_no_proof {α : Type} [euclidean_domain α] (a b : α) : α :=
 
-
+-- could take as input proof that f a > f b?
 def extended_euclidean_algorithm {α : Type} [euclidean_domain α] (a b : α) : bezout_identity a b :=
 sorry
 
