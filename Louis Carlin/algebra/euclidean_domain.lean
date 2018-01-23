@@ -6,14 +6,6 @@ import data.int.basic
 -- euclid's algorithm (extended)
 -- should euclidean domain fill out has_div (and possibly other things)
 
-/-
-class integral_domain (α : Type u) extends comm_ring α, no_zero_divisors α, zero_ne_one_class α
-
-class no_zero_divisors (α : Type u) extends has_mul α, has_zero α :=
-(eq_zero_or_eq_zero_of_mul_eq_zero : ∀ a b : α, a * b = 0 → a = 0 ∨ b = 0)
-
--/
-
 universes u v
 
 
@@ -30,6 +22,17 @@ class euclidean_domain (α : Type u) extends integral_domain α :=
 -- (euclidean_function : α → ℕ)
 
 -- (witness_2 : ∀ a b, b=0 ∨ euclidean_function (remainder a b) < euclidean_function b)
+
+
+instance euclidean_domain_has_div {α : Type} [euclidean_domain α] : has_div α := {
+    div := euclidean_domain.quotient
+}
+
+instance euclidean_domain_has_mod {α : Type} [euclidean_domain α] : has_mod α := {
+    mod := euclidean_domain.remainder
+}
+
+example {α : Type} [integral_domain α] : eq_zero_or_eq_zero_of_mul_eq_zero α := by apply_instance
 
 
 #reduce 2/5
@@ -104,11 +107,7 @@ instance int_euclidean_domain : euclidean_domain ℤ :=
 instance field_euclidean_domain {α : Type} [fa: field α] : euclidean_domain α:= 
 {
     fa with
-    eq_zero_or_eq_zero_of_mul_eq_zero := begin -- why doesn't lean infer this property if it is true of all fields?
-                                            intros,
-                                            
-                                            
-                                         end,
+    eq_zero_or_eq_zero_of_mul_eq_zero := by apply_instance,
     quotient := λ x y, x / y,
     remainder := λ _ _, fa.zero,
     
@@ -226,9 +225,11 @@ meta structure eea_np_input (α : Type) [euclidean_domain α]:= -- do we need to
 structure eea_np_output (α : Type) :=
 (gcd x y: α)
 
+example {α : Type} [euclidean_domain α] : has_zero α := by apply_instance -- why can't we pattern match for 0 then?
+
 meta def eea_no_proof {α : Type} [ed :euclidean_domain α] : eea_np_input α → eea_np_output α
 | ⟨ rp, 0, xp, xc, yp, yc⟩  := {eea_np_output . gcd := rp, x := xp, y := yp}
-| ⟨rp, rc, xp, xc, yp, yc⟩  := let q := (euclidean_domain.quotient rp rc) in eea_no_proof ⟨ rc, (euclidean_domain.quotient rp rc), xc, (xp-q*xc), yc, (yp -q*yc)⟩
+| ⟨rp, rc, xp, xc, yp, yc⟩  := let q := (rp/rc) in eea_no_proof ⟨ rc, (rp/rc), xc, (xp-q*xc), yc, (yp -q*yc)⟩
 
 def eea_no_proof_initial 
 
@@ -237,4 +238,5 @@ sorry
 
 lemma foo : ∃ n : nat, n = 5 := by {existsi 5, refl}
 
+has_div
 
