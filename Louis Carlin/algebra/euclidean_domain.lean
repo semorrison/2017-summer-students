@@ -194,6 +194,14 @@ meta def nat_euclidean_algorithm_no_proof : nat → nat → nat
 structure bezout_int :=
 (gcd x y : int)
 
+instance bezout_int_print : has_repr bezout_int := {
+    repr := λ bi : bezout_int, "gcd: " ++ to_string bi.gcd ++ "\n" 
+                                ++ "a coeff: " ++ to_string bi.x ++ "\n"
+                                ++ "b coeff: " ++ to_string bi.y 
+}
+
+
+
 meta structure eea_int_input :=
 (rp rc xp xc yp yc: ℤ)
 
