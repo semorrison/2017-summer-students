@@ -170,6 +170,7 @@ theorem gcd_comm {α : Type} [R: comm_ring α] {a b : α}(d : greatest_common_di
 
 -- theorem nat_gcd_gcd -- prove equivalence of definitions
 
+
 /- euclidean algorithm -/
 
 structure bezout_identity {α : Type} [R: comm_ring α] (a b : α):= 
@@ -200,8 +201,6 @@ instance bezout_int_print : has_repr bezout_int := {
                                 ++ "b coeff: " ++ to_string bi.y 
 }
 
-
-
 meta structure eea_int_input :=
 (rp rc xp xc yp yc: ℤ)
 
@@ -210,25 +209,28 @@ meta structure eea_int_input :=
 -- two previous remainders
 -- two previous coefficients
 meta def int_eea_no_proof : eea_int_input → bezout_int
-| (eea_int_input.mk rp 0 xp xc yp yc)  := {bezout_int . gcd := rp, x := xp, y := yp}
-| (eea_int_input.mk rp rc xp xc yp yc)  := let q := (rp/rc) in int_eea_no_proof (eea_int_input.mk rc (rp%rc) xc (xp-q*xc) yc (yp -q*yc))
+| ⟨rp, 0, xp, xc, yp, yc⟩  := {bezout_int . gcd := rp, x := xp, y := yp}
+| ⟨rp, rc, xp, xc, yp, yc⟩  := let q := (rp/rc) in int_eea_no_proof (eea_int_input.mk rc (rp%rc) xc (xp-q*xc) yc (yp -q*yc))
 
 meta def int_eea_initial (a b : int) : bezout_int :=
 int_eea_no_proof (eea_int_input.mk a b 1 0 0 1)
 
 #eval int_eea_initial 240 46
---#reduce int_eea_initial 240 46
---#reduce int_eea_no_proof {rp := of_nat 46, rc := of_nat 10, xp := of_nat 0, xc := of_nat 1, yp := of_nat 1, yc := -[1+ 4]}
---#reduce int_eea_no_proof {rp := of_nat 10, rc := of_nat 6, xp := of_nat 1, xc := -[1+ 3], yp := -[1+ 4], yc := of_nat 21}
---#reduce int_eea_no_proof {rp := of_nat 6, rc := of_nat 4, xp := -[1+ 3], xc := of_nat 5, yp := of_nat 21, yc := -[1+ 25]}
---#reduce int_eea_no_proof {rp := of_nat 4, rc := of_nat 2, xp := of_nat 5, xc := -[1+ 8], yp := -[1+ 25], yc := of_nat 47}
---#reduce int_eea_no_proof {rp := of_nat 2, rc := of_nat 0, xp := -[1+ 8], xc := of_nat 23, yp := of_nat 47, yc := -[1+ 119]}
-
-def euclidean_algorithm_no_proof {α : Type} [euclidean_domain α] (a b : α) : α :=
+#eval int_eea_initial 46 240 -- very clever :^)
 
 
+meta structure eea_np_input (α : Type) [euclidean_domain α]:= -- do we need to specify α is a euclidean domain?
+(rp rc xp xc yp yc: α)
 
--- could take as input proof that f a > f b?
+structure eea_np_output (α : Type) :=
+(gcd x y: α)
+
+meta def eea_no_proof {α : Type} [ed :euclidean_domain α] : eea_np_input α → eea_np_output α
+| ⟨ rp, 0, xp, xc, yp, yc⟩  := {eea_np_output . gcd := rp, x := xp, y := yp}
+| ⟨rp, rc, xp, xc, yp, yc⟩  := let q := (euclidean_domain.quotient rp rc) in eea_no_proof ⟨ rc, (euclidean_domain.quotient rp rc), xc, (xp-q*xc), yc, (yp -q*yc)⟩
+
+def eea_no_proof_initial 
+
 def extended_euclidean_algorithm {α : Type} [euclidean_domain α] (a b : α) : bezout_identity a b :=
 sorry
 

@@ -20,4 +20,6 @@ Problem : lemmas are for abs instead of nat_abs
 - prove abs lemmas for nat_abs
 - use abs then convert to nat
 
-why can't we automatically coerce an object into a parent?
+why can't we automatically coerce an object into a parent? (we can)
+
+spent ages trying to write eea (I was right all along but lean prints negatives funny)
