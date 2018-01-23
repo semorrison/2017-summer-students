@@ -60,6 +60,34 @@ instance normal_preimage {G : group α} {H : group β} (f : hom G H) (H' : norma
     normal     := by simp; intros a ha g; apply H'.normal; assumption
 }
 
+instance center (G : group α) : normal_subgroup G := {
+    set := {z | ∀ g, g * z = z * g},
+    one_closed := by simp,
+    mul_closed := begin
+    intros a b ha hb g,
+    rw [set.mem_set_of_eq] at *,
+    rw [←mul_assoc, ha g, mul_assoc, hb g, ←mul_assoc]
+    end,
+    inv_closed := begin
+    assume a ha g,
+    simp at *,  -- Should be possible to make this more compact
+    calc
+        g * a⁻¹ = a⁻¹ * (a * g) * a⁻¹     : by simp
+        ...     = a⁻¹ * (g * a) * a⁻¹     : by simp [ha g]
+        ...     = a⁻¹ * g * (a * a⁻¹)     : by rw [←mul_assoc, mul_assoc]
+        ...     = a⁻¹ * g                 : by simp
+    end,
+    normal := begin
+    simp [set.mem_set_of_eq],
+    intros n ha g h,
+    calc
+        h * (g * n * g⁻¹) = h * n               : by simp [ha g, mul_assoc]
+        ...               = n * h               : by rw ha h
+        ...               = g * g⁻¹ * n * h     : by simp
+        ...               = g * n * g⁻¹ * h     : by rw [mul_assoc g, ha g⁻¹, ←mul_assoc]
+    end
+}
+
 instance kernel {G : group α} {H : group β} (f : hom G H) : normal_subgroup G := subgroup.normal_preimage f (subgroup.trivial H)
 
 lemma kernel_iff_equiv {G : group α} {H : group β} (f : hom G H) (a b : α) : 

@@ -3,4 +3,8 @@ But I don't get any errors when I write [group nat]
 
 When to use structure vs class?
 
-What to do long term - adding to mathlib?
+instance fun_to_hom {G : group α} {H : group β} : has_coe_to_fun (hom G H) :=
+{ F   := λ f, α → β,
+coe := hom.map }
+
+Could we overload construction so that it can be used in either a bundled or non-bundled form?
