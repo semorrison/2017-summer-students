@@ -8,8 +8,8 @@ import data.int.basic
 
 universes u v
 
-
 class euclidean_domain (α : Type u) extends integral_domain α :=
+( decidable_equality : decidable_eq α . tactic.apply_instance )
 
 ( quotient : α → α → α )
 
@@ -97,7 +97,7 @@ instance int_euclidean_domain : euclidean_domain ℤ :=
                      end
 }  
 
-instance field_euclidean_domain {α : Type} [fa: field α] : euclidean_domain α:= 
+instance field_euclidean_domain {α : Type}  [ decidable_eq α ][fa: field α] : euclidean_domain α:= 
 {
     fa with
     eq_zero_or_eq_zero_of_mul_eq_zero := by apply_instance,
@@ -226,7 +226,29 @@ structure eea_np_output (α : Type) :=
 
 example {α : Type} [euclidean_domain α] : has_zero α := by apply_instance -- why can't we pattern match for 0 then?
 
-meta def eea_no_proof {α : Type} [ed :euclidean_domain α] : eea_np_input α → eea_np_output α
+-- TODO imitate this:
+-- class decidable_linear_order (α : Type u) extends linear_order α :=
+-- (decidable_le : decidable_rel (≤))
+-- (decidable_eq : decidable_eq α := @decidable_eq_of_decidable_le _ _ decidable_le)
+-- (decidable_lt : decidable_rel ((<) : α → α → Prop) :=
+--     @decidable_lt_of_decidable_le _ _ decidable_le)
+
+-- instance [decidable_linear_order α] (a b : α) : decidable (a < b) :=
+-- decidable_linear_order.decidable_lt α a b
+
+-- instance [decidable_linear_order α] (a b : α) : decidable (a ≤ b) :=
+-- decidable_linear_order.decidable_le α a b
+
+-- instance [decidable_linear_order α] (a b : α) : decidable (a = b) :=
+-- decidable_linear_order.decidable_eq α a b
+
+meta def eea_no_proof {α : Type}  [ed :euclidean_domain α] : eea_np_input α → eea_np_output α :=
+λ ⟨rp, rc, xp, xc, yp, yc⟩, if rc = 0 then 
+                              sorry
+                            else
+                              sorry
+
+meta def eea_no_proof {α : Type}  [ed :euclidean_domain α] : eea_np_input α → eea_np_output α
 | ⟨ rp, 0, xp, xc, yp, yc⟩  := {eea_np_output . gcd := rp, x := xp, y := yp}
 | ⟨rp, rc, xp, xc, yp, yc⟩  := let q := (rp/rc) in eea_no_proof ⟨ rc, (rp/rc), xc, (xp-q*xc), yc, (yp -q*yc)⟩
 

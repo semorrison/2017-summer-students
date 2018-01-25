@@ -22,12 +22,14 @@ import logic.basic
 
 open classical
 
+-- set_option pp.all true
+
 -- local attribute classical.prop_decidable [instance]
 instance div_ring_no_zero_divisors {α : Type} [division_ring α] : no_zero_divisors α := {
     mul := division_ring.mul,
     zero := division_ring.zero α,
     eq_zero_or_eq_zero_of_mul_eq_zero := begin
-                                            intros,
+                                            intros,                                            
                                             -- by_contradiction,
                                             cases  em (a = 0 ∨ b = 0),
                                             
@@ -39,7 +41,7 @@ instance div_ring_no_zero_divisors {α : Type} [division_ring α] : no_zero_divi
                                                  b = 1 * b : eq.symm (one_mul b)
                                                  ... = (a⁻¹ * a) * b : by rw inv_mul_cancel left
                                                  ... = a⁻¹ * (a * b) : by rw mul_assoc
-                                                 ... = a⁻¹ * 0 : by admit --rw a_1 -- why doesn't this work???
+                                                 ... = a⁻¹ * 0 : begin erw a_1, refl, end-- by admit --rw a_1 -- why doesn't this work???
                                                  ... = 0 : by rw mul_zero,
                                             
                                          end
