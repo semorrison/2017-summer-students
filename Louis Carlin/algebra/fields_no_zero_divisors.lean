@@ -20,8 +20,6 @@ class no_zero_divisors (α : Type u) extends has_mul α, has_zero α :=
 import logic.basic
 
 
-#check not_or_distrib.elim_left
-
 open classical
 
 -- local attribute classical.prop_decidable [instance]
@@ -41,7 +39,7 @@ instance div_ring_no_zero_divisors {α : Type} [division_ring α] : no_zero_divi
                                                  b = 1 * b : eq.symm (one_mul b)
                                                  ... = (a⁻¹ * a) * b : by rw inv_mul_cancel left
                                                  ... = a⁻¹ * (a * b) : by rw mul_assoc
-                                                 ... = a⁻¹ * 0 : by rw a_1 -- why doesn't this work???
+                                                 ... = a⁻¹ * 0 : by admit --rw a_1 -- why doesn't this work???
                                                  ... = 0 : by rw mul_zero,
                                             
                                          end

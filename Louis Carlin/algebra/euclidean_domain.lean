@@ -32,13 +32,6 @@ instance euclidean_domain_has_mod {α : Type} [euclidean_domain α] : has_mod α
     mod := euclidean_domain.remainder
 }
 
-example {α : Type} [integral_domain α] : eq_zero_or_eq_zero_of_mul_eq_zero α := by apply_instance
-
-
-#reduce 2/5
-#reduce 2%5
-#reduce (-3:int)/(3)
-#reduce (3:int)%(-3)
 
 /- nat_abs lemmas -/
 open int
@@ -173,24 +166,15 @@ theorem gcd_comm {α : Type} [R: comm_ring α] {a b : α}(d : greatest_common_di
 
 /- euclidean algorithm -/
 
-structure bezout_identity {α : Type} [R: comm_ring α] (a b : α):= 
--- gcd = ax + by
-
-(x y : α) -- coefficients
-
-(gcd : greatest_common_divisor a b)
-
-(witness : gcd.value = a * x + b * y)
-
-
-
+/-
 meta def nat_euclidean_algorithm_no_proof : nat → nat → nat
 | n 0 := n
 | n m := nat_euclidean_algorithm_no_proof m (n%m) -- problem: how to show well-founded?
 
-#eval nat_euclidean_algorithm_no_proof 21 14
-#eval nat_euclidean_algorithm_no_proof 14 22
-#reduce nat_euclidean_algorithm_no_proof 14 22
+
+--#eval nat_euclidean_algorithm_no_proof 21 14
+--#eval nat_euclidean_algorithm_no_proof 14 22
+--#reduce nat_euclidean_algorithm_no_proof 14 22
 
 structure bezout_int :=
 (gcd x y : int)
@@ -201,22 +185,37 @@ instance bezout_int_print : has_repr bezout_int := {
                                 ++ "b coeff: " ++ to_string bi.y 
 }
 
-meta structure eea_int_input :=
+meta structure eea_int_np_input :=
 (rp rc xp xc yp yc: ℤ)
 
-/- nat implementation of Extended Euclid's Algorithm (without proof of validity) -/
+-- nat implementation of Extended Euclid's Algorithm (without proof of validity) 
 -- at each step we need:
 -- two previous remainders
 -- two previous coefficients
-meta def int_eea_no_proof : eea_int_input → bezout_int
+meta def int_eea_no_proof : eea_int_np_input → bezout_int
 | ⟨rp, 0, xp, xc, yp, yc⟩  := {bezout_int . gcd := rp, x := xp, y := yp}
-| ⟨rp, rc, xp, xc, yp, yc⟩  := let q := (rp/rc) in int_eea_no_proof (eea_int_input.mk rc (rp%rc) xc (xp-q*xc) yc (yp -q*yc))
+| ⟨rp, rc, xp, xc, yp, yc⟩  := let q := (rp/rc) in int_eea_no_proof  (eea_int_np_input.mk rc (rp%rc) xc (xp-q*xc) yc (yp -q*yc))
 
 meta def int_eea_initial (a b : int) : bezout_int :=
-int_eea_no_proof (eea_int_input.mk a b 1 0 0 1)
+int_eea_no_proof  eea_int_np_input.mk a b 1 0 0 1)
 
-#eval int_eea_initial 240 46
-#eval int_eea_initial 46 240 -- very clever :^)
+-- #eval int_eea_initial 240 46
+-- #eval int_eea_initial 46 240 -- very clever :^)
+-/
+
+structure bezout_identity {α : Type} [R: comm_ring α] (a b : α):= 
+-- gcd = ax + by
+
+(x y : α) -- coefficients
+
+(gcd : greatest_common_divisor a b)
+
+(witness : gcd.value = a * x + b * y)
+
+structure eea_input {α : Type} (a b : α) [euclidean_domain α] := 
+(rp rc xp xc yp yc: α)
+
+meta def int_eea : 
 
 
 meta structure eea_np_input (α : Type) [euclidean_domain α]:= -- do we need to specify α is a euclidean domain?
@@ -231,8 +230,12 @@ meta def eea_no_proof {α : Type} [ed :euclidean_domain α] : eea_np_input α �
 | ⟨ rp, 0, xp, xc, yp, yc⟩  := {eea_np_output . gcd := rp, x := xp, y := yp}
 | ⟨rp, rc, xp, xc, yp, yc⟩  := let q := (rp/rc) in eea_no_proof ⟨ rc, (rp/rc), xc, (xp-q*xc), yc, (yp -q*yc)⟩
 
-def eea_no_proof_initial 
+meta def eea_no_proof_initial {α : Type} (a b : α) : eea_np_output α:=
+eea_no_proof (eea_np_input.mk a b 1 0 0 1)
 
+
+
+-- extend input to include initial thingos
 def extended_euclidean_algorithm {α : Type} [euclidean_domain α] (a b : α) : bezout_identity a b :=
 sorry
 
