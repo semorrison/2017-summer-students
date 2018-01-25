@@ -80,7 +80,7 @@ instance kernel {G : group α} {H : group β} (f : hom G H) : normal_subgroup G 
 lemma kernel_iff_equiv {G : group α} {H : group β} (f : hom G H) (a b : α) : 
     f.map b = f.map a ↔ a⁻¹ * b ∈ (subgroup.kernel f).set
 
-theorem inj_iff_trivial_kernel {G : group α} {H : group β} (f : hom G H) : function.injective f ↔ kernel f = trivial G
+theorem inj_iff_trivial_kernel {G : group α} {H : group β} (f : hom G H) : function.injective f.map ↔ subgroup.kernel f = subgroup.trivial G
 
 -- I'm not quite sure how to express normal_iff_eq_cosets
 

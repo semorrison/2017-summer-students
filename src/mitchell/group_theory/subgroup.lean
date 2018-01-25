@@ -18,9 +18,7 @@ class is_subgroup [group α] (s : set α) : Prop :=
 attribute [simp] is_subgroup.one_closed 
                  is_subgroup.inv_closed 
                  is_subgroup.mul_closed
-
--- theorem int_subgroups (S : set ℤ) [group ℤ] [is_subgroup S] : ∃ a ∈ S, ∀ b ∈ S, a ∣ b := sorry
-
+                 
 namespace is_subgroup
 variables [group α] [group β]
 variables {s : set α} [is_subgroup s]
@@ -51,44 +49,28 @@ def right_coset (s : set α) [is_subgroup s] (a : α) : set α := {b | ∃ (g : 
 lemma kernel_iff_equiv {f : α → β} (hf: is_hom f) (a b : α) : f b = f a ↔ a⁻¹ * b ∈ kernel hf :=
 begin
     split,
-    {
-        assume h,
-        simp [kernel],
-        simp [hf.hom_mul, hf.inv, h]
-    },
-    {
-        assume h,
-        simp [kernel] at h,
-        calc
-            f b = f (a * a⁻¹ * b)   : by simp; rw [mul_assoc]; simp [hf.hom_mul, h]
-            ... = f a               : by rw [mul_assoc]; simp [hf.hom_mul, h]
-    }
-    -- struggling with simp [mul_assoc]
+    { assume h, simp [kernel, hf.hom_mul, hf.inv, h] },
+    { assume h, simp [kernel] at h,
+    calc
+        f b = f (a * a⁻¹ * b)   : by simp; rw [mul_assoc]; simp [hf.hom_mul, h]
+        ... = f a               : by rw [mul_assoc]; simp [hf.hom_mul, h] }
 end
 
--- TODO: clean up proof
 theorem inj_iff_trivial_kernel {f : α → β} (hf: is_hom f) : 
     function.injective f ↔ kernel hf = {1} :=
 begin
     split,
     {
-        unfold function.injective,
-        assume h,
-        have hx : ∃ x, x ∈ kernel hf := ⟨1, hf.one⟩,
-        dsimp [kernel],
-        rw set.set_eq_def,
-        simp [set.mem_set_of_eq],
-        assume x,
+        dsimp [function.injective, kernel],
+        simp [set.set_eq_def, set.mem_set_of_eq],
+        assume h x,
         split,
-        {
-        assume hx,
+        { 
+        assume hx, 
         have hi : f x = f 1 := by simp [hf.one, hx],
         simp [h hi, hf.one]
         },
-        {
-        assume hx,
-        simp [hx, hf.one]
-        }
+        { assume hx, simp [hx, hf.one] }
     },
     {
         assume h a b,
@@ -100,8 +82,6 @@ begin
     }
 end
 
--- Not a particularly pretty definition, feel as though it could be improved
--- Potentially by defining a normal subset first?
 class is_normal_subgroup (s : set α) : Prop :=
     (is_subgroup : is_subgroup s)
     (normal : ∀ n ∈ s, ∀ g : α, g * n * g⁻¹ ∈ s)
@@ -113,7 +93,6 @@ instance kernel_normal {f : α → β} (hf: is_hom f) : is_normal_subgroup (kern
 
 def center (α : Type u) [group α] : set α := {z | ∀ g, g * z = z * g}
 
--- TODO: clean up proof
 instance center_subg : is_subgroup (center α) := {
     is_subgroup .
     one_closed := by simp [center],
@@ -124,12 +103,10 @@ instance center_subg : is_subgroup (center α) := {
     end,
     inv_closed := begin
     assume a ha g,
-    simp [center] at *,  -- Should be possible to make this more compact
+    simp [center] at *,
     calc
-        g * a⁻¹ = a⁻¹ * (a * g) * a⁻¹     : by simp
-        ...     = a⁻¹ * (g * a) * a⁻¹     : by simp [ha g]
-        ...     = a⁻¹ * g * (a * a⁻¹)     : by rw [←mul_assoc, mul_assoc]
-        ...     = a⁻¹ * g                 : by simp
+        g * a⁻¹ = a⁻¹ * (g * a) * a⁻¹     : by simp [ha g]
+        ...     = a⁻¹ * g                 : by rw [←mul_assoc, mul_assoc]; simp
     end
 }
 
@@ -141,84 +118,50 @@ instance center_normal : is_normal_subgroup (center α) := {
     intros n ha g h,
     calc
         h * (g * n * g⁻¹) = h * n               : by simp [ha g, mul_assoc]
-        ...               = n * h               : by rw ha h
-        ...               = g * g⁻¹ * n * h     : by simp
+        ...               = g * g⁻¹ * n * h     : by rw ha h; simp
         ...               = g * n * g⁻¹ * h     : by rw [mul_assoc g, ha g⁻¹, ←mul_assoc]
     end
 }
 
 
--- TODO: Terrible! Needs significant clean up
+
 theorem normal_iff_eq_cosets (s : set α) [hs : is_subgroup s] : 
     is_normal_subgroup s ↔ ∀ g, left_coset g s = right_coset s g :=
-    begin
+begin
+split, tactic.swap,
+    {
+    intros hg,
     split,
+    { assumption },
+    {  -- Can probably be cleaned further
+        intros n hn g,
+        have hl : g * n ∈ left_coset g s, {
+            simp [left_coset],
+            existsi n,
+            split,
+            assumption, trivial
+        },
+        rw hg at hl,
+        simp [right_coset] at hl,
+        cases hl with x hx,
+        cases hx with hxl hxr,
+        have : g * n * g⁻¹ = x, {
+        calc
+            g * n * g⁻¹ = x * (g * g⁻¹) : by rw [hxr, mul_assoc]
+            ...         = x             : by simp [mul_right_inv g]
+        },
+        rw this,
+        exact hxl
+    }},
     {
         intros h g,
-        have hlr : left_coset g s ⊆ right_coset s g,
-        {
-            simp [left_coset, right_coset],
-            intros a n ha hn,
-            let n₁ := g * n * g⁻¹,
-            existsi n₁,
-            split,
-            { apply h.normal, assumption },
-            { simp, assumption },
-        },
-        have hrl : right_coset s g ⊆ left_coset g s, 
-        {
-            simp [right_coset, left_coset],
-            intros a n ha hn,
-            existsi g⁻¹ * n * (g⁻¹)⁻¹,
-            split,
-            { apply h.normal, assumption },
-            { rw inv_inv g, rw [←mul_assoc, ←mul_assoc], simp, assumption },
-        },
-        show left_coset g s = right_coset s g, from set.eq_of_subset_of_subset hlr hrl,
-    },
-    {
-        intros hg,
-        refine {..},
-        { assumption },
-        {
-            intros n hn g,
-            have hl : g * n ∈ left_coset g s, {
-                simp [left_coset],
-                existsi n,
-                split,
-                assumption, trivial
-            },
-            rw hg at hl,
-            simp [right_coset] at hl,
-            cases hl with x hx,
-            cases hx with hxl hxr,
-            have : g * n * g⁻¹ = x,{
-            calc
-                g * n * g⁻¹ = x * (g * g⁻¹) : by rw [hxr, mul_assoc]
-                ...         = x             : by simp [mul_right_inv g]
-            },
-            rw this,
-            exact hxl
-        }      
+        apply set.eq_of_subset_of_subset,
+        all_goals { simp [left_coset, right_coset], intros a n ha hn },
+        existsi g * n * g⁻¹, tactic.swap, existsi g⁻¹ * n * (g⁻¹)⁻¹,
+        all_goals {split, apply h.normal, assumption },
+        { rw inv_inv g, rw [←mul_assoc, ←mul_assoc], simp, assumption },
+        { simp, assumption }
     }
-    end
-    
-
+end
 
 end is_subgroup
-
--- An alternative style:
--- structure group_homomorphism {α β} (G : group α) (H : group β) :=
---   ( map : α → β )
-
--- structure subgroup {α} (G : group α) := 
---   ( underlying_set : set α )
---   (one_closed : (1 : α) ∈ underlying_set)
---   (inv_closed : ∀ {a}, a ∈ underlying_set → a⁻¹ ∈ underlying_set) 
---   (mul_closed : ∀ {a b}, a ∈ underlying_set → b ∈ underlying_set → a * b ∈ underlying_set) 
-
--- def kernel {α β} {G : group α} {H : group β} (f: group_homomorphism G H) : subgroup G := {
-
--- }
-
-
