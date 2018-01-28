@@ -4,7 +4,24 @@ import data.int.basic
 -- polynomials with ED coefficients are a ED
 -- make sure I'm using standard code style
 -- euclid's algorithm (extended)
--- should euclidean domain fill out has_div (and possibly other things)
+
+-- TODO imitate this:
+-- class decidable_linear_order (α : Type u) extends linear_order α :=
+-- (decidable_le : decidable_rel (≤))
+-- (decidable_eq : decidable_eq α := @decidable_eq_of_decidable_le _ _ decidable_le)
+-- (decidable_lt : decidable_rel ((<) : α → α → Prop) :=
+--     @decidable_lt_of_decidable_le _ _ decidable_le)
+
+-- instance [decidable_linear_order α] (a b : α) : decidable (a < b) :=
+-- decidable_linear_order.decidable_lt α a b
+
+-- instance [decidable_linear_order α] (a b : α) : decidable (a ≤ b) :=
+-- decidable_linear_order.decidable_le α a b
+
+--instance [decidable_linear_order α] (a b : α) : decidable (a = b) :=
+-- decidable_linear_order.decidable_eq α a b
+
+/- euclidean domain definitions and instances -/
 
 universes u v
 
@@ -19,9 +36,15 @@ class euclidean_domain (α : Type u) extends integral_domain α :=
 
 ( valuation : ∃ f : α → ℕ, ∀ a b, b = 0 ∨ f(remainder a b) < f b )
 
--- (euclidean_function : α → ℕ)
 
--- (witness_2 : ∀ a b, b=0 ∨ euclidean_function (remainder a b) < euclidean_function b)
+class decidable_euclidean_domain (α : Type) extends euclidean_domain α := -- ask Scott about this implementation (we only really need to be able to compare with zero)
+
+(decidable_eq : decidable_eq α)
+
+
+
+instance decidable_eq_ab {α : Type} [decidable_euclidean_domain α] (a b : α) : decidable (a = b) := -- why does this have to have a different name?
+decidable_euclidean_domain.decidable_eq α a b
 
 
 instance euclidean_domain_has_div {α : Type} [euclidean_domain α] : has_div α := {
@@ -203,44 +226,11 @@ int_eea_no_proof  eea_int_np_input.mk a b 1 0 0 1)
 -- #eval int_eea_initial 46 240 -- very clever :^)
 -/
 
-structure bezout_identity {α : Type} [R: comm_ring α] (a b : α):= 
--- gcd = ax + by
-
-(x y : α) -- coefficients
-
-(gcd : greatest_common_divisor a b)
-
-(witness : gcd.value = a * x + b * y)
-
-structure eea_input {α : Type} (a b : α) [euclidean_domain α] := 
-(rp rc xp xc yp yc: α)
-
-meta def int_eea : 
-
-
 meta structure eea_np_input (α : Type) [euclidean_domain α]:= -- do we need to specify α is a euclidean domain?
 (rp rc xp xc yp yc: α)
 
 structure eea_np_output (α : Type) :=
 (gcd x y: α)
-
-example {α : Type} [euclidean_domain α] : has_zero α := by apply_instance -- why can't we pattern match for 0 then?
-
--- TODO imitate this:
--- class decidable_linear_order (α : Type u) extends linear_order α :=
--- (decidable_le : decidable_rel (≤))
--- (decidable_eq : decidable_eq α := @decidable_eq_of_decidable_le _ _ decidable_le)
--- (decidable_lt : decidable_rel ((<) : α → α → Prop) :=
---     @decidable_lt_of_decidable_le _ _ decidable_le)
-
--- instance [decidable_linear_order α] (a b : α) : decidable (a < b) :=
--- decidable_linear_order.decidable_lt α a b
-
--- instance [decidable_linear_order α] (a b : α) : decidable (a ≤ b) :=
--- decidable_linear_order.decidable_le α a b
-
--- instance [decidable_linear_order α] (a b : α) : decidable (a = b) :=
--- decidable_linear_order.decidable_eq α a b
 
 meta def eea_no_proof {α : Type}  [ed :euclidean_domain α] : eea_np_input α → eea_np_output α :=
 λ ⟨rp, rc, xp, xc, yp, yc⟩, if rc = 0 then 
@@ -257,11 +247,65 @@ eea_no_proof (eea_np_input.mk a b 1 0 0 1)
 
 
 
+/- gcd final -/
+
+
+structure bezout_identity {α : Type} [R: comm_ring α] (a b : α):= 
+
+(x y : α) -- coefficients
+
+(gcd : greatest_common_divisor a b)
+
+(bezout : gcd.value = a * x + b * y)
+
+structure eea_input {α : Type} (a b : α) [euclidean_domain α] := 
+(rp rc xp xc yp yc: α)
+
+(bezout_prev : rp = a * xp + b * yp)
+
+(bezout_curr : rc = a * xc + b * yc)
+
+#check eea_input.mk
+
 -- extend input to include initial thingos
-def extended_euclidean_algorithm {α : Type} [euclidean_domain α] (a b : α) : bezout_identity a b :=
-sorry
 
-lemma foo : ∃ n : nat, n = 5 := by {existsi 5, refl}
 
-has_div
+meta def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_euclidean_domain α]  {a b : α } : eea_input a b → bezout_identity a b :=
+λ ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr ⟩, if rc = 0 then 
+                                    {bezout_identity . x := xp, y := yp, gcd := {greatest_common_divisor . value := rp, divides_a := sorry, divides_b := sorry, greatest := sorry }, bezout := sorry}
+                                  else 
+                                    let q := (rp/rc) in extended_euclidean_algorithm_internal ⟨ rc, (rp/rc), xc, (xp-q*xc), yc, (yp -q*yc), sorry, sorry⟩ 
+                              
 
+meta def extended_euclidean_algorithm {α : Type} [decidable_euclidean_domain α] (a b : α) : bezout_identity a b :=
+extended_euclidean_algorithm_internal ⟨ a, b, 1, 0, 0, 1, begin 
+                                                            calc
+                                                            a = a * 1 : by rw mul_one
+                                                            ... = a * 1 + 0 : by rw add_zero
+                                                            ... = a * 1 + b * 0 : by rw mul_zero
+                                                           end,
+                                                           begin
+                                                            calc
+                                                            b = b * 1 : by rw mul_one
+                                                            ... = 0 + b * 1 : by rw zero_add
+                                                            ... = a * 0 + b * 1 : by rw mul_zero
+                                                           end ⟩ 
+
+
+#check eq.refl 5
+
+/-
+
+structure common_divisor {α : Type} [R: comm_ring α] (a b : α) :=
+
+(value : α)
+
+(divides_a : value ∣ a) -- better names?
+
+(divides_b : value ∣ b)
+
+
+structure greatest_common_divisor {α : Type} [R: comm_ring α] (a b : α) extends common_divisor a b :=
+
+(greatest : ∀ d : common_divisor a b, d.value ∣ value)
+-/
