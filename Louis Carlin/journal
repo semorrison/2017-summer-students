@@ -25,3 +25,5 @@ why can't we automatically coerce an object into a parent? (we can)
 how to work out eea order without explicit function? (it doesn't matter)
 spent ages trying to write eea (I was right all along but lean prints negatives funny)
 Why doesn't lean know fields don't have zero divisors?
+
+why euclidean_domain does not have explicit Euclidean function (it's about equality of euclidean domains)
