@@ -27,3 +27,6 @@ spent ages trying to write eea (I was right all along but lean prints negatives 
 Why doesn't lean know fields don't have zero divisors?
 
 why euclidean_domain does not have explicit Euclidean function (it's about equality of euclidean domains)
+
+What needs to be given for eea to construct the proof at each step?
+How to bulk apply stuff like add_comm?

@@ -269,12 +269,34 @@ structure eea_input {α : Type} (a b : α) [euclidean_domain α] :=
 
 -- extend input to include initial thingos
 
+example (a b : int) : a = b + a - b := by admit
+
+neg_add
+
 
 meta def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_euclidean_domain α]  {a b : α } : eea_input a b → bezout_identity a b :=
 λ ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr ⟩, if rc = 0 then 
                                     {bezout_identity . x := xp, y := yp, gcd := {greatest_common_divisor . value := rp, divides_a := sorry, divides_b := sorry, greatest := sorry }, bezout := sorry}
                                   else 
-                                    let q := (rp/rc) in extended_euclidean_algorithm_internal ⟨ rc, (rp/rc), xc, (xp-q*xc), yc, (yp -q*yc), sorry, sorry⟩ 
+                                    let q := (rp/rc) in extended_euclidean_algorithm_internal ⟨ rc, ( rp%rc) , xc, (xp-q*xc), yc, (yp -q*yc), bezout_curr,
+                                                            begin
+                                                            -- ( witness : ∀ a b, (quotient a b) * b + (remainder a b) = a )
+                                                                have : q * rc + (rp%rc) = rp, by apply ed.witness,
+                                                                                
+                                                                calc
+                                                                rp%rc = rp%rc + 0 : by rw add_zero 
+                                                                ... = rp%rc + q*rc - q*rc : by admit --rw ←(add_neg_self (q*rc))
+                                                                ... = q*rc + rp%rc - q *rc : by admit -- add_comm
+                                                                ... = rp - q*rc : by {rw [this]}
+                                                                ... = (a*xp + b*yp) - q* (a*xc + b*yc) : by {rw [bezout_prev,bezout_curr]} 
+                                                                -- ... = a*xp + b*yp - (a*xc*q + b*yc*q) : by admit -- {rw mul_add}
+                                                                ... = a*xp + b*yp - a*xc*q - b*yc*q : by admit -- {erw [mul_add,neg_add],}
+                                                                ... = a*xp - a*xc*q + b*yp - b*yc*q : by admit --{rw [add_comm],}
+                                                                ... = a * (xp -xc *q) + b*yp - b*yc*q : by admit-- {rw [←mul_add],}
+                                                                ... = a * (xp -xc *q) + b * (yp -  yc * q) : by admit -- rw mul_add
+                                                                ... = a * (xp - q * xc) + b * (yp - yc * q) : by admit -- {rw mul_comm,} -- this is rewriting the wrong thing
+                                                                ... = a * (xp - q * xc) + b * (yp - q * yc) : by admit -- {rw mul_comm,} -- same thing happens
+                                                            end⟩ 
                               
 
 meta def extended_euclidean_algorithm {α : Type} [decidable_euclidean_domain α] (a b : α) : bezout_identity a b :=
