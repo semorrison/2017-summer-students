@@ -75,8 +75,6 @@ end
 
 /- Euclidean Domain instances-/
 
-open classical
-
 instance int_euclidean_domain : euclidean_domain ℤ :=
 {
     ((by apply_instance) : integral_domain ℤ) with 
@@ -90,8 +88,7 @@ instance int_euclidean_domain : euclidean_domain ℤ :=
         valuation := begin
                         existsi (λ x, nat_abs x),
                         intros,
-                        --simp,
-                        cases em (b=0), 
+                        cases decidable.em (b=0), 
                         {
                             left,
                             exact h

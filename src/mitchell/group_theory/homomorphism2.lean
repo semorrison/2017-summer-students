@@ -9,6 +9,8 @@ universes u v w
 variables {α : Type u} {β : Type v} {γ : Type w}
 
 -- Structure or class?
+-- Scott: no need for a class, for given groups G and H you'd never want to summon a mysterious instance of a homomorphism G → H
+-- Scott: I'd also suggest calling this "group_homomorphism". "hom" could mean many things, and characters are cheap.
 structure hom {α β} (G : group α) (H : group β) :=
     ( map : α → β )
     ( hom_mul : ∀ a b, map (a * b) = (map a) * (map b) )
@@ -22,8 +24,8 @@ variables (f : hom G H) (a : α)
 @[simp]
 lemma one : f.map 1 = 1 :=
 calc
-    f.map 1     = (f.map 1)⁻¹ * (f.map 1 * f.map 1)    : by simp
-    ...     = 1                        : by rw ← f.hom_mul; simp
+    f.map 1 = (f.map 1)⁻¹ * (f.map 1 * f.map 1) : by simp
+    ...     = 1                                 : by rw ← f.hom_mul; simp
 
 @[simp]
 lemma inv : f.map a⁻¹ = (f.map a)⁻¹ :=
