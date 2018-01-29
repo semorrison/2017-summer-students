@@ -157,14 +157,22 @@ theorem cd_comm {α : Type} [R: comm_ring α] {a b : α}(d : common_divisor a b)
     divides_b := d.divides_a,
 }
 
+@[simp] lemma cd_comm_value {α : Type} [R: comm_ring α] {a b : α}(d : common_divisor a b) : (cd_comm d).value = d.value :=
+begin
+  dunfold cd_comm,
+  refl
+end
+
 theorem gcd_comm {α : Type} [R: comm_ring α] {a b : α}(d : greatest_common_divisor a b) : greatest_common_divisor b a :=
 {
-    -- cd_comm d.to_common_divisor with -- This is hard
-    value := d.value,
-    divides_a := d.divides_b,
-    divides_b := d.divides_a,
+    cd_comm d.to_common_divisor with
     greatest := begin
-                    admit,
+                  intro d', 
+                  have p := d.greatest (cd_comm d'), 
+                  dunfold cd_comm at p, 
+                  dsimp at p, 
+                  simp,
+                  exact p
                 end
 }
 
