@@ -29,4 +29,12 @@ Why doesn't lean know fields don't have zero divisors?
 why euclidean_domain does not have explicit Euclidean function (it's about equality of euclidean domains)
 
 What needs to be given for eea to construct the proof at each step?
-How to bulk apply stuff like add_comm?
+- coefficients proof
+- proof remainders divide a and b
+- proof a greatest divisor of remainers is a greatest divisor of a and b
+
+How to bulk apply stuff like add_comm? (ring tactic is nice)
+
+if then else is ite rather than dite (despite what the textbook claims)?
+How to define ordering on inputs
+- is exists strong enough in lean to do what we want?
