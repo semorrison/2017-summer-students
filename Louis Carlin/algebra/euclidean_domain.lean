@@ -1,4 +1,5 @@
 import data.int.basic
+import tactic.ring
 
 -- TODO
 -- examples
@@ -235,18 +236,10 @@ meta def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_eucl
         begin -- proof that rp % rc = a * (xp - q * xc) + b * (yp - q * yc). Used to show gcd = a*x + b*y at end                                                       
             have : q * rc + (rp%rc) = rp, by apply ed.witness,                                                  
             calc
-            rp%rc = rp%rc + 0 : by rw add_zero 
-            ... = rp%rc + q*rc - q*rc : by admit --rw ←(add_neg_self (q*rc))
-            ... = q*rc + rp%rc - q *rc : by admit -- add_comm
-            ... = rp - q*rc : by {rw [this]}
-            ... = (a*xp + b*yp) - q* (a*xc + b*yc) : by {rw [bezout_prev,bezout_curr]} 
-            -- ... = a*xp + b*yp - (a*xc*q + b*yc*q) : by admit -- {rw mul_add}
-            ... = a*xp + b*yp - a*xc*q - b*yc*q : by admit -- {erw [mul_add,neg_add],}
-            ... = a*xp - a*xc*q + b*yp - b*yc*q : by admit --{rw [add_comm],}
-            ... = a * (xp -xc *q) + b*yp - b*yc*q : by admit-- {rw [←mul_add],}
-            ... = a * (xp -xc *q) + b * (yp -  yc * q) : by admit -- rw mul_add
-            ... = a * (xp - q * xc) + b * (yp - yc * q) : by admit-- {erw mul_comm,} -- this is rewriting the wrong thing
-            ... = a * (xp - q * xc) + b * (yp - q * yc) : by admit -- {rw mul_comm,} -- same thing happens
+            rp%rc = q*rc + rp%rc - q *rc : by ring
+            ...   = rp - q*rc : by {rw [this]}
+            ...   = (a*xp + b*yp) - q* (a*xc + b*yc) : by {rw [bezout_prev,bezout_curr]} 
+            ...   = a * (xp - q * xc) + b * (yp - q * yc) : by ring 
         end,
         
         begin -- proof that if something divides the divisor (rc) and the remainder (rp%/rc) then it divides a and b. Used to show gcd divides a and b 
@@ -276,18 +269,8 @@ meta def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_eucl
 
 meta def extended_euclidean_algorithm {α : Type} [decidable_euclidean_domain α] (a b : α) : bezout_identity a b :=
 extended_euclidean_algorithm_internal ⟨ a, b, 1, 0, 0, 1,
-    begin 
-        calc
-        a = a * 1 : by rw mul_one
-        ... = a * 1 + 0 : by rw add_zero
-        ... = a * 1 + b * 0 : by rw mul_zero
-    end,
-    begin
-        calc
-        b = b * 1 : by rw mul_one
-        ... = 0 + b * 1 : by rw zero_add
-        ... = a * 0 + b * 1 : by rw mul_zero
-    end,
+    by ring,
+    by ring,
     begin
         intros,
         cases a_1,
