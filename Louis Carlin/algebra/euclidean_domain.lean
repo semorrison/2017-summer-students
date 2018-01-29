@@ -267,15 +267,17 @@ structure eea_input {α : Type} (a b : α) [euclidean_domain α] :=
 
 (divides : ∀ x : α, x∣rp ∧ x∣rc → x∣a ∧ x∣b)
 
+(greatest_divisor : ∀ d : common_divisor a b, d.value ∣ rp ∧ d.value ∣ rc)
+
 #check eea_input.mk
 
--- extend input to include initial thingos
+-- (greatest : ∀ d : common_divisor a b, d.value ∣ value)
 
 example (a b : int) : a = b + a - b := by admit
 
 
 meta def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_euclidean_domain α]  {a b : α } : eea_input a b → bezout_identity a b :=
-λ ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_curr ⟩, if rc = 0 then 
+λ ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_curr, greatest_divisor ⟩, if rc = 0 then 
                                     {bezout_identity . x := xp, y := yp, gcd := {greatest_common_divisor . value := rp, divides_a := 
                                                                                                                                 begin
                                                                                                                                     have h1 : rc = 0, by admit, -- TODO, why doesn't lean give us this
@@ -290,7 +292,11 @@ meta def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_eucl
                                                                                                                                     rw [←h1] at h2,
                                                                                                                                     exact (divides_curr rp (and.intro (dvd_refl rp) h2)).right,
                                                                                                                                 end,
-                                                                                                                                greatest := sorry }, bezout := bezout_prev}
+                                                                                                                                greatest := 
+                                                                                                                                begin
+                                                                                                                                    
+                                                                                                                                    admit
+                                                                                                                                end }, bezout := bezout_prev}
                                   else 
                                     let q := (rp/rc) in extended_euclidean_algorithm_internal ⟨ rc, ( rp%rc) , xc, (xp-q*xc), yc, (yp -q*yc), bezout_curr,
                                                             begin -- proof that rp % rc = a * (xp - q * xc) + b * (yp - q * yc). Used to show gcd = a*x + b*y at end
@@ -321,10 +327,28 @@ meta def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_eucl
                                                                 have h3 := dvd_add h2 a_1_right,
                                                                 rw [h1] at h3,
                                                                 exact this (and.intro h3 a_1_left),
+                                                            end,
+                                                            begin
+                                                                intro,
+                                                                have := greatest_divisor d,
+                                                                have h1 : q * rc + rp%rc = rp, by apply ed.witness,
+                                                                rw add_comm at h1,
+                                                                have h2 := eq_add_neg_of_add_eq h1,
+                                                                cases this,
+                                                                have h3 := dvd_mul_of_dvd_right this_right q,
+                                                                have := dvd_neg_of_dvd h3,
+                                                                have := dvd_add this_left this,
+                                                                rw ←h2 at this,
+                                                                exact and.intro this_right this,
                                                             end⟩ 
                               
 #check dvd_add
 #check dvd_mul_of_dvd_right
+#check dvd_sub
+#check add_neg_self
+#check eq_add_neg_of_add_eq
+#check dvd_neg_of_dvd
+
 
 meta def extended_euclidean_algorithm {α : Type} [decidable_euclidean_domain α] (a b : α) : bezout_identity a b :=
 extended_euclidean_algorithm_internal ⟨ a, b, 1, 0, 0, 1, begin 
@@ -345,6 +369,10 @@ extended_euclidean_algorithm_internal ⟨ a, b, 1, 0, 0, 1, begin
                                                             split,
                                                             assumption,
                                                             assumption,
+                                                           end,
+                                                           begin
+                                                            intro,
+                                                            exact and.intro d.divides_a d.divides_b,
                                                            end ⟩ 
 
 
