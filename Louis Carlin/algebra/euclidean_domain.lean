@@ -265,18 +265,18 @@ structure eea_input {α : Type} (a b : α) [euclidean_domain α] :=
 
 (bezout_curr : rc = a * xc + b * yc)
 
+(divides : ∀ x : α, x∣rp ∧ x∣rc → x∣a ∧ x∣b)
+
 #check eea_input.mk
 
 -- extend input to include initial thingos
 
 example (a b : int) : a = b + a - b := by admit
 
-neg_add
-
 
 meta def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_euclidean_domain α]  {a b : α } : eea_input a b → bezout_identity a b :=
-λ ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr ⟩, if rc = 0 then 
-                                    {bezout_identity . x := xp, y := yp, gcd := {greatest_common_divisor . value := rp, divides_a := sorry, divides_b := sorry, greatest := sorry }, bezout := sorry}
+λ ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_curr ⟩, if rc = 0 then 
+                                    {bezout_identity . x := xp, y := yp, gcd := {greatest_common_divisor . value := rp, divides_a := sorry, divides_b := sorry, greatest := sorry }, bezout := bezout_prev}
                                   else 
                                     let q := (rp/rc) in extended_euclidean_algorithm_internal ⟨ rc, ( rp%rc) , xc, (xp-q*xc), yc, (yp -q*yc), bezout_curr,
                                                             begin
@@ -294,10 +294,22 @@ meta def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_eucl
                                                                 ... = a*xp - a*xc*q + b*yp - b*yc*q : by admit --{rw [add_comm],}
                                                                 ... = a * (xp -xc *q) + b*yp - b*yc*q : by admit-- {rw [←mul_add],}
                                                                 ... = a * (xp -xc *q) + b * (yp -  yc * q) : by admit -- rw mul_add
-                                                                ... = a * (xp - q * xc) + b * (yp - yc * q) : by -- {erw mul_comm,} -- this is rewriting the wrong thing
+                                                                ... = a * (xp - q * xc) + b * (yp - yc * q) : by admit-- {erw mul_comm,} -- this is rewriting the wrong thing
                                                                 ... = a * (xp - q * xc) + b * (yp - q * yc) : by admit -- {rw mul_comm,} -- same thing happens
+                                                            end,
+                                                            begin
+                                                                intros,
+                                                                cases a_1,
+                                                                have := divides_curr x,
+                                                                have h1 : q * rc + rp%rc = rp, by apply ed.witness,
+                                                                have h2 := dvd_mul_of_dvd_right a_1_left q, 
+                                                                have h3 := dvd_add h2 a_1_right,
+                                                                rw [h1] at h3,
+                                                                exact this (and.intro h3 a_1_left),
                                                             end⟩ 
                               
+#check dvd_add
+#check dvd_mul_of_dvd_right
 
 meta def extended_euclidean_algorithm {α : Type} [decidable_euclidean_domain α] (a b : α) : bezout_identity a b :=
 extended_euclidean_algorithm_internal ⟨ a, b, 1, 0, 0, 1, begin 
@@ -311,6 +323,13 @@ extended_euclidean_algorithm_internal ⟨ a, b, 1, 0, 0, 1, begin
                                                             b = b * 1 : by rw mul_one
                                                             ... = 0 + b * 1 : by rw zero_add
                                                             ... = a * 0 + b * 1 : by rw mul_zero
+                                                           end,
+                                                           begin
+                                                            intros,
+                                                            cases a_1,
+                                                            split,
+                                                            assumption,
+                                                            assumption,
                                                            end ⟩ 
 
 
