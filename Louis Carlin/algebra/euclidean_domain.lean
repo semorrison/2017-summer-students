@@ -278,102 +278,104 @@ example (a b : int) : a = b + a - b := by admit
 
 meta def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_euclidean_domain α]  {a b : α } : eea_input a b → bezout_identity a b :=
 λ ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_curr, greatest_divisor ⟩, if rc = 0 then 
-                                    {bezout_identity . x := xp, y := yp, gcd := {greatest_common_divisor . value := rp, divides_a := 
-                                                                                                                                begin
-                                                                                                                                    have h1 : rc = 0, by admit, -- TODO, why doesn't lean give us this
-                                                                                                                                    have h2 : rp ∣ 0, by apply dvd_zero,
-                                                                                                                                    rw [←h1] at h2,
-                                                                                                                                    exact (divides_curr rp (and.intro (dvd_refl rp) h2)).left,
-                                                                                                                                end,
-                                                                                                                                divides_b :=
-                                                                                                                                begin
-                                                                                                                                    have h1 : rc = 0, by admit, -- TODO, why doesn't lean give us this
-                                                                                                                                    have h2 : rp ∣ 0, by apply dvd_zero,
-                                                                                                                                    rw [←h1] at h2,
-                                                                                                                                    exact (divides_curr rp (and.intro (dvd_refl rp) h2)).right,
-                                                                                                                                end,
-                                                                                                                                greatest := 
-                                                                                                                                begin
-                                                                                                                                    
-                                                                                                                                    admit
-                                                                                                                                end }, bezout := bezout_prev}
-                                  else 
-                                    let q := (rp/rc) in extended_euclidean_algorithm_internal ⟨ rc, ( rp%rc) , xc, (xp-q*xc), yc, (yp -q*yc), bezout_curr,
-                                                            begin -- proof that rp % rc = a * (xp - q * xc) + b * (yp - q * yc). Used to show gcd = a*x + b*y at end
-                                                                
-                                                                have : q * rc + (rp%rc) = rp, by apply ed.witness,
-                                                                
-                                                                calc
-                                                                rp%rc = rp%rc + 0 : by rw add_zero 
-                                                                ... = rp%rc + q*rc - q*rc : by admit --rw ←(add_neg_self (q*rc))
-                                                                ... = q*rc + rp%rc - q *rc : by admit -- add_comm
-                                                                ... = rp - q*rc : by {rw [this]}
-                                                                ... = (a*xp + b*yp) - q* (a*xc + b*yc) : by {rw [bezout_prev,bezout_curr]} 
-                                                                -- ... = a*xp + b*yp - (a*xc*q + b*yc*q) : by admit -- {rw mul_add}
-                                                                ... = a*xp + b*yp - a*xc*q - b*yc*q : by admit -- {erw [mul_add,neg_add],}
-                                                                ... = a*xp - a*xc*q + b*yp - b*yc*q : by admit --{rw [add_comm],}
-                                                                ... = a * (xp -xc *q) + b*yp - b*yc*q : by admit-- {rw [←mul_add],}
-                                                                ... = a * (xp -xc *q) + b * (yp -  yc * q) : by admit -- rw mul_add
-                                                                ... = a * (xp - q * xc) + b * (yp - yc * q) : by admit-- {erw mul_comm,} -- this is rewriting the wrong thing
-                                                                ... = a * (xp - q * xc) + b * (yp - q * yc) : by admit -- {rw mul_comm,} -- same thing happens
-                                                            end,
-                                                            
-                                                            begin -- proof that if something divides the divisor (rc) and the remainder (rp%/rc) then it divides a and b. Used to show gcd divides a and b 
-                                                                intros,
-                                                                cases a_1,
-                                                                have := divides_curr x,
-                                                                have h1 : q * rc + rp%rc = rp, by apply ed.witness,
-                                                                have h2 := dvd_mul_of_dvd_right a_1_left q, 
-                                                                have h3 := dvd_add h2 a_1_right,
-                                                                rw [h1] at h3,
-                                                                exact this (and.intro h3 a_1_left),
-                                                            end,
-                                                            begin
-                                                                intro,
-                                                                have := greatest_divisor d,
-                                                                have h1 : q * rc + rp%rc = rp, by apply ed.witness,
-                                                                rw add_comm at h1,
-                                                                have h2 := eq_add_neg_of_add_eq h1,
-                                                                cases this,
-                                                                have h3 := dvd_mul_of_dvd_right this_right q,
-                                                                have := dvd_neg_of_dvd h3,
-                                                                have := dvd_add this_left this,
-                                                                rw ←h2 at this,
-                                                                exact and.intro this_right this,
-                                                            end⟩ 
-                              
-#check dvd_add
-#check dvd_mul_of_dvd_right
-#check dvd_sub
-#check add_neg_self
-#check eq_add_neg_of_add_eq
-#check dvd_neg_of_dvd
+    {bezout_identity . x := xp, y := yp, gcd := 
+        {
+        greatest_common_divisor .
+        value := rp,
 
+        divides_a := 
+        begin
+            have h1 : rc = 0, by admit, -- TODO, why doesn't lean give us this
+            have h2 : rp ∣ 0, by apply dvd_zero,
+            rw [←h1] at h2,
+            exact (divides_curr rp (and.intro (dvd_refl rp) h2)).left,
+        end,
+
+        divides_b :=
+        begin
+            have h1 : rc = 0, by admit, -- TODO, why doesn't lean give us this
+            have h2 : rp ∣ 0, by apply dvd_zero,
+            rw [←h1] at h2,
+            exact (divides_curr rp (and.intro (dvd_refl rp) h2)).right,
+        end,
+
+        greatest := 
+        begin
+            intro,
+            exact (greatest_divisor d).left,
+        end 
+        },
+        bezout := bezout_prev}
+    else 
+        let q := (rp/rc) in extended_euclidean_algorithm_internal ⟨ rc, ( rp%rc) , xc, (xp-q*xc), yc, (yp -q*yc), bezout_curr,
+        
+        begin -- proof that rp % rc = a * (xp - q * xc) + b * (yp - q * yc). Used to show gcd = a*x + b*y at end                                                       
+            have : q * rc + (rp%rc) = rp, by apply ed.witness,                                                  
+            calc
+            rp%rc = rp%rc + 0 : by rw add_zero 
+            ... = rp%rc + q*rc - q*rc : by admit --rw ←(add_neg_self (q*rc))
+            ... = q*rc + rp%rc - q *rc : by admit -- add_comm
+            ... = rp - q*rc : by {rw [this]}
+            ... = (a*xp + b*yp) - q* (a*xc + b*yc) : by {rw [bezout_prev,bezout_curr]} 
+            -- ... = a*xp + b*yp - (a*xc*q + b*yc*q) : by admit -- {rw mul_add}
+            ... = a*xp + b*yp - a*xc*q - b*yc*q : by admit -- {erw [mul_add,neg_add],}
+            ... = a*xp - a*xc*q + b*yp - b*yc*q : by admit --{rw [add_comm],}
+            ... = a * (xp -xc *q) + b*yp - b*yc*q : by admit-- {rw [←mul_add],}
+            ... = a * (xp -xc *q) + b * (yp -  yc * q) : by admit -- rw mul_add
+            ... = a * (xp - q * xc) + b * (yp - yc * q) : by admit-- {erw mul_comm,} -- this is rewriting the wrong thing
+            ... = a * (xp - q * xc) + b * (yp - q * yc) : by admit -- {rw mul_comm,} -- same thing happens
+        end,
+        
+        begin -- proof that if something divides the divisor (rc) and the remainder (rp%/rc) then it divides a and b. Used to show gcd divides a and b 
+            intros,
+            cases a_1,
+            have := divides_curr x,
+            have h1 : q * rc + rp%rc = rp, by apply ed.witness,
+            have h2 := dvd_mul_of_dvd_right a_1_left q, 
+            have h3 := dvd_add h2 a_1_right,
+            rw [h1] at h3,
+            exact this (and.intro h3 a_1_left),
+        end,
+
+        begin
+            intro,
+            have := greatest_divisor d,
+            have h1 : q * rc + rp%rc = rp, by apply ed.witness,
+            rw add_comm at h1,
+            have h2 := eq_add_neg_of_add_eq h1,
+            cases this,
+            have h3 := dvd_mul_of_dvd_right this_right q,
+            have := dvd_neg_of_dvd h3,
+            have := dvd_add this_left this,
+            rw ←h2 at this,
+            exact and.intro this_right this,
+        end⟩ 
 
 meta def extended_euclidean_algorithm {α : Type} [decidable_euclidean_domain α] (a b : α) : bezout_identity a b :=
-extended_euclidean_algorithm_internal ⟨ a, b, 1, 0, 0, 1, begin 
-                                                            calc
-                                                            a = a * 1 : by rw mul_one
-                                                            ... = a * 1 + 0 : by rw add_zero
-                                                            ... = a * 1 + b * 0 : by rw mul_zero
-                                                           end,
-                                                           begin
-                                                            calc
-                                                            b = b * 1 : by rw mul_one
-                                                            ... = 0 + b * 1 : by rw zero_add
-                                                            ... = a * 0 + b * 1 : by rw mul_zero
-                                                           end,
-                                                           begin
-                                                            intros,
-                                                            cases a_1,
-                                                            split,
-                                                            assumption,
-                                                            assumption,
-                                                           end,
-                                                           begin
-                                                            intro,
-                                                            exact and.intro d.divides_a d.divides_b,
-                                                           end ⟩ 
+extended_euclidean_algorithm_internal ⟨ a, b, 1, 0, 0, 1,
+    begin 
+        calc
+        a = a * 1 : by rw mul_one
+        ... = a * 1 + 0 : by rw add_zero
+        ... = a * 1 + b * 0 : by rw mul_zero
+    end,
+    begin
+        calc
+        b = b * 1 : by rw mul_one
+        ... = 0 + b * 1 : by rw zero_add
+        ... = a * 0 + b * 1 : by rw mul_zero
+    end,
+    begin
+        intros,
+        cases a_1,
+        split,
+        assumption,
+        assumption,
+    end,
+    begin
+        intro,
+        exact and.intro d.divides_a d.divides_b,
+    end ⟩ 
 
 
 #check eq.refl 5
