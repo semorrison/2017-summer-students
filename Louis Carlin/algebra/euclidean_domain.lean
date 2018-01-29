@@ -294,7 +294,7 @@ meta def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_eucl
                                                                 ... = a*xp - a*xc*q + b*yp - b*yc*q : by admit --{rw [add_comm],}
                                                                 ... = a * (xp -xc *q) + b*yp - b*yc*q : by admit-- {rw [←mul_add],}
                                                                 ... = a * (xp -xc *q) + b * (yp -  yc * q) : by admit -- rw mul_add
-                                                                ... = a * (xp - q * xc) + b * (yp - yc * q) : by admit -- {rw mul_comm,} -- this is rewriting the wrong thing
+                                                                ... = a * (xp - q * xc) + b * (yp - yc * q) : by -- {erw mul_comm,} -- this is rewriting the wrong thing
                                                                 ... = a * (xp - q * xc) + b * (yp - q * yc) : by admit -- {rw mul_comm,} -- same thing happens
                                                             end⟩ 
                               
