@@ -267,13 +267,19 @@ inductive well_founded {α : Sort u} (r : α → α → Prop) : Prop
 | intro (h : ∀ a, acc r a) : well_founded
 -/
 
-#check well_founded.fix
+#check well_founded
 
+instance eea_input_has_well_founded {α :Type} (a b :α) [euclidean_domain α]  : has_well_founded (eea_input a b) := {
+    r := λ e1 e2, ∀ (f : α → ℕ) (w : ∀ s t, t = 0 ∨ f(s % t) < f t), f(e1.rc) < f(e2.rc),
+    wf := begin split, intro x, sorry end
+}
 
-meta def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_euclidean_domain α]  {a b : α } : eea_input a b → bezout_identity a b :=
-λ ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_curr, greatest_divisor ⟩, if rc = 0 then 
+def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_euclidean_domain α]  {a b : α } : eea_input a b → bezout_identity a b
+| input := 
+match input with ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_curr, greatest_divisor ⟩ :=
+   if h : rc = 0 then 
 
-    have (lt (rp%rc) rc), from sorry,
+    -- have (lt (rp%rc) rc), from sorry,
 
     {
     bezout_identity . x := xp, y := yp, gcd := 
@@ -283,17 +289,15 @@ meta def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_eucl
 
         divides_a := 
         begin
-            have h1 : rc = 0, by admit,-- TODO, use dite
             have h2 : rp ∣ 0, by apply dvd_zero,
-            rw [←h1] at h2,
+            rw [←h] at h2,
             exact (divides_curr rp (and.intro (dvd_refl rp) h2)).left,
         end,
 
         divides_b :=
         begin
-            have h1 : rc = 0, by admit, -- TODO, use dite
             have h2 : rp ∣ 0, by apply dvd_zero,
-            rw [←h1] at h2,
+            rw [←h] at h2,
             exact (divides_curr rp (and.intro (dvd_refl rp) h2)).right,
         end,
 
@@ -340,7 +344,9 @@ meta def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_eucl
             have := dvd_add this_left this,
             rw ←h2 at this,
             exact and.intro this_right this,
-        end⟩ 
+        end⟩
+end
+
 
 meta def extended_euclidean_algorithm {α : Type} [decidable_euclidean_domain α] (a b : α) : bezout_identity a b :=
 extended_euclidean_algorithm_internal ⟨ a, b, 1, 0, 0, 1,
