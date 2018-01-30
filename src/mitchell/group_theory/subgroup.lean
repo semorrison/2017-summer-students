@@ -11,28 +11,42 @@ universes u v w
 variables {α : Type u} {β : Type v} {γ : Type w}
 
 class is_subgroup [group α] (s : set α) : Prop := 
-    (one_ : (1 : α) ∈ s)
-    (inv_ : ∀ {a}, a ∈ s → a⁻¹ ∈ s) 
-    (mul_ : ∀ {a b}, a ∈ s → b ∈ s → a * b ∈ s) 
-
-attribute [simp] is_subgroup.one_ 
-                 is_subgroup.inv_ 
-                 is_subgroup.mul_
+    (one_mem : (1 : α) ∈ s)
+    (inv_mem : ∀ {a}, a ∈ s → a⁻¹ ∈ s) 
+    (mul_mem : ∀ {a b}, a ∈ s → b ∈ s → a * b ∈ s) 
                  
 namespace is_subgroup
 variables [group α] [group β]
 variables {s : set α} [is_subgroup s]
 
+attribute [simp] is_subgroup.one_mem 
+                 is_subgroup.inv_mem 
+                 is_subgroup.mul_mem
+
+-- Subgroup is a group
+instance : group s :=
+{   mul := λ ⟨x, hx⟩ ⟨y, hy⟩, ⟨x * y, mul_mem hx hy⟩,
+    mul_assoc := λ ⟨x, hx⟩ ⟨y, hy⟩ ⟨z, hz⟩, subtype.eq $ mul_assoc x y z,
+    one := ⟨1, one_mem s⟩,
+    one_mul := λ ⟨x, hx⟩, subtype.eq $ one_mul x,
+    mul_one := λ ⟨x, hx⟩, subtype.eq $ mul_one x,
+    inv := λ ⟨x, hx⟩, ⟨x⁻¹, inv_mem hx⟩,
+    mul_left_inv := λ ⟨x, hx⟩, subtype.eq $ mul_left_inv x }
+
+@[simp] lemma mul (x y : α) (hx : x ∈ s) (hy : y ∈ s) :
+(⟨x, hx⟩ : s) * ⟨y, hy⟩ = ⟨x * y, mul_mem hx hy⟩ := rfl
+
+-- Examples of subgroups
 instance trivial : is_subgroup ({1} : set α) :=
     by refine {..}; by simp {contextual := tt}
 
 instance image {f : α → β} (hf: is_hom f) : is_subgroup (f '' s) := {
     is_subgroup .
-    mul_ := assume a₁ a₂ ⟨b₁, hb₁, eq₁⟩ ⟨b₂, hb₂, eq₂⟩,
-    ⟨b₁ * b₂, mul_ hb₁ hb₂, by simp [eq₁, eq₂, hf.hom_mul]⟩,
-    one_ := ⟨1, one_ s, hf.one⟩,
-    inv_ := assume a ⟨b, hb, eq⟩,
-    ⟨b⁻¹, inv_ hb, by simp [eq, hf.inv]⟩ 
+    mul_mem := assume a₁ a₂ ⟨b₁, hb₁, eq₁⟩ ⟨b₂, hb₂, eq₂⟩,
+    ⟨b₁ * b₂, mul_mem hb₁ hb₂, by simp [eq₁, eq₂, hf.hom_mul]⟩,
+    one_mem := ⟨1, one_mem s, hf.one⟩,
+    inv_mem := assume a ⟨b, hb, eq⟩,
+    ⟨b⁻¹, inv_mem hb, by simp [eq, hf.inv]⟩ 
 }
 
 instance preimage {f : β → α} (hf : is_hom f) : is_subgroup (f ⁻¹' s) :=
@@ -43,9 +57,6 @@ def kernel {f : α → β} (hf: is_hom f) : set α := {a | f a = 1}
 instance kernel_subg {f : α → β} (hf: is_hom f) : is_subgroup (kernel hf) := 
     by refine {..}; simp [kernel, hf.hom_mul, hf.one, hf.inv] {contextual:=tt}
 
-def left_coset  (a : α) (s : set α) [is_subgroup s] : set α := {b | ∃ (g : s), b = a * g}
-def right_coset (s : set α) [is_subgroup s] (a : α) : set α := {b | ∃ (g : s), b = g * a}
-
 lemma kernel_iff_equiv {f : α → β} (hf: is_hom f) (a b : α) : f b = f a ↔ a⁻¹ * b ∈ kernel hf :=
 begin
     split,
@@ -53,7 +64,7 @@ begin
     { assume h, simp [kernel] at h,
     calc
         f b = f (a * a⁻¹ * b)   : by simp; rw [mul_assoc]; simp [hf.hom_mul, h]
-        ... = f a               : by rw [mul_assoc]; simp [hf.hom_mul, h] }
+        ... = f a               : by rw [mul_assoc, hf.hom_mul]; simp [h] }
 end
 
 theorem inj_iff_trivial_kernel {f : α → β} (hf: is_hom f) : 
@@ -82,8 +93,12 @@ begin
     }
 end
 
+-- More structures
+def left_coset  (a : α) (s : set α) [is_subgroup s] : set α := {b | ∃ (g : s), b = a * g}
+def right_coset (s : set α) [is_subgroup s] (a : α) : set α := {b | ∃ (g : s), b = g * a}
+
 class is_normal_subgroup (s : set α) : Prop :=
-    (is_subgroup : is_subgroup s)
+    (subgroup : is_subgroup s)
     (normal : ∀ n ∈ s, ∀ g : α, g * n * g⁻¹ ∈ s)
 
 instance kernel_normal {f : α → β} (hf: is_hom f) : is_normal_subgroup (kernel hf) :=
@@ -95,13 +110,13 @@ def center (α : Type u) [group α] : set α := {z | ∀ g, g * z = z * g}
 
 instance center_subg : is_subgroup (center α) := {
     is_subgroup .
-    one_ := by simp [center],
-    mul_ := begin
+    one_mem := by simp [center],
+    mul_mem := begin
     intros a b ha hb g,
     rw [center, set.mem_set_of_eq] at *,
     rw [←mul_assoc, ha g, mul_assoc, hb g, ←mul_assoc]
     end,
-    inv_ := begin
+    inv_mem := begin
     assume a ha g,
     simp [center] at *,
     calc
@@ -112,7 +127,7 @@ instance center_subg : is_subgroup (center α) := {
 
 instance center_normal : is_normal_subgroup (center α) := {
     is_normal_subgroup .
-    is_subgroup := is_subgroup.center_subg,
+    subgroup := is_subgroup.center_subg,
     normal := begin
     simp [center, set.mem_set_of_eq],
     intros n ha g h,
@@ -122,8 +137,6 @@ instance center_normal : is_normal_subgroup (center α) := {
         ...               = g * n * g⁻¹ * h     : by rw [mul_assoc g, ha g⁻¹, ←mul_assoc]
     end
 }
-
-
 
 theorem normal_iff_eq_cosets (s : set α) [hs : is_subgroup s] : 
     is_normal_subgroup s ↔ ∀ g, left_coset g s = right_coset s g :=
@@ -137,9 +150,7 @@ split, tactic.swap,
         intros n hn g,
         have hl : g * n ∈ left_coset g s, {
             simp [left_coset],
-            existsi n,
-            split,
-            assumption, trivial
+            apply hn
         },
         rw hg at hl,
         simp [right_coset] at hl,
@@ -165,3 +176,22 @@ split, tactic.swap,
 end
 
 end is_subgroup
+
+namespace quotient_group
+open is_subgroup
+variables [group α]
+variables {s : set α} [hs : is_normal_subgroup s]
+
+instance : setoid α := 
+{ setoid .
+    r := λ x y, x * y⁻¹ ∈ s,
+    iseqv :=
+    ⟨ λ x, calc
+        x * x⁻¹ = (1 : α) : mul_right_inv x
+        ... ∈ s           : hs.subgroup.one_mem,
+    
+
+}
+
+
+end quotient_group
