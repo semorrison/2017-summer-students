@@ -38,3 +38,5 @@ How to bulk apply stuff like add_comm? (ring tactic is nice)
 if then else is ite rather than dite (despite what the textbook claims)?
 How to define ordering on inputs
 - is exists strong enough in lean to do what we want?
+
+When showing recursion is valid lean asks you to give a well founded relation on the return type (I think). Shouldn't it be valid to just show one exists?

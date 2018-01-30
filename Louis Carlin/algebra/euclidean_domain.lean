@@ -219,19 +219,51 @@ example (p : Prop) [decidable p] : p ∨ ¬ p := dite p (assume hp :p, or.inl hp
 #check int.lt 
 #print int.lt
 
-#check exists.elim
+
 #check exists_prop
 
 constant ex : ∃ x : nat, x = 5
-#check exists.elim ex (λ a : nat, λ ha : a = 5, show a = 5, from ha)
+#check exists.elim ex (λ a : nat, λ ha : a = 5, show ∃ x : nat, x = 5, from exists.intro a ha)
 
 
+-- ( valuation : ∃ f : α → ℕ, ∀ a b, b = 0 ∨ f(remainder a b) < f b )
 
-def lt {α : Type} {a b : α} [ed : decidable_euclidean_domain α] : eea_input a b → eea_input a b → Prop := 
-λ x y, begin
-        have h1 := ed.valuation,
-        
-       end
+#check exists.elim
+
+example (α : Type) {a b : α} [ed : decidable_euclidean_domain α] : ∃ (r: α → α → Prop), well_founded r ∧ ∀ (a b : α), r (a%b) b :=
+begin
+    have := ed.remainder, -- why can't lean figure this out inside the next part?
+    have := exists.elim ed.valuation 
+    (assume f : α → ℕ,
+    assume hf : ∀ (a' b' : α), b' = 0 ∨ f (/- ed.remainder -/ a' %  b') < f b',
+    begin
+    -- exact f,
+    have h1 : ∃ (r: α → α → Prop), well_founded r ∧ ∀ (a b : α), b = 0 ∨ r (a%b) b,
+    existsi (λ x y, f x < f y),
+    split,
+    {
+        admit,
+    },
+    {
+        simp,
+        intros,
+        exact hf a_1 b_1,
+    },
+    admit,
+     end)
+end
+
+/-
+
+inductive acc {α : Sort u} (r : α → α → Prop) : α → Prop
+| intro (x : α) (h : ∀ y, r y x → acc y) : acc x
+
+inductive well_founded {α : Sort u} (r : α → α → Prop) : Prop
+| intro (h : ∀ a, acc r a) : well_founded
+-/
+
+#check well_founded.fix
+
 
 meta def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_euclidean_domain α]  {a b : α } : eea_input a b → bezout_identity a b :=
 λ ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_curr, greatest_divisor ⟩, if rc = 0 then 
@@ -243,7 +275,7 @@ meta def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_eucl
 
         divides_a := 
         begin
-            have h1 : rc = 0, by admit,-- TODO, why doesn't lean give us this
+            have h1 : rc = 0, by admit,-- TODO, use dite
             have h2 : rp ∣ 0, by apply dvd_zero,
             rw [←h1] at h2,
             exact (divides_curr rp (and.intro (dvd_refl rp) h2)).left,
@@ -251,7 +283,7 @@ meta def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_eucl
 
         divides_b :=
         begin
-            have h1 : rc = 0, by admit, -- TODO, why doesn't lean give us this
+            have h1 : rc = 0, by admit, -- TODO, use dite
             have h2 : rp ∣ 0, by apply dvd_zero,
             rw [←h1] at h2,
             exact (divides_curr rp (and.intro (dvd_refl rp) h2)).right,
@@ -317,5 +349,3 @@ extended_euclidean_algorithm_internal ⟨ a, b, 1, 0, 0, 1,
         intro,
         exact and.intro d.divides_a d.divides_b,
     end ⟩ 
-
-#
