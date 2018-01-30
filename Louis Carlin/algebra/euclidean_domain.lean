@@ -216,9 +216,7 @@ example (p : Prop) [decidable p] : p ∨ ¬ p := dite p (assume hp :p, or.inl hp
 -- It looks like the major hurdle now is convincing Lean this is a well-founded recursion. You will need to define an ordering on eea_input,
 -- and use "have" to give yourself a hypothesis showing that the argument of the recursive call is smaller than the current argument.
 
-#check int.lt 
-#print int.lt
-
+example : well_founded int.lt := by admit
 
 #check exists_prop
 
@@ -230,27 +228,34 @@ constant ex : ∃ x : nat, x = 5
 
 #check exists.elim
 
-example (α : Type) {a b : α} [ed : decidable_euclidean_domain α] : ∃ (r: α → α → Prop), well_founded r ∧ ∀ (a b : α), r (a%b) b :=
+lemma well_founded_ded (α : Type) [ed : decidable_euclidean_domain α] : ∃ (r: α → α → Prop), well_founded r ∧ ∀ (a b : α), b = 0 ∨ r (a%b) b :=
 begin
     have := ed.remainder, -- why can't lean figure this out inside the next part?
-    have := exists.elim ed.valuation 
+    exact exists.elim ed.valuation
     (assume f : α → ℕ,
     assume hf : ∀ (a' b' : α), b' = 0 ∨ f (/- ed.remainder -/ a' %  b') < f b',
     begin
     -- exact f,
-    have h1 : ∃ (r: α → α → Prop), well_founded r ∧ ∀ (a b : α), b = 0 ∨ r (a%b) b,
+    show ∃ (r: α → α → Prop), well_founded r ∧ ∀ (a b : α), b = 0 ∨ r (a%b) b,
     existsi (λ x y, f x < f y),
     split,
     {
+        /-
+        inductive acc {α : Sort u} (r : α → α → Prop) : α → Prop
+|       intro (x : α) (h : ∀ y, r y x → acc y) : acc x
+
+        inductive well_founded {α : Sort u} (r : α → α → Prop) : Prop
+|       intro (h : ∀ a, acc r a) : well_founded
+        -/
+
         admit,
     },
     {
         simp,
         intros,
-        exact hf a_1 b_1,
+        exact hf a b,
     },
-    admit,
-     end)
+     end),
 end
 
 /-
@@ -267,6 +272,9 @@ inductive well_founded {α : Sort u} (r : α → α → Prop) : Prop
 
 meta def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_euclidean_domain α]  {a b : α } : eea_input a b → bezout_identity a b :=
 λ ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_curr, greatest_divisor ⟩, if rc = 0 then 
+
+    have (lt (rp%rc) rc), from sorry,
+
     {
     bezout_identity . x := xp, y := yp, gcd := 
         {
