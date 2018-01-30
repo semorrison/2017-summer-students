@@ -1,6 +1,9 @@
 import data.int.basic
 import tactic.ring
 
+
+set_option max_memory 6144 -- how do I access settings :)
+
 -- TODO
 -- examples
 -- polynomials with ED coefficients are a ED
@@ -102,6 +105,9 @@ instance int_euclidean_domain : euclidean_domain ℤ :=
                      end
 }  
 
+#check inv_mul_self
+
+/-
 instance field_euclidean_domain {α : Type}  [ decidable_eq α ][fa: field α] : euclidean_domain α:= 
 {
     fa with
@@ -111,6 +117,7 @@ instance field_euclidean_domain {α : Type}  [ decidable_eq α ][fa: field α] :
     
     witness := begin
                 intros,
+                ring,
                 admit
                end,
     valuation := begin
@@ -131,6 +138,8 @@ begin
     | _ := 0
     end)
 end
+
+-/
 
 /- gcd stuff -/
 
@@ -200,16 +209,81 @@ structure eea_input {α : Type} (a b : α) [euclidean_domain α] :=
 (greatest_divisor : ∀ d : common_divisor a b, d.value ∣ rp ∧ d.value ∣ rc)
 
 
+-- example (p: Prop) [decidable p] : p ∨ ¬ p := if p then (assume hp : p, or.inl hp) else begin admit end -- theorem proving tutorial claims this is dite (page 143), but it is actually ite
+
+example (p : Prop) [decidable p] : p ∨ ¬ p := dite p (assume hp :p, or.inl hp) (assume hnp :¬p, or.inr hnp)
+
+-- It looks like the major hurdle now is convincing Lean this is a well-founded recursion. You will need to define an ordering on eea_input,
+-- and use "have" to give yourself a hypothesis showing that the argument of the recursive call is smaller than the current argument.
+
+example : well_founded int.lt := by admit
+
+#check exists_prop
+
+constant ex : ∃ x : nat, x = 5
+#check exists.elim ex (λ a : nat, λ ha : a = 5, show ∃ x : nat, x = 5, from exists.intro a ha)
+
+
+-- ( valuation : ∃ f : α → ℕ, ∀ a b, b = 0 ∨ f(remainder a b) < f b )
+
+#check exists.elim
+
+lemma well_founded_ded (α : Type) [ed : decidable_euclidean_domain α] : ∃ (r: α → α → Prop), well_founded r ∧ ∀ (a b : α), b = 0 ∨ r (a%b) b :=
+begin
+    have := ed.remainder, -- why can't lean figure this out inside the next part?
+    exact exists.elim ed.valuation
+    (assume f : α → ℕ,
+    assume hf : ∀ (a' b' : α), b' = 0 ∨ f (/- ed.remainder -/ a' %  b') < f b',
+    begin
+    -- exact f,
+    show ∃ (r: α → α → Prop), well_founded r ∧ ∀ (a b : α), b = 0 ∨ r (a%b) b,
+    existsi (λ x y, f x < f y),
+    split,
+    {
+        /-
+        inductive acc {α : Sort u} (r : α → α → Prop) : α → Prop
+|       intro (x : α) (h : ∀ y, r y x → acc y) : acc x
+
+        inductive well_founded {α : Sort u} (r : α → α → Prop) : Prop
+|       intro (h : ∀ a, acc r a) : well_founded
+        -/
+
+        admit,
+    },
+    {
+        simp,
+        intros,
+        exact hf a b,
+    },
+     end),
+end
+
+/-
+
+inductive acc {α : Sort u} (r : α → α → Prop) : α → Prop
+| intro (x : α) (h : ∀ y, r y x → acc y) : acc x
+
+inductive well_founded {α : Sort u} (r : α → α → Prop) : Prop
+| intro (h : ∀ a, acc r a) : well_founded
+-/
+
+#check well_founded.fix
+
+
 meta def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_euclidean_domain α]  {a b : α } : eea_input a b → bezout_identity a b :=
 λ ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_curr, greatest_divisor ⟩, if rc = 0 then 
-    {bezout_identity . x := xp, y := yp, gcd := 
+
+    have (lt (rp%rc) rc), from sorry,
+
+    {
+    bezout_identity . x := xp, y := yp, gcd := 
         {
         greatest_common_divisor .
         value := rp,
 
         divides_a := 
         begin
-            have h1 : rc = 0, by admit, -- TODO, why doesn't lean give us this
+            have h1 : rc = 0, by admit,-- TODO, use dite
             have h2 : rp ∣ 0, by apply dvd_zero,
             rw [←h1] at h2,
             exact (divides_curr rp (and.intro (dvd_refl rp) h2)).left,
@@ -217,7 +291,7 @@ meta def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_eucl
 
         divides_b :=
         begin
-            have h1 : rc = 0, by admit, -- TODO, why doesn't lean give us this
+            have h1 : rc = 0, by admit, -- TODO, use dite
             have h2 : rp ∣ 0, by apply dvd_zero,
             rw [←h1] at h2,
             exact (divides_curr rp (and.intro (dvd_refl rp) h2)).right,
@@ -229,7 +303,8 @@ meta def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_eucl
             exact (greatest_divisor d).left,
         end 
         },
-        bezout := bezout_prev}
+    bezout := bezout_prev
+    }
     else 
         let q := (rp/rc) in extended_euclidean_algorithm_internal ⟨ rc, ( rp%rc) , xc, (xp-q*xc), yc, (yp -q*yc), bezout_curr,
         

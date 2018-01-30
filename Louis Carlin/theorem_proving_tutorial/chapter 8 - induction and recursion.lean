@@ -89,6 +89,7 @@ variable r : γ → γ → Prop
 -- acc r x says that x is accessible from below, in the sense that all its predecessors are accessible
 
 #check (well_founded r : Prop)
+#print well_founded
 -- well_founded r says that every element of the type (?) is accessible
 
 /-https://en.wikipedia.org/wiki/Well-founded_relation
