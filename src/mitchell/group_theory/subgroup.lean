@@ -11,13 +11,13 @@ universes u v w
 variables {α : Type u} {β : Type v} {γ : Type w}
 
 class is_subgroup [group α] (s : set α) : Prop := 
-    (one_closed : (1 : α) ∈ s)
-    (inv_closed : ∀ {a}, a ∈ s → a⁻¹ ∈ s) 
-    (mul_closed : ∀ {a b}, a ∈ s → b ∈ s → a * b ∈ s) 
+    (one_ : (1 : α) ∈ s)
+    (inv_ : ∀ {a}, a ∈ s → a⁻¹ ∈ s) 
+    (mul_ : ∀ {a b}, a ∈ s → b ∈ s → a * b ∈ s) 
 
-attribute [simp] is_subgroup.one_closed 
-                 is_subgroup.inv_closed 
-                 is_subgroup.mul_closed
+attribute [simp] is_subgroup.one_ 
+                 is_subgroup.inv_ 
+                 is_subgroup.mul_
                  
 namespace is_subgroup
 variables [group α] [group β]
@@ -28,11 +28,11 @@ instance trivial : is_subgroup ({1} : set α) :=
 
 instance image {f : α → β} (hf: is_hom f) : is_subgroup (f '' s) := {
     is_subgroup .
-    mul_closed := assume a₁ a₂ ⟨b₁, hb₁, eq₁⟩ ⟨b₂, hb₂, eq₂⟩,
-    ⟨b₁ * b₂, mul_closed hb₁ hb₂, by simp [eq₁, eq₂, hf.hom_mul]⟩,
-    one_closed := ⟨1, one_closed s, hf.one⟩,
-    inv_closed := assume a ⟨b, hb, eq⟩,
-    ⟨b⁻¹, inv_closed hb, by simp [eq, hf.inv]⟩ 
+    mul_ := assume a₁ a₂ ⟨b₁, hb₁, eq₁⟩ ⟨b₂, hb₂, eq₂⟩,
+    ⟨b₁ * b₂, mul_ hb₁ hb₂, by simp [eq₁, eq₂, hf.hom_mul]⟩,
+    one_ := ⟨1, one_ s, hf.one⟩,
+    inv_ := assume a ⟨b, hb, eq⟩,
+    ⟨b⁻¹, inv_ hb, by simp [eq, hf.inv]⟩ 
 }
 
 instance preimage {f : β → α} (hf : is_hom f) : is_subgroup (f ⁻¹' s) :=
@@ -95,13 +95,13 @@ def center (α : Type u) [group α] : set α := {z | ∀ g, g * z = z * g}
 
 instance center_subg : is_subgroup (center α) := {
     is_subgroup .
-    one_closed := by simp [center],
-    mul_closed := begin
+    one_ := by simp [center],
+    mul_ := begin
     intros a b ha hb g,
     rw [center, set.mem_set_of_eq] at *,
     rw [←mul_assoc, ha g, mul_assoc, hb g, ←mul_assoc]
     end,
-    inv_closed := begin
+    inv_ := begin
     assume a ha g,
     simp [center] at *,
     calc
