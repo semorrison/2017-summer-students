@@ -3,8 +3,7 @@
     in mathlib's module.lean
 -/
 
-import data.set.basic
-import init.function
+import data.set.basic init.function algebra.group
 
 universes u v w
 variables {α : Type u} {β : Type v} {γ : Type w}
@@ -16,29 +15,27 @@ structure is_hom [group α] [group β] (f : α → β) : Prop :=
 attribute [simp] is_hom.hom_mul
 
 namespace is_hom
-variables [group α] [group β]
-variables {f : α → β} {a : α}
+variables [group α] [group β] [group γ]
 
 section
+variables {f : α → β} {a : α}
 variable (hf: is_hom f)
 include hf
 
 @[simp]
-lemma one : f 1 = 1 :=
-calc
-    f 1     = (f 1)⁻¹ * (f 1 * f 1)    : by simp
-    ...     = 1                        : by rw ← hom_mul hf; simp
+lemma one : f 1 = 1 := 
+mul_self_iff_eq_one.1 $ by simp [(hf.hom_mul 1 1).symm]
 
 @[simp]
 lemma inv : f a⁻¹ = (f a)⁻¹ :=
-calc
-    f a⁻¹ = (f a)⁻¹ * (f a * f a⁻¹)      : by simp
-    ...   = (f a)⁻¹ * f (a * a⁻¹)        : by rw hom_mul hf
-    ...   = (f a)⁻¹                      : by simp [one hf]
+eq.symm $ inv_eq_of_mul_eq_one $ by simp [(hf.hom_mul a a⁻¹).symm, one hf]
 
 end
-end is_hom
 
-class is_iso [group α] [group β] (f : α → β) : Prop :=
-    (is_hom : is_hom f)
-    (is_bij : function.bijective f)
+lemma comp {g : β → γ} {f : α → β} [hg : is_hom g] [hf : is_hom f] : is_hom (g ∘ f) :=
+{   hom_mul := λ x y, calc
+    g (f (x * y)) = g (f x * f y)       : by simp [hf.hom_mul]
+    ...           = g (f x) * g (f y)   : by simp [hg.hom_mul]
+}
+
+end is_hom
