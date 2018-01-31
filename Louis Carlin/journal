@@ -40,3 +40,6 @@ How to define ordering on inputs
 - is exists strong enough in lean to do what we want?
 
 When showing recursion is valid lean asks you to give a well founded relation on the return type (I think). Shouldn't it be valid to just show one exists?
+
+How do I break down a structure into its projections and then apply it? simp doesn't like me. (wasn't actually function application)
+How do I use induction on the output of a function (problem is that lean forgets the value of the function)

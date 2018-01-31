@@ -139,44 +139,92 @@ example : has_well_founded ℕ := {
     end
 }
 
+
+
 /-
-split,
-    intro a,
-    simp,
-    induction a,
-have h : acc has_lt.lt 0, from acc.intro 0
-        begin
-        intro y,
-        intro,
-        induction y,
-        {
-
-            admit,
-        },
-        {
-            admit,
-        }
-           
-        end,
-    exact h,
-    admit,
--/
-
-
---lt_irrefl
-#check lt_irrefl
-
 example : has_well_founded ℤ := 
 {
     r := 
+} 
+-/
+
+example (a : nat) (f : nat → nat) (hf : f a < 2) : f a = 1 ∨ f a = 0 :=
+begin
+    have := f a,
+    cases this,
+    right,
+    exact dec_trivial,
+
+end
+
+
+
+structure test_struct :=
+(n m : nat)
+(x : int)
+
+example : has_well_founded test_struct := {
+    r := λ e1 e2, e1.n < e2.n,
+    wf :=
+    begin
+        split,
+        intro a,
+        exact let ⟨ n, m, x ⟩ := a in
+        begin
+            induction n,
+            {
+                split,
+                intros y hy,
+                simp at hy,
+                cases hy,
+            },
+            {
+                split,
+                intros y hy,
+                simp at hy,
+                have := nat.succ_le_of_lt hy,
+                cases this,
+                {
+                    cases n_ih,
+                    split,
+                    simp at n_ih_h,
+                    assumption,
+                },
+                {
+                    
+                    admit
+                }
+                
+            }
+        end 
+    end
 }
 
-/-
-instance eea_input_has_well_founded {α :Type} (a b :α) [euclidean_domain α]  : has_well_founded (eea_input a b) := {
-    r := λ e1 e2, ∀ (f : α → ℕ) (w : ∀ s t, t = 0 ∨ f(s % t) < f t), f(e1.rc) < f(e2.rc),
-    wf := begin split, intro x, sorry end
+instance eea_input_has_well_founded {α :Type} (a b :α) [ed : euclidean_domain α]  : has_well_founded (eea_input a b) := {
+    r := λ e1 e2, ∃ (f : α → ℕ) (w : ∀ s t, t = 0 ∨ f(s % t) < f t), f(e1.rc) < f(e2.rc),
+    wf := 
+    begin
+        split,
+        intro x,
+        have := ed.valuation,
+        simp,
+        exact exists.elim this (assume (f : α → ℕ), assume h : ∀ (a' b' : α), b' = 0 ∨ f ( a' % b') < f b',
+            let ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_curr, greatest_divisor⟩ := x in 
+            begin
+                
+                have h1 := (f x.rc),
+                induction h1,
+                {
+                    admit
+                },
+                {
+                    
+                    admit,
+                }
+            end)
+    end
 }
--/
+
 
 -- ( valuation : ∃ f : α → ℕ, ∀ a b, b = 0 ∨ f(remainder a b) < f b )
 /-
