@@ -107,40 +107,6 @@ instance int_euclidean_domain : euclidean_domain ℤ :=
 
 #check inv_mul_self
 
-/-
-instance field_euclidean_domain {α : Type}  [ decidable_eq α ][fa: field α] : euclidean_domain α:= 
-{
-    fa with
-    eq_zero_or_eq_zero_of_mul_eq_zero := by admit,-- apply_instance,
-    quotient := λ x y, x / y,
-    remainder := λ _ _, fa.zero,
-    
-    witness := begin
-                intros,
-                ring,
-                admit
-               end,
-    valuation := begin
-                    existsi (λ x : α,
-                    match x with
-                    | 0 := (0:ℕ),
-                    | _ := (1:ℕ)
-                    end
-                    ),
-                    simp,
-                 end
-}
-
-example : ∃ f : ℕ → ℕ, ∀ n : ℕ, f n > 1 :=
-begin
-    existsi (λ x:ℕ, match x with
-    | 0 := 1
-    | _ := 0
-    end)
-end
-
--/
-
 /- gcd stuff -/
 
 structure common_divisor {α : Type} [R: comm_ring α] (a b : α) :=
@@ -183,8 +149,6 @@ theorem gcd_comm {α : Type} [R: comm_ring α] {a b : α}(d : greatest_common_di
                 end
 }
 
--- theorem nat_gcd_gcd -- prove equivalence of definitions
-
 
 /- euclidean algorithm -/
 
@@ -209,70 +173,7 @@ structure eea_input {α : Type} (a b : α) [euclidean_domain α] :=
 (greatest_divisor : ∀ d : common_divisor a b, d.value ∣ rp ∧ d.value ∣ rc)
 
 
--- example (p: Prop) [decidable p] : p ∨ ¬ p := if p then (assume hp : p, or.inl hp) else begin admit end -- theorem proving tutorial claims this is dite (page 143), but it is actually ite
 
-example (p : Prop) [decidable p] : p ∨ ¬ p := dite p (assume hp :p, or.inl hp) (assume hnp :¬p, or.inr hnp)
-
--- It looks like the major hurdle now is convincing Lean this is a well-founded recursion. You will need to define an ordering on eea_input,
--- and use "have" to give yourself a hypothesis showing that the argument of the recursive call is smaller than the current argument.
-
-example : well_founded int.lt := by admit
-
-#check exists_prop
-
-constant ex : ∃ x : nat, x = 5
-#check exists.elim ex (λ a : nat, λ ha : a = 5, show ∃ x : nat, x = 5, from exists.intro a ha)
-
-
--- ( valuation : ∃ f : α → ℕ, ∀ a b, b = 0 ∨ f(remainder a b) < f b )
-
-#check exists.elim
-
-lemma well_founded_ded (α : Type) [ed : decidable_euclidean_domain α] : ∃ (r: α → α → Prop), well_founded r ∧ ∀ (a b : α), b = 0 ∨ r (a%b) b :=
-begin
-    have := ed.remainder, -- why can't lean figure this out inside the next part?
-    exact exists.elim ed.valuation
-    (assume f : α → ℕ,
-    assume hf : ∀ (a' b' : α), b' = 0 ∨ f (/- ed.remainder -/ a' %  b') < f b',
-    begin
-    -- exact f,
-    show ∃ (r: α → α → Prop), well_founded r ∧ ∀ (a b : α), b = 0 ∨ r (a%b) b,
-    existsi (λ x y, f x < f y),
-    split,
-    {
-        /-
-        inductive acc {α : Sort u} (r : α → α → Prop) : α → Prop
-|       intro (x : α) (h : ∀ y, r y x → acc y) : acc x
-
-        inductive well_founded {α : Sort u} (r : α → α → Prop) : Prop
-|       intro (h : ∀ a, acc r a) : well_founded
-        -/
-
-        admit,
-    },
-    {
-        simp,
-        intros,
-        exact hf a b,
-    },
-     end),
-end
-
-/-
-
-inductive acc {α : Sort u} (r : α → α → Prop) : α → Prop
-| intro (x : α) (h : ∀ y, r y x → acc y) : acc x
-
-inductive well_founded {α : Sort u} (r : α → α → Prop) : Prop
-| intro (h : ∀ a, acc r a) : well_founded
--/
-
-#check well_founded
-
-instance eea_input_has_well_founded {α :Type} (a b :α) [euclidean_domain α]  : has_well_founded (eea_input a b) := {
-    r := λ e1 e2, ∀ (f : α → ℕ) (w : ∀ s t, t = 0 ∨ f(s % t) < f t), f(e1.rc) < f(e2.rc),
-    wf := begin split, intro x, sorry end
-}
 
 def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_euclidean_domain α]  {a b : α } : eea_input a b → bezout_identity a b
 | input := 
