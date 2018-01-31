@@ -2,8 +2,6 @@ import data.int.basic
 import tactic.ring
 
 
-set_option max_memory 6144 -- how do I access settings :)
-
 -- TODO
 -- examples
 -- polynomials with ED coefficients are a ED

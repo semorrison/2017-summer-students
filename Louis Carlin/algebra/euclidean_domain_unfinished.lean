@@ -1,6 +1,8 @@
 import Louis.euclidean_domain
 
 
+/- misc gcd/ed stuff -/
+
 instance field_euclidean_domain {α : Type}  [ decidable_eq α ][fa: field α] : euclidean_domain α:= 
 {
     fa with
@@ -68,13 +70,7 @@ begin
     existsi (λ x y, f x < f y),
     split,
     {
-        /-
-        inductive acc {α : Sort u} (r : α → α → Prop) : α → Prop
-|       intro (x : α) (h : ∀ y, r y x → acc y) : acc x
 
-        inductive well_founded {α : Sort u} (r : α → α → Prop) : Prop
-|       intro (h : ∀ a, acc r a) : well_founded
-        -/
 
         admit,
     },
@@ -191,8 +187,10 @@ example : has_well_founded test_struct := {
                     assumption,
                 },
                 {
-                    
-                    admit
+                    cases n_ih,
+                    have h1 := nat.lt_of_succ_le this_a,
+                    have h2 := n_ih_h y,
+                    exact h2 h1,
                 }
                 
             }
@@ -240,3 +238,90 @@ exact exists.elim ed.valuation (assume f : α → ℕ,
 )
 end
 -/
+
+/- Euclidean algorithm stuff -/
+
+def foo {α : Type} [has_well_founded α] : α → false
+| a := have wf : has_well_founded α,
+    by apply_instance,
+    have h : @has_well_founded.r a a,
+    from sorry,
+    foo a
+
+def extended_euclidean_algorithm_internal' {α : Type}  [ed : decidable_euclidean_domain α]  {a b : α } : eea_input a b → bezout_identity a b
+| input := 
+match input with ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_curr, greatest_divisor ⟩ :=
+    if h : rc = 0 then 
+
+    -- have (lt (rp%rc) rc), from sorry,
+
+    {
+    bezout_identity . x := xp, y := yp, gcd := 
+        {
+        greatest_common_divisor .
+        value := rp,
+
+        divides_a := 
+        begin
+            have h2 : rp ∣ 0, by apply dvd_zero,
+            rw [←h] at h2,
+            exact (divides_curr rp (and.intro (dvd_refl rp) h2)).left,
+        end,
+
+        divides_b :=
+        begin
+            have h2 : rp ∣ 0, by apply dvd_zero,
+            rw [←h] at h2,
+            exact (divides_curr rp (and.intro (dvd_refl rp) h2)).right,
+        end,
+
+        greatest := 
+        begin
+            intro,
+            exact (greatest_divisor d).left,
+        end 
+        },
+    bezout := bezout_prev
+    }
+    else 
+        let q := (rp/rc) in
+        let next_input : eea_input a b := ⟨ rc, ( rp%rc) , xc, (xp-q*xc), yc, (yp -q*yc), bezout_curr,
+        
+        begin -- proof that rp % rc = a * (xp - q * xc) + b * (yp - q * yc). Used to show gcd = a*x + b*y at end                                                       
+            have : q * rc + (rp%rc) = rp, by apply ed.witness,                                                  
+            calc
+            rp%rc = q*rc + rp%rc - q *rc : by ring
+            ...   = rp - q*rc : by {rw [this]}
+            ...   = (a*xp + b*yp) - q* (a*xc + b*yc) : by {rw [bezout_prev,bezout_curr]} 
+            ...   = a * (xp - q * xc) + b * (yp - q * yc) : by ring 
+        end,
+        
+        begin -- proof that if something divides the divisor (rc) and the remainder (rp%/rc) then it divides a and b. Used to show gcd divides a and b 
+            intros,
+            cases a_1,
+            have := divides_curr x,
+            have h1 : q * rc + rp%rc = rp, by apply ed.witness,
+            have h2 := dvd_mul_of_dvd_right a_1_left q, 
+            have h3 := dvd_add h2 a_1_right,
+            rw [h1] at h3,
+            exact this (and.intro h3 a_1_left),
+        end,
+
+        begin
+            intro, -- TODO this proof is ugly, make it cleaner
+            have := greatest_divisor d,
+            have h1 : q * rc + rp%rc = rp, by apply ed.witness,
+            rw add_comm at h1,
+            have h2 := eq_add_neg_of_add_eq h1,
+            cases this,
+            have h3 := dvd_mul_of_dvd_right this_right q,
+            have := dvd_neg_of_dvd h3,
+            have := dvd_add this_left this,
+            rw ←h2 at this,
+            exact and.intro this_right this,
+        end⟩ in
+        have (has_well_founded (eea_input a b)).r next_input input,
+        from sorry,
+        extended_euclidean_algorithm_internal' next_input
+end
+
