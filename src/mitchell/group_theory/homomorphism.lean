@@ -27,8 +27,8 @@ lemma one : f 1 = 1 :=
 mul_self_iff_eq_one.1 $ by simp [(hf.hom_mul 1 1).symm]
 
 @[simp]
-lemma inv : (f a)⁻¹ = f a⁻¹ :=
-inv_eq_of_mul_eq_one $ by simp [(hf.hom_mul a a⁻¹).symm, one hf]
+lemma inv : f a⁻¹ = (f a)⁻¹ :=
+eq.symm $ inv_eq_of_mul_eq_one $ by simp [(hf.hom_mul a a⁻¹).symm, one hf]
 
 end
 

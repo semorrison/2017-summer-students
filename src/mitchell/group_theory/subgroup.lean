@@ -6,6 +6,7 @@
 -- Needs reorganisation - current order is just the order it was written
 
 import data.set.basic init.function mitchell.group_theory.homomorphism
+import data.equiv
 
 universes u v w
 variables {α : Type u} {β : Type v} {γ : Type w}
@@ -46,7 +47,7 @@ instance image {f : α → β} (hf: is_hom f) : is_subgroup (f '' s) := {
     ⟨b₁ * b₂, mul_mem hb₁ hb₂, by simp [eq₁, eq₂, hf.hom_mul]⟩,
     one_mem := ⟨1, one_mem s, hf.one⟩,
     inv_mem := assume a ⟨b, hb, eq⟩,
-    ⟨b⁻¹, inv_mem hb, by simp [eq, hf.inv]⟩ 
+    ⟨b⁻¹, inv_mem hb, by rw hf.inv; simp *⟩ 
 }
 
 instance preimage {f : β → α} (hf : is_hom f) : is_subgroup (f ⁻¹' s) :=
@@ -179,19 +180,41 @@ end is_subgroup
 
 namespace quotient_group
 open is_subgroup
-variables [group α]
-variables {s : set α} [hs : is_normal_subgroup s]
 
-instance : setoid α := 
+definition quotient_group_setoid {α} [group α] {N : set α} (hs : is_normal_subgroup N) : setoid α := 
 { setoid .
-    r := λ x y, x * y⁻¹ ∈ s,
+    r := λ x y, x * y⁻¹ ∈ N,
     iseqv :=
     ⟨ λ x, calc
         x * x⁻¹ = (1 : α) : mul_right_inv x
-        ... ∈ s           : hs.subgroup.one_mem,
-    
+        ... ∈ N           : hs.subgroup.one_mem,
+    sorry, sorry ⟩ 
+}
+attribute [instance] quotient_group_setoid
 
+instance quotient_group {α} [group α] {N : set α} (hs : is_normal_subgroup N) : group (quotient (quotient_group_setoid hs)) := {
+    one := @quot.mk α _ (1 : α),
+    mul := sorry,
+    mul_assoc := sorry,
 }
 
 
 end quotient_group
+
+open is_subgroup
+open quotient_group
+open function
+
+structure group_isomorphism (β : Type v) (γ : Type w) [group β] [group γ]
+  extends equiv β γ :=
+(hom_fun : is_hom to_fun)
+
+infix ` ≃ₕ `:50 := group_isomorphism
+
+def image' { α β } ( φ : α → β ) := φ '' set.univ
+
+def quotient_group {α} [group α] (G K : set α) [ h : is_normal_subgroup K ] : quotient (quotient_group_setoid h)
+
+theorem fake_isomorphism_theorem {α} ( G : group α ) ( H : group α ) { φ : α → α } ( h : is_hom φ ) : (image' φ) ≃ₕ (kernel h) := sorry
+
+theorem first_isomorphism_theorem {α β} ( G : group α ) ( H : group β ) { φ : α → β } ( h : is_hom φ ) : (image' φ) ≃ₕ quotient_group (set.univ) (kernel h) := sorry
