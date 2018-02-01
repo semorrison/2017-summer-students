@@ -5,8 +5,10 @@
 
 -- Needs reorganisation - current order is just the order it was written
 
-import data.set.basic init.function mitchell.group_theory.homomorphism
-import data.equiv
+import data.set.basic init.function data.equiv init.logic 
+import mitchell.group_theory.homomorphism mitchell.group_theory.coset
+
+open set
 
 universes u v w
 variables {α : Type u} {β : Type v} {γ : Type w}
@@ -71,7 +73,7 @@ begin
     split,
     {
         dsimp [function.injective, kernel],
-        simp [set.set_eq_def, set.mem_set_of_eq],
+        simp [set_eq_def, mem_set_of_eq],
         assume h x,
         split,
         { 
@@ -91,10 +93,6 @@ begin
     }
 end
 
--- More structures
-def left_coset  (a : α) (s : set α) [is_subgroup s] : set α := {b | ∃ (g : s), b = a * g}
-def right_coset (s : set α) [is_subgroup s] (a : α) : set α := {b | ∃ (g : s), b = g * a}
-
 class is_normal_subgroup (s : set α) : Prop :=
     (subgroup : is_subgroup s)
     (normal : ∀ n ∈ s, ∀ g : α, g * n * g⁻¹ ∈ s)
@@ -113,7 +111,7 @@ instance center_subg : is_subgroup (center α) := {
     one_mem := by simp [center],
     mul_mem := begin
     intros a b ha hb g,
-    rw [center, set.mem_set_of_eq] at *,
+    rw [center, mem_set_of_eq] at *,
     rw [←mul_assoc, ha g, mul_assoc, hb g, ←mul_assoc]
     end,
     inv_mem := begin
@@ -129,7 +127,7 @@ instance center_normal : is_normal_subgroup (center α) := {
     is_normal_subgroup .
     subgroup := is_subgroup.center_subg,
     normal := begin
-    simp [center, set.mem_set_of_eq],
+    simp [center, mem_set_of_eq],
     intros n ha g h,
     calc
         h * (g * n * g⁻¹) = h * n               : by simp [ha g, mul_assoc]
@@ -138,55 +136,37 @@ instance center_normal : is_normal_subgroup (center α) := {
     end
 }
 
-theorem normal_iff_eq_cosets (s : set α) [hs : is_subgroup s] : 
-    is_normal_subgroup s ↔ ∀ g, left_coset g s = right_coset s g :=
-begin
-split, tactic.swap,
-    {
-    intros hg,
-    split,
-    { assumption },
-    {  -- Can probably be cleaned further
-        intros n hn g,
-        have hl : g * n ∈ left_coset g s, {
-            simp [left_coset],
-            apply hn
-        },
-        rw hg at hl,
-        simp [right_coset] at hl,
-        cases hl with x hx,
-        cases hx with hxl hxr,
-        have : g * n * g⁻¹ = x, {
-        calc
-            g * n * g⁻¹ = x * (g * g⁻¹) : by rw [hxr, mul_assoc]
-            ...         = x             : by simp [mul_right_inv g]
-        },
-        rw this,
-        exact hxl
-    }},
-    {
-        intros h g,
-        apply set.eq_of_subset_of_subset,
-        all_goals { simp [left_coset, right_coset], intros a n ha hn },
-        existsi g * n * g⁻¹, tactic.swap, existsi g⁻¹ * n * (g⁻¹)⁻¹,
-        all_goals {split, apply h.normal, assumption },
-        { rw inv_inv g, rw [←mul_assoc, ←mul_assoc], simp, assumption },
-        { simp, assumption }
-    }
-end
-
-lemma normal_elem_comm {s : set α} [hs : is_normal_subgroup s] {a : α} (ha : a ∈ s) (b : α) : a * b = b * a := sorry 
-
 end is_subgroup
 
 namespace quotient_group
-open is_subgroup
+open is_subgroup coset_notation
+variable [group α]
 
-definition quotient_group_setoid {α} [group α] (N : set α) [hs : is_normal_subgroup N] : setoid α := 
-{ setoid .
-    r := λ x y, x * y⁻¹ ∈ N,
-    iseqv :=
-    ⟨ λ x, calc
+def norm_equiv (N : set α) (a b : α) := a * b⁻¹ ∈ N
+
+section norm_equiv
+open is_subgroup -- coset_notation
+variables [group α] (N : set α) [is_normal_subgroup N] (a : α)
+
+lemma norm_equiv_mul {a₁ a₂ b₁ b₂ : α} (ha : norm_equiv N a₁ a₂) (hb : norm_equiv N b₁ b₂)
+    : norm_equiv N (a₁ * b₁) (a₂ * b₂) :=
+    begin
+    simp [norm_equiv] at *,
+    have h : (a₁ * N) * a₂⁻¹ = N, {
+        calc
+            (a₁ * N) * a₂⁻¹ = (N * a₁) * a₂⁻¹   : by rw normal_iff_eq_cosets
+            ...             = N * (a₁ * a₂⁻¹)   : 
+    },
+    rw ←h,
+    calc
+        a₁ * b₁ * (b₂⁻¹ * a₂⁻¹) = a₁ * (b₁ * b₂⁻¹) * a₂⁻¹   : by simp
+        ...                     ∈ (a₁ * N) * a₂⁻¹           : mem_rcoset a₂⁻¹ (mem_lcoset a₁ hb)
+    end
+
+end norm_equiv
+
+lemma norm_equiv_rel (N : set α) [is_normal_subgroup N] : equivalence (norm_equiv N) :=
+⟨ λ x, calc
         x * x⁻¹ = (1 : α) : mul_right_inv x
         ... ∈ N           : one_mem N,
     λ x y hxy, calc
@@ -195,6 +175,10 @@ definition quotient_group_setoid {α} [group α] (N : set α) [hs : is_normal_su
     λ x y z hxy hyz, calc
       x * z⁻¹ = (x * y⁻¹) * (y * z⁻¹) : by rw [mul_assoc, inv_mul_cancel_left y z⁻¹]
       ...   ∈ N                       : mul_mem hxy hyz ⟩
+
+definition quotient_group_setoid {α} [group α] (N : set α) [is_normal_subgroup N] : setoid α := {
+    r := norm_equiv N,
+    iseqv := norm_equiv_rel N
 }
 
 attribute [instance] quotient_group_setoid
@@ -203,18 +187,17 @@ def quotient_group {α} [group α] (N : set α) [h : is_normal_subgroup N] := qu
 
 notation G `/` N := quotient_group N
 
-instance quotient_group_is_group {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] : group (G / N) := {
-    mul := quotient.lift₂ (λ x y, ⟦x*y⟧) begin
-    intros x₁ x₂ y₁ y₂ h₁ h₂,
-    apply quot.sound,
-    dsimp [setoid.r],
-    calc
-        (x₁ * x₂) * (y₁ * y₂)⁻¹ = x₁ * x₂ * (y₂⁻¹ * y₁⁻¹)   : by rw [mul_inv_rev y₁ y₂]
-        ...                     = x₁ * (x₂ * y₂⁻¹) * y₁⁻¹   : by rw [←mul_assoc, mul_assoc x₁]
-        ...                     = x₁ * y₁⁻¹ * (x₂ * y₂⁻¹)   : sorry
-        ...                     ∈ N                         : sorry
-    end
-}
+
+
+-- instance quotient_group_is_group {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] : group (G / N) := {
+--     mul := quotient.lift₂ (λ x y : α, ⟦x*y⟧) (λ x₁ x₂ y₁ y₂ h₁ h₂, quot.sound $
+--     calc
+--         (x₁ * x₂) * (y₁ * y₂)⁻¹ = x₁ * x₂ * (y₂⁻¹ * y₁⁻¹)   : by rw [mul_inv_rev y₁ y₂]
+--         ...                     = x₁ * (x₂ * y₂⁻¹) * y₁⁻¹   : by rw [←mul_assoc, mul_assoc x₁]
+--         ...                     = x₁ * y₁⁻¹ * (x₂ * y₂⁻¹)   : 
+--         ...                     ∈ N                         : sorry
+    
+-- }
 
 
 end quotient_group
@@ -229,7 +212,7 @@ structure group_isomorphism (β : Type v) (γ : Type w) [group β] [group γ]
 
 infix ` ≃ₕ `:50 := group_isomorphism
 
-def image' { α β } ( φ : α → β ) := φ '' set.univ
+def image' { α β } ( φ : α → β ) := φ '' univ
 
 
 theorem fake_isomorphism_theorem {α} ( G : group α ) ( H : group α ) { φ : α → α } ( h : is_hom φ ) : (image' φ) ≃ₕ (kernel h) := sorry
