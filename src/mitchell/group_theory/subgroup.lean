@@ -175,12 +175,14 @@ split, tactic.swap,
     }
 end
 
+lemma normal_elem_comm {s : set α} [hs : is_normal_subgroup s] {a : α} (ha : a ∈ s) (b : α) : a * b = b * a := sorry 
+
 end is_subgroup
 
 namespace quotient_group
 open is_subgroup
 
-definition quotient_group_setoid {α} [group α] {N : set α} (hs : is_normal_subgroup N) : setoid α := 
+definition quotient_group_setoid {α} [group α] (N : set α) [hs : is_normal_subgroup N] : setoid α := 
 { setoid .
     r := λ x y, x * y⁻¹ ∈ N,
     iseqv :=
@@ -197,10 +199,21 @@ definition quotient_group_setoid {α} [group α] {N : set α} (hs : is_normal_su
 
 attribute [instance] quotient_group_setoid
 
-instance quotient_group {α} [group α] {N : set α} (hs : is_normal_subgroup N) : group (quotient (quotient_group_setoid hs)) := {
-    one := @quot.mk α _ (1 : α),
-    mul := sorry,
-    mul_assoc := sorry,
+def quotient_group {α} [group α] (N : set α) [h : is_normal_subgroup N] := quotient (quotient_group_setoid N)
+
+notation G `/` N := quotient_group N
+
+instance quotient_group_is_group {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] : group (G / N) := {
+    mul := quotient.lift₂ (λ x y, ⟦x*y⟧) begin
+    intros x₁ x₂ y₁ y₂ h₁ h₂,
+    apply quot.sound,
+    dsimp [setoid.r],
+    calc
+        (x₁ * x₂) * (y₁ * y₂)⁻¹ = x₁ * x₂ * (y₂⁻¹ * y₁⁻¹)   : by rw [mul_inv_rev y₁ y₂]
+        ...                     = x₁ * (x₂ * y₂⁻¹) * y₁⁻¹   : by rw [←mul_assoc, mul_assoc x₁]
+        ...                     = x₁ * y₁⁻¹ * (x₂ * y₂⁻¹)   : sorry
+        ...                     ∈ N                         : sorry
+    end
 }
 
 
@@ -218,7 +231,6 @@ infix ` ≃ₕ `:50 := group_isomorphism
 
 def image' { α β } ( φ : α → β ) := φ '' set.univ
 
-def quotient_group {α} [group α] (G K : set α) [ h : is_normal_subgroup K ] : quotient (quotient_group_setoid h)
 
 theorem fake_isomorphism_theorem {α} ( G : group α ) ( H : group α ) { φ : α → α } ( h : is_hom φ ) : (image' φ) ≃ₕ (kernel h) := sorry
 
