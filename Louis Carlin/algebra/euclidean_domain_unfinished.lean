@@ -210,6 +210,37 @@ instance eea_input_has_well_founded {α :Type} (a b :α) [ed : euclidean_domain 
             let ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_curr, greatest_divisor⟩ := x in 
             begin
                 
+                have h1 := (f rc),
+                induction h1,
+                {
+                    split,
+                    intros y hy,
+                    simp at hy,
+                    cases hy, -- this doesn't work because the (f : α → ℕ) is a different f
+                    cases hy_h,
+                    admit
+                },
+                {
+                    
+                    admit,
+                }
+            end)
+    end
+}
+
+/-
+instance eea_input_has_well_founded {α :Type} (a b :α) [ed : euclidean_domain α]  : has_well_founded (eea_input a b) := {
+    r := λ e1 e2, ∃ (f : α → ℕ) (w : ∀ s t, t = 0 ∨ f(s % t) < f t), f(e1.rc) < f(e2.rc),
+    wf := 
+    begin
+        split,
+        intro x,
+        have := ed.valuation,
+        simp,
+        exact exists.elim this (assume (f : α → ℕ), assume h : ∀ (a' b' : α), b' = 0 ∨ f ( a' % b') < f b',
+            let ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_curr, greatest_divisor⟩ := x in 
+            begin
+                
                 have h1 := (f x.rc),
                 induction h1,
                 {
@@ -222,7 +253,7 @@ instance eea_input_has_well_founded {α :Type} (a b :α) [ed : euclidean_domain 
             end)
     end
 }
-
+-/
 
 -- ( valuation : ∃ f : α → ℕ, ∀ a b, b = 0 ∨ f(remainder a b) < f b )
 /-
@@ -240,21 +271,19 @@ end
 -/
 
 /- Euclidean algorithm stuff -/
+/-
+example {α : Type} [decidable_euclidean_domain α] : has_add α := by apply_instance 
 
-def foo {α : Type} [has_well_founded α] : α → false
-| a := have wf : has_well_founded α,
-    by apply_instance,
-    have h : @has_well_founded.r a a,
-    from sorry,
-    foo a
-
+def foo {α : Type} [has_well_founded α] (f: α → α) (h : ∀ b : α, has_well_founded.r (f b) b) : α → false
+| a := 
+    have h : has_well_founded.r (f a) a,
+    from h a,
+    foo (f a) using_well_founded
+-/
 def extended_euclidean_algorithm_internal' {α : Type}  [ed : decidable_euclidean_domain α]  {a b : α } : eea_input a b → bezout_identity a b
 | input := 
 match input with ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_curr, greatest_divisor ⟩ :=
     if h : rc = 0 then 
-
-    -- have (lt (rp%rc) rc), from sorry,
-
     {
     bezout_identity . x := xp, y := yp, gcd := 
         {
@@ -284,7 +313,7 @@ match input with ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_c
     bezout := bezout_prev
     }
     else 
-        let q := (rp/rc) in
+        let q : α:= (rp/rc) in
         let next_input : eea_input a b := ⟨ rc, ( rp%rc) , xc, (xp-q*xc), yc, (yp -q*yc), bezout_curr,
         
         begin -- proof that rp % rc = a * (xp - q * xc) + b * (yp - q * yc). Used to show gcd = a*x + b*y at end                                                       
@@ -320,7 +349,7 @@ match input with ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_c
             rw ←h2 at this,
             exact and.intro this_right this,
         end⟩ in
-        have (has_well_founded (eea_input a b)).r next_input input,
+        have has_well_founded.r next_input input,
         from sorry,
         extended_euclidean_algorithm_internal' next_input
 end
