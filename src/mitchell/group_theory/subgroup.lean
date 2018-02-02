@@ -19,15 +19,13 @@ class is_subgroup [group α] (s : set α) : Prop :=
     (mul_mem : ∀ {a b}, a ∈ s → b ∈ s → a * b ∈ s) 
                  
 namespace is_subgroup
-variables [group α] [group β]
-variables {s : set α} [is_subgroup s]
 
 attribute [simp] is_subgroup.one_mem 
                  is_subgroup.inv_mem 
                  is_subgroup.mul_mem
 
 -- Subgroup is a group
-instance : group s :=
+instance [group α] {s : set α} [is_subgroup s] : group s :=
 {   mul := λ ⟨x, hx⟩ ⟨y, hy⟩, ⟨x * y, mul_mem hx hy⟩,
     mul_assoc := λ ⟨x, hx⟩ ⟨y, hy⟩ ⟨z, hz⟩, subtype.eq $ mul_assoc x y z,
     one := ⟨1, one_mem s⟩,
@@ -37,79 +35,79 @@ instance : group s :=
     mul_left_inv := λ ⟨x, hx⟩, subtype.eq $ mul_left_inv x }
 
 -- Examples of subgroups
-def trivial : set α := {1}
+def trivial [group α] : set α := {1}
 
 end is_subgroup
 
 namespace is_hom
 variables [group α] [group β]
-variables {s : set α} [is_subgroup s]
 
-def image {f : α → β} (hf: is_hom f) : set β := f '' s
+def image {f : α → β} (hf : is_hom f) (S : set α) : set β := f '' S
 
-def preimage {f : β → α} (hf : is_hom f) : set β := f ⁻¹' s
+def preimage {f : α → β} (hf : is_hom f) (S : set β) : set α := f ⁻¹' S
 
-def kernel {f : α → β} (hf: is_hom f) : set α := preimage trivial
+def kernel {f : α → β} (hf : is_hom f) : set α := hf.preimage is_subgroup.trivial
 
 end is_hom
 
 namespace is_subgroup
+variables [group α] [group β]
 
-instance trivial : is_subgroup ({1} : set α) :=
-    by refine {..}; by simp {contextual := tt}
+instance trivial_in : is_subgroup (@is_subgroup.trivial α _) :=
+    by split; by simp [trivial] {contextual := tt}
 
-instance image {f : α → β} (hf: is_hom f) : is_subgroup (f '' s) := {
+instance image_in {f : α → β} (hf: is_hom f) (S : set α) [is_subgroup S] : is_subgroup (hf.image S) := {
     is_subgroup .
     mul_mem := assume a₁ a₂ ⟨b₁, hb₁, eq₁⟩ ⟨b₂, hb₂, eq₂⟩,
     ⟨b₁ * b₂, mul_mem hb₁ hb₂, by simp [eq₁, eq₂, hf.hom_mul]⟩,
-    one_mem := ⟨1, one_mem s, hf.one⟩,
+    one_mem := ⟨1, one_mem S, hf.one⟩,
     inv_mem := assume a ⟨b, hb, eq⟩,
     ⟨b⁻¹, inv_mem hb, by rw hf.inv; simp *⟩ 
 }
 
-instance preimage {f : β → α} (hf : is_hom f) : is_subgroup (f ⁻¹' s) :=
-    by refine {..}; simp [hf.hom_mul, hf.one, hf.inv] {contextual:=tt}
+-- Should work, but simplifier refuses to unpack definition
 
-def kernel {f : α → β} (hf: is_hom f) : set α := {a | f a = 1}
+-- instance preimage_in {f : β → α} (hf : is_hom f) (S : set α) [is_subgroup S] : is_subgroup (hf.preimage S) :=
+--     by split; simp [hf.preimage S, hf.hom_mul, hf.one, hf.inv] {contextual:=tt};
 
-instance kernel_subg {f : α → β} (hf: is_hom f) : is_subgroup (kernel hf) := 
-    by refine {..}; simp [kernel, hf.hom_mul, hf.one, hf.inv] {contextual:=tt}
+-- instance kernel_in {f : α → β} (hf: is_hom f) : is_subgroup (hf.kernel) := 
+--     by refine {..}; simp [hf.kernel, hf.preimage, hf.hom_mul, hf.one, hf.inv] {contextual:=tt}
 
-lemma kernel_iff_equiv {f : α → β} (hf: is_hom f) (a b : α) : f b = f a ↔ a⁻¹ * b ∈ kernel hf :=
-begin
-    split,
-    { assume h, simp [kernel, hf.hom_mul, hf.inv, h] },
-    { assume h, simp [kernel] at h,
-    calc
-        f b = f (a * a⁻¹ * b)   : by simp; rw [mul_assoc]; simp [hf.hom_mul, h]
-        ... = f a               : by rw [mul_assoc, hf.hom_mul]; simp [h] }
-end
+-- lemma kernel_iff_equiv {f : α → β} (hf: is_hom f) (a b : α) : f b = f a ↔ a⁻¹ * b ∈ hf.kernel :=
+-- begin
+--     split,
+--     { assume h, simp [hf.kernel, hf.hom_mul, hf.inv, h] },
+--     { assume h, simp [kernel] at h,
+--     calc
+--         f b = f (a * a⁻¹ * b)   : by simp; rw [mul_assoc]; simp [hf.hom_mul, h]
+--         ... = f a               : by rw [mul_assoc, hf.hom_mul]; simp [h] }
+-- end
 
-theorem inj_iff_trivial_kernel {f : α → β} (hf: is_hom f) : 
-    function.injective f ↔ kernel hf = {1} :=
-begin
-    split,
-    {
-        dsimp [function.injective, kernel],
-        simp [set_eq_def, mem_set_of_eq],
-        assume h x,
-        split,
-        { 
-        assume hx, 
-        have hi : f x = f 1 := by simp [hf.one, hx],
-        simp [h hi, hf.one]
-        },
-        { assume hx, simp [hx, hf.one] }
-    },
-    {
-        assume h a b,
-        simp [kernel_iff_equiv hf b a, kernel, h],
-        assume hbia,
-        calc
-            a   = b * b⁻¹ * a     : by simp 
-            ... = b               : by rw mul_assoc; simp [hbia]
-    }
-end
+-- theorem inj_iff_trivial_kernel {f : α → β} (hf: is_hom f) : 
+--     function.injective f ↔ hf.kernel = trivial :=
+-- begin
+--     split,
+--     {
+--         dsimp [function.injective, hf.kernel],
+--         simp [set_eq_def, mem_set_of_eq],
+--         assume h x,
+--         split,
+--         { 
+--         assume hx, 
+--         have hi : f x = f 1 := by simp [hf.one, hx],
+--         simp [h hi, hf.one]
+--         },
+--         { assume hx, simp [hx, hf.one] }
+--     },
+--     {
+--         assume h a b,
+--         simp [kernel_iff_equiv hf b a, kernel, h],
+--         assume hbia,
+--         calc
+--             a   = b * b⁻¹ * a     : by simp 
+--             ... = b               : by rw mul_assoc; simp [hbia]
+--     }
+-- end
 
 class is_normal_subgroup (s : set α) : Prop :=
     (subgroup : is_subgroup s)
@@ -117,10 +115,10 @@ class is_normal_subgroup (s : set α) : Prop :=
 
 attribute [instance] is_normal_subgroup.subgroup
 
-instance kernel_normal {f : α → β} (hf: is_hom f) : is_normal_subgroup (kernel hf) :=
-    by refine {..};
-    simp [kernel, hf.hom_mul, hf.one, hf.inv] {contextual:=tt};
-    apply (is_subgroup.kernel_subg hf)
+-- instance kernel_normal {f : α → β} (hf: is_hom f) : is_normal_subgroup (hf.kernel) :=
+--     by refine {..};
+--     simp [hf.kernel, hf.hom_mul, hf.one, hf.inv] {contextual:=tt};
+--     apply (is_subgroup.kernel_subg hf)
 
 def center (α : Type u) [group α] : set α := {z | ∀ g, g * z = z * g}
 
