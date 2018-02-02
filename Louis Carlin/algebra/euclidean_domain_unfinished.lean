@@ -1,8 +1,74 @@
 import Louis.euclidean_domain
 
 
-/- misc gcd/ed stuff -/
+/- lemmas -/
+@[simp] lemma mod_zero {α : Type} [ed : euclidean_domain α] (a : α)  : a % 0 = a :=
+begin
+    have := ed.witness,
+    have := this a 0,
+    simp at this,
+    exact this,
+end
 
+lemma zero_value_implies_zero {α : Type} [ed : euclidean_domain α] : ∀ (a : α), ∀ (f : α → ℕ) (hf : ∀ s t, t = 0 ∨ f(s % t) < f t), f a = 0 → a = 0 :=
+begin
+    intros,
+    have := ed.witness,
+    have := hf 0 a,
+    cases this,
+    assumption,
+    rw [a_1] at this_1,
+    cases this_1,
+end
+
+lemma zero_lowest (α : Type) [ed : decidable_euclidean_domain α] : ∀ (a : α), ∀ (f : α → ℕ) (hf : ∀ s t, t = 0 ∨ f(s % t) < f t), a = 0 ∨ f 0 < f a :=
+begin
+    intros,
+    have := hf 0 a,
+    cases this,
+    left, exact this,
+    by_contradiction, -- possible without this (on non-decidable ed)?
+    rw [not_or_distrib] at a_1,
+    cases a_1,
+    have := ed.valuation,
+
+    have h1 := mod_zero a,
+    exact exists.elim this (assume (f : α → ℕ), 
+    begin
+        intros,
+        have := a_1 0 a,
+        cases this,
+        exact a_1_left this_1,
+        
+    end)
+end
+#check not_or_distrib
+
+
+@[simp] lemma zero_div_ed {α : Type} [ed : euclidean_domain α] (b : α) : 0 / b = 0 :=
+begin
+    have := ed.witness,
+    have := this 0 b,
+end 
+
+@[simp] lemma zero_mod {α : Type} [ed : euclidean_domain α] (b : α) : 0 % b = 0 :=
+begin
+    have := ed.witness,
+    have := this 0 b,
+    simp at this,
+    have := zero_div b,
+end
+
+
+
+
+#check euclidean_domain_has_div.div
+
+
+
+
+/- misc gcd/ed stuff -/
+/-
 instance field_euclidean_domain {α : Type}  [ decidable_eq α ][fa: field α] : euclidean_domain α:= 
 {
     fa with
@@ -33,6 +99,7 @@ begin
     | _ := 0
     end)
 end
+-/
 
 -- theorem nat_gcd_gcd -- prove equivalence of definitions
 
@@ -193,6 +260,19 @@ example {α : Type} (a b : α) (f : α → ℕ) [euclidean_domain α]  : has_wel
     end
 }
 
+#eval (5%0)
+
+
+
+#check zero_mod 
+
+example {α :Type} (a b :α) [ed : euclidean_domain α] (x : eea_input a b) (hx : x.rc = 0) : 
+acc (λ (e1 e2: eea_input a b), ∃ (f : α → ℕ) (w : ∀ s t, t = 0 ∨ f(s % t) < f t), f(e1.rc) < f(e2.rc)) x :=
+begin
+    
+end
+
+#check acc
 
 instance eea_input_has_well_founded' {α :Type} (a b :α) [ed : euclidean_domain α]  : has_well_founded (eea_input a b) := {
     r := λ e1 e2, ∃ (f : α → ℕ) (w : ∀ s t, t = 0 ∨ f(s % t) < f t), f(e1.rc) < f(e2.rc),
