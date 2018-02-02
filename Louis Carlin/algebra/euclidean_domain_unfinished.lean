@@ -198,7 +198,66 @@ example : has_well_founded test_struct := {
     end
 }
 
+example {α : Type} (a b : α) (f : α → ℕ) [euclidean_domain α]  : has_well_founded α := {
+    r :=  λ e1 e2, f(e1) < f(e2),
+    wf :=
+    begin
+        split,
+        intro x,
+        split,
+        intros y hy,
+        have := (f x),
+        cases (f x),
+        {
+            cases hy,
+        },
+        {
+            have h1 : f y < n → acc (λ (e1 e2 : α), f e1 < f e2) y, from sorry,
+            have := nat.succ_le_of_lt hy,
+
+            cases this,
+            {
+                admit,
+            },
+            {
+                admit,
+            }
+        }
+    end
+
+#check nat.le
+
+example {α : Type} (a b : α) (f : α → ℕ) [euclidean_domain α]  : has_well_founded (eea_input a b) := {
+    r :=  λ e1 e2, f(e1.rc) < f(e2.rc),
+    wf :=
+    begin
+        split,
+        intro x,
+        split,
+        intros y hy,
+        have := (f x.rc),
+        cases (f x.rc),
+        {
+            cases hy,
+        },
+        {
+            have h1 : f (y.rc) < n → acc (λ (e1 e2 : eea_input a b), f (e1.rc) < f (e2.rc)) y, 
+        }
+    end
+}
+
 instance eea_input_has_well_founded {α :Type} (a b :α) [ed : euclidean_domain α]  : has_well_founded (eea_input a b) := {
+    r := λ e1 e2, ∃ (f : α → ℕ) (w : ∀ s t, t = 0 ∨ f(s % t) < f t), f(e1.rc) < f(e2.rc),
+    wf := 
+    begin
+        split,
+        intro x,
+
+        
+    end
+}
+
+instance eea_input_has_well_founded' {α :Type} (a b :α) [ed : euclidean_domain α]  : has_well_founded (eea_input a b) := {
     r := λ e1 e2, ∃ (f : α → ℕ) (w : ∀ s t, t = 0 ∨ f(s % t) < f t), f(e1.rc) < f(e2.rc),
     wf := 
     begin
