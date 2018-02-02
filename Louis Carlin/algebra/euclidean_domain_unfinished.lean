@@ -198,34 +198,36 @@ example : has_well_founded test_struct := {
     end
 }
 
-example {α : Type} (a b : α) (f : α → ℕ) [euclidean_domain α]  : has_well_founded α := {
-    r :=  λ e1 e2, f(e1) < f(e2),
-    wf :=
-    begin
-        split,
-        intro x,
-        split,
-        intros y hy,
-        have := (f x),
-        cases (f x),
-        {
-            cases hy,
-        },
-        {
-            have h1 : f y < n → acc (λ (e1 e2 : α), f e1 < f e2) y, from sorry,
-            have := nat.succ_le_of_lt hy,
 
-            cases this,
-            {
-                admit,
-            },
-            {
-                admit,
-            }
-        }
-    end
+default_has_sizeof
 
-#check nat.le
+set_option trace.class_instances true
+example {α : Type} (a b : α) (f : α → ℕ) [euclidean_domain α]  : has_well_founded α := 
+begin
+-- apply_instance, this is just mapping everything to 0
+have h : has_sizeof α := {sizeof := f},
+apply_instance,
+end
+
+def a : has_well_founded nat := by apply_instance
+set_option trace.class_instances false
+
+example {α : Type} [ed : euclidean_domain α] (h : ∃ (f : α → ℕ), ∀ (a b : α), b = 0 ∨ f ( a % b) < f b) : has_well_founded α :=
+exists.elim ed.valuation (assume (f : α → ℕ), assume h : ∀ (a b : α), b = 0 ∨ f ( a % b) < f b,
+begin
+    have h : has_sizeof α := {sizeof := f},
+    have : has_well_founded α, by apply_instance,
+    exact this,
+end
+
+
+#check a.wf
+#check has_sizeof
+
+example (α : Type) [ed : euclidean_domain α] : has_sizeof α :=
+exists.elim ed.valuation (assume (f : α → ℕ), assume h : ∀ (a' b' : α), b' = 0 ∨ f ( a' % b') < f b',
+{has_sizeof α . sizeof := f })
+
 
 example {α : Type} (a b : α) (f : α → ℕ) [euclidean_domain α]  : has_well_founded (eea_input a b) := {
     r :=  λ e1 e2, f(e1.rc) < f(e2.rc),
@@ -408,8 +410,10 @@ match input with ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_c
             rw ←h2 at this,
             exact and.intro this_right this,
         end⟩ in
-        have has_well_founded.r next_input input,
-        from sorry,
-        extended_euclidean_algorithm_internal' next_input
+        begin
+            have := ed.valuation,
+            
+            exact (extended_euclidean_algorithm_internal' next_input)
+        end
 end
 
