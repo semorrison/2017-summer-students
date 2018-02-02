@@ -37,26 +37,18 @@ instance [group α] {s : set α} [is_subgroup s] : group s :=
 -- Examples of subgroups
 def trivial [group α] : set α := {1}
 
+instance trivial_in [group α] : is_subgroup (@is_subgroup.trivial α _) :=
+    by split; by simp [trivial] {contextual := tt}
+
 end is_subgroup
 
 namespace is_hom
+open is_subgroup
 variables [group α] [group β]
 
-def image {f : α → β} (hf : is_hom f) (S : set α) : set β := f '' S
+def kernel {f : α → β} (hf : is_hom f) : set α := preimage f is_subgroup.trivial
 
-def preimage {f : α → β} (hf : is_hom f) (S : set β) : set α := f ⁻¹' S
-
-def kernel {f : α → β} (hf : is_hom f) : set α := hf.preimage is_subgroup.trivial
-
-end is_hom
-
-namespace is_subgroup
-variables [group α] [group β]
-
-instance trivial_in : is_subgroup (@is_subgroup.trivial α _) :=
-    by split; by simp [trivial] {contextual := tt}
-
-instance image_in {f : α → β} (hf: is_hom f) (S : set α) [is_subgroup S] : is_subgroup (hf.image S) := {
+instance image_in {f : α → β} (hf: is_hom f) (S : set α) [is_subgroup S] : is_subgroup (f '' S) := {
     is_subgroup .
     mul_mem := assume a₁ a₂ ⟨b₁, hb₁, eq₁⟩ ⟨b₂, hb₂, eq₂⟩,
     ⟨b₁ * b₂, mul_mem hb₁ hb₂, by simp [eq₁, eq₂, hf.hom_mul]⟩,
@@ -65,13 +57,16 @@ instance image_in {f : α → β} (hf: is_hom f) (S : set α) [is_subgroup S] : 
     ⟨b⁻¹, inv_mem hb, by rw hf.inv; simp *⟩ 
 }
 
--- Should work, but simplifier refuses to unpack definition
+instance preimage_in {f : β → α} (hf : is_hom f) (S : set α) [is_subgroup S] : is_subgroup (f ⁻¹' S) :=
+    by split; simp [hf.hom_mul, hf.one, hf.inv] {contextual:=tt}
 
--- instance preimage_in {f : β → α} (hf : is_hom f) (S : set α) [is_subgroup S] : is_subgroup (hf.preimage S) :=
---     by split; simp [hf.preimage S, hf.hom_mul, hf.one, hf.inv] {contextual:=tt};
+instance kernel_in {f : α → β} (hf: is_hom f) : is_subgroup (hf.kernel) := 
+    is_hom.preimage_in hf $ trivial
 
--- instance kernel_in {f : α → β} (hf: is_hom f) : is_subgroup (hf.kernel) := 
---     by refine {..}; simp [hf.kernel, hf.preimage, hf.hom_mul, hf.one, hf.inv] {contextual:=tt}
+end is_hom
+
+namespace is_subgroup
+variables [group α] [group β]
 
 -- lemma kernel_iff_equiv {f : α → β} (hf: is_hom f) (a b : α) : f b = f a ↔ a⁻¹ * b ∈ hf.kernel :=
 -- begin
