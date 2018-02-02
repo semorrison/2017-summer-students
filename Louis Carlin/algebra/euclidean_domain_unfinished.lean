@@ -48,40 +48,6 @@ example (p : Prop) [decidable p] : p ∨ ¬ p := dite p (assume hp :p, or.inl hp
 
 example : well_founded int.lt := by admit
 
-#check exists_prop
-
-constant ex : ∃ x : nat, x = 5
-#check exists.elim ex (λ a : nat, λ ha : a = 5, show ∃ x : nat, x = 5, from exists.intro a ha)
-
-
--- ( valuation : ∃ f : α → ℕ, ∀ a b, b = 0 ∨ f(remainder a b) < f b )
-
-#check exists.elim
-
-lemma well_founded_ded (α : Type) [ed : decidable_euclidean_domain α] : ∃ (r: α → α → Prop), well_founded r ∧ ∀ (a b : α), b = 0 ∨ r (a%b) b :=
-begin
-    have := ed.remainder, -- why can't lean figure this out inside the next part?
-    exact exists.elim ed.valuation
-    (assume f : α → ℕ,
-    assume hf : ∀ (a' b' : α), b' = 0 ∨ f (/- ed.remainder -/ a' %  b') < f b',
-    begin
-    -- exact f,
-    show ∃ (r: α → α → Prop), well_founded r ∧ ∀ (a b : α), b = 0 ∨ r (a%b) b,
-    existsi (λ x y, f x < f y),
-    split,
-    {
-
-
-        admit,
-    },
-    {
-        simp,
-        intros,
-        exact hf a b,
-    },
-     end),
-end
-
 /-
 
 inductive acc {α : Sort u} (r : α → α → Prop) : α → Prop
@@ -134,24 +100,6 @@ example : has_well_founded ℕ := {
     
     end
 }
-
-
-
-/-
-example : has_well_founded ℤ := 
-{
-    r := 
-} 
--/
-
-example (a : nat) (f : nat → nat) (hf : f a < 2) : f a = 1 ∨ f a = 0 :=
-begin
-    have := f a,
-    cases this,
-    right,
-    exact dec_trivial,
-
-end
 
 
 
@@ -221,9 +169,6 @@ begin
 end
 
 
-#check a.wf
-#check has_sizeof
-
 example (α : Type) [ed : euclidean_domain α] : has_sizeof α :=
 exists.elim ed.valuation (assume (f : α → ℕ), assume h : ∀ (a' b' : α), b' = 0 ∨ f ( a' % b') < f b',
 {has_sizeof α . sizeof := f })
@@ -248,16 +193,6 @@ example {α : Type} (a b : α) (f : α → ℕ) [euclidean_domain α]  : has_wel
     end
 }
 
-instance eea_input_has_well_founded {α :Type} (a b :α) [ed : euclidean_domain α]  : has_well_founded (eea_input a b) := {
-    r := λ e1 e2, ∃ (f : α → ℕ) (w : ∀ s t, t = 0 ∨ f(s % t) < f t), f(e1.rc) < f(e2.rc),
-    wf := 
-    begin
-        split,
-        intro x,
-
-        
-    end
-}
 
 instance eea_input_has_well_founded' {α :Type} (a b :α) [ed : euclidean_domain α]  : has_well_founded (eea_input a b) := {
     r := λ e1 e2, ∃ (f : α → ℕ) (w : ∀ s t, t = 0 ∨ f(s % t) < f t), f(e1.rc) < f(e2.rc),
@@ -341,6 +276,11 @@ def foo {α : Type} [has_well_founded α] (f: α → α) (h : ∀ b : α, has_we
     from h a,
     foo (f a) using_well_founded
 -/
+
+#check exists.elim
+#check (has_well_founded nat)
+#check Prop
+
 def extended_euclidean_algorithm_internal' {α : Type}  [ed : decidable_euclidean_domain α]  {a b : α } : eea_input a b → bezout_identity a b
 | input := 
 match input with ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_curr, greatest_divisor ⟩ :=
@@ -413,7 +353,8 @@ match input with ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_c
         begin
             have := ed.valuation,
             
-            exact (extended_euclidean_algorithm_internal' next_input)
+            exact exists.elim ed.valuation (assume (f : α → ℕ), assume h : ∀ a' b', b' = 0 ∨ f(a' % b') < f b',
+            (extended_euclidean_algorithm_internal' next_input))
         end
 end
 
