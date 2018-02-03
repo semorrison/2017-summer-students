@@ -70,7 +70,7 @@ include hs
 
 -- Can definitely be cleaned
 
-lemma lcoset_mem_lcoset {a : α} (a ∈ S) : a * S = S := 
+lemma lcoset_mem_lcoset {a : α} (ha : a ∈ S) : a * S = S := 
 begin
     simp [lcoset, image],
     simp [set_eq_def, mem_set_of_eq],
@@ -80,17 +80,17 @@ begin
     cases h with x hx,
     cases hx with hxl hxr,
     rw [←hxr],
-    exact mul_mem H hxl },
+    exact mul_mem ha hxl },
     { intro h,
     existsi a⁻¹ * b,
     split,
-    have : a⁻¹ ∈ S, from inv_mem H,
+    have : a⁻¹ ∈ S, from inv_mem ha,
     exact mul_mem this h,
     simp
     }
 end
 
-lemma rcoset_mem_rcoset {a : α} (a ∈ S) : S * a = S :=
+lemma rcoset_mem_rcoset {a : α} (ha : a ∈ S) : S * a = S :=
 begin
     simp [rcoset, image],
     simp [set_eq_def, mem_set_of_eq],
@@ -100,24 +100,38 @@ begin
     cases h with x hx,
     cases hx with hxl hxr,
     rw [←hxr],
-    exact mul_mem hxl H},
+    exact mul_mem hxl ha},
     { intro h,
     existsi b * a⁻¹,
     split,
-    have : a⁻¹ ∈ S, from inv_mem H,
+    have : a⁻¹ ∈ S, from inv_mem ha,
     exact mul_mem h this,
     simp
     }
 end
 
+lemma one_lcoset : 1 * S = S := lcoset_mem_lcoset S (one_mem S)
+
+lemma one_rcoset : S * 1 = S := rcoset_mem_rcoset S (one_mem S)
+
 lemma mem_own_lcoset (a : α) : a ∈ a * S := 
-    by rw [←mul_one a]; exact (mem_lcoset a (one_mem S))
+    by rw [←mul_one a, ←lcoset_assoc, one_lcoset S]; exact (mem_lcoset a (one_mem S))
 
-lemma mem_own_rcoset (a : α) : a ∈ S * a := sorry
+lemma mem_own_rcoset (a : α) : a ∈ S * a :=
+    by rw [←one_mul a, ←rcoset_assoc, one_rcoset S]; exact (mem_rcoset a (one_mem S))
 
-lemma mem_lcoset_lcoset {a : α} (ha : a * S = S) : a ∈ S := sorry
+lemma mem_lcoset_lcoset {a : α} (ha : a * S = S) : a ∈ S :=
+    by rw [←ha]; exact mem_own_lcoset S a 
 
-lemma mem_rcoset_rcoset {a : α} (ha : S * a = S) : a ∈ S := sorry
+lemma mem_rcoset_rcoset {a : α} (ha : S * a = S) : a ∈ S :=
+    by rw [←ha]; exact mem_own_rcoset S a
+
+lemma mem_mem_lcoset {a x : α} (hx : x ∈ S) (hax : a * x ∈ S) : a ∈ S :=
+    begin 
+    apply mem_lcoset_lcoset S,
+    rw [←lcoset_mem_lcoset S hx, lcoset_assoc],
+    rw [lcoset_mem_lcoset S hx, lcoset_mem_lcoset S hax]
+    end
 
 theorem normal_iff_eq_cosets : is_normal_subgroup S ↔ ∀ g, g * S = S * g :=
 begin

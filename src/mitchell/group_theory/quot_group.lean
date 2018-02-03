@@ -18,33 +18,7 @@ open is_subgroup coset_notation
 variables [hg : group α] (N : set α) [hn : is_normal_subgroup N] (a : α)
 include hn hg
 
-lemma norm_equiv_mul {a₁ a₂ b₁ b₂ : α} (ha : norm_equiv N a₁ a₂) (hb : norm_equiv N b₁ b₂)
-    : norm_equiv N (a₁ * b₁) (a₂ * b₂) :=
-    begin
-    simp [norm_equiv] at *,
-    have h : (a₁ * N) * a₂⁻¹ = N, {
-        calc
-            (a₁ * N) * a₂⁻¹ = (N * a₁) * a₂⁻¹   : by rw iff.elim_left (normal_iff_eq_cosets N) hn
-            ...             = N * (a₁ * a₂⁻¹)   : by rw rcoset_assoc
-            ...             = N                 : by rw (rcoset_mem_rcoset N (a₁ * a₂⁻¹) ha); assumption
-    },
-    rw ←h,
-    calc
-        a₁ * b₁ * (b₂⁻¹ * a₂⁻¹) = a₁ * (b₁ * b₂⁻¹) * a₂⁻¹   : by rw [mul_assoc, ←mul_assoc b₁, ←mul_assoc]
-        ...                     ∈ (a₁ * N) * a₂⁻¹           : mem_rcoset a₂⁻¹ (mem_lcoset a₁ hb)
-    end
-
-lemma norm_equiv_inv {a₁ a₂ : α} (h : norm_equiv N a₁ a₂) : norm_equiv N a₁⁻¹ a₂⁻¹ :=
-begin
-    simp [norm_equiv] at *,
-    have hi : (a₁ * a₂⁻¹)⁻¹ ∈ N, from inv_mem h,
-    simp [mul_inv_rev] at hi,
-    sorry
-end
-
-end norm_equiv
-
-lemma norm_equiv_rel (N : set α) [is_normal_subgroup N] : equivalence (norm_equiv N) :=
+lemma norm_equiv_rel : equivalence (norm_equiv N) :=
 ⟨ λ x, calc
         x * x⁻¹ = (1 : α) : mul_right_inv x
         ... ∈ N           : one_mem N,
@@ -54,6 +28,37 @@ lemma norm_equiv_rel (N : set α) [is_normal_subgroup N] : equivalence (norm_equ
     λ x y z hxy hyz, calc
       x * z⁻¹ = (x * y⁻¹) * (y * z⁻¹) : by rw [mul_assoc, inv_mul_cancel_left y z⁻¹]
       ...   ∈ N                       : mul_mem hxy hyz ⟩
+
+lemma norm_equiv_rfl (a : α) : norm_equiv N a a := (norm_equiv_rel N).left a
+
+lemma norm_equiv_symm {a b} (h : norm_equiv N a b) : norm_equiv N b a := (norm_equiv_rel N).right.left h
+
+lemma norm_equiv_trans {a b c} (hab : norm_equiv N a b) (hbc : norm_equiv N b c) : norm_equiv N a c := (norm_equiv_rel N).right.right hab hbc
+
+lemma norm_equiv_mul {a₁ a₂ b₁ b₂ : α} (ha : norm_equiv N a₁ a₂) (hb : norm_equiv N b₁ b₂)
+    : norm_equiv N (a₁ * b₁) (a₂ * b₂) :=
+    begin
+    simp [norm_equiv] at *,
+    have h : (a₁ * N) * a₂⁻¹ = N, {
+        calc
+            (a₁ * N) * a₂⁻¹ = (N * a₁) * a₂⁻¹   : by rw iff.elim_left (normal_iff_eq_cosets N) hn
+            ...             = N * (a₁ * a₂⁻¹)   : by rw rcoset_assoc
+            ...             = N                 : by rw [rcoset_mem_rcoset N ha]; assumption
+    },
+    rw ←h,
+    calc
+        a₁ * b₁ * (b₂⁻¹ * a₂⁻¹) = a₁ * (b₁ * b₂⁻¹) * a₂⁻¹   : by rw [mul_assoc, ←mul_assoc b₁, ←mul_assoc]
+        ...                     ∈ (a₁ * N) * a₂⁻¹           : mem_rcoset a₂⁻¹ (mem_lcoset a₁ hb)
+    end
+
+lemma norm_equiv_inv {a₁ a₂ : α} (h : norm_equiv N a₁ a₂) : norm_equiv N a₁⁻¹ a₂⁻¹ :=
+begin
+    apply norm_equiv_symm N,
+    simp [norm_equiv] at *,
+    exact mem_norm_comm h
+end
+
+end norm_equiv
 
 definition quotient_group_setoid {α} [group α] (N : set α) [is_normal_subgroup N] : setoid α := {
     r := norm_equiv N,
