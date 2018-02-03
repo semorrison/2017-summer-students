@@ -115,10 +115,10 @@ lemma one_lcoset : 1 * S = S := lcoset_mem_lcoset S (one_mem S)
 lemma one_rcoset : S * 1 = S := rcoset_mem_rcoset S (one_mem S)
 
 lemma mem_own_lcoset (a : α) : a ∈ a * S := 
-    by rw [←mul_one a, ←lcoset_assoc, one_lcoset S]; exact (mem_lcoset a (one_mem S))
+    by conv in a {rw ←mul_one a}; exact (mem_lcoset a (one_mem S))
 
 lemma mem_own_rcoset (a : α) : a ∈ S * a :=
-    by rw [←one_mul a, ←rcoset_assoc, one_rcoset S]; exact (mem_rcoset a (one_mem S))
+    by conv in a {rw ←one_mul a}; exact (mem_rcoset a (one_mem S))
 
 lemma mem_lcoset_lcoset {a : α} (ha : a * S = S) : a ∈ S :=
     by rw [←ha]; exact mem_own_lcoset S a 
@@ -129,8 +129,8 @@ lemma mem_rcoset_rcoset {a : α} (ha : S * a = S) : a ∈ S :=
 lemma mem_mem_lcoset {a x : α} (hx : x ∈ S) (hax : a * x ∈ S) : a ∈ S :=
     begin 
     apply mem_lcoset_lcoset S,
-    rw [←lcoset_mem_lcoset S hx, lcoset_assoc],
-    rw [lcoset_mem_lcoset S hx, lcoset_mem_lcoset S hax]
+    conv in S { rw ←lcoset_mem_lcoset S hx },
+    rw [lcoset_assoc, lcoset_mem_lcoset S hax]
     end
 
 theorem normal_iff_eq_cosets : is_normal_subgroup S ↔ ∀ g, g * S = S * g :=

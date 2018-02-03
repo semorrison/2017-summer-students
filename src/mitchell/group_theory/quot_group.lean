@@ -71,7 +71,7 @@ def quotient_group {α} [group α] (N : set α) [h : is_normal_subgroup N] := qu
 
 notation G `/` N := quotient_group N
 
-instance quotient_group_is_group {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] : group (G / N) := {
+lemma quotient_group_is_group {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] : group (G / N) := {
     one := ⟦ 1 ⟧,
     mul := quotient.lift₂ (λ x y : α, ⟦x*y⟧) (λ x₁ x₂ y₁ y₂ h₁ h₂, quot.sound (norm_equiv_mul N h₁ h₂)),
     inv := quotient.lift  (λ x : α, ⟦x⁻¹⟧)   (λ x₁ x₂ h, quot.sound (norm_equiv_inv N h)),
@@ -82,11 +82,14 @@ instance quotient_group_is_group {α} [G : group α] (N : set α) [hs : is_norma
     mul_left_inv := λ x, quotient.induction_on x (λ x, show ⟦ x⁻¹ * x ⟧ = ⟦ 1 ⟧, by rw mul_left_inv)
 }
 
+attribute [instance] quotient_group_is_group
+
 end quotient_group
 
 open is_subgroup
 open quotient_group
 open function
+open is_hom
 
 structure group_isomorphism (β : Type v) (γ : Type w) [group β] [group γ]
   extends equiv β γ :=
@@ -94,6 +97,6 @@ structure group_isomorphism (β : Type v) (γ : Type w) [group β] [group γ]
 
 infix ` ≃ₕ `:50 := group_isomorphism
 
-def image' { α β } ( φ : α → β ) := φ '' univ
+def image' ( φ : α → β ) := φ '' univ
 
--- theorem first_isomorphism_theorem {α β} ( G : group α ) ( H : group β ) { φ : α → β } ( h : is_hom φ ) : (image' φ) ≃ₕ G / (h.kernel) := sorry
+theorem first_isomorphism_theorem {α β} ( G : group α ) ( H : group β ) { φ : α → β } ( h : is_hom φ ) : group_isomorphism (quotient_group h.kernel) (image' φ)  := sorry
