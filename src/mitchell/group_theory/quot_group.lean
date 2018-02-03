@@ -34,7 +34,13 @@ lemma norm_equiv_mul {a₁ a₂ b₁ b₂ : α} (ha : norm_equiv N a₁ a₂) (h
         ...                     ∈ (a₁ * N) * a₂⁻¹           : mem_rcoset a₂⁻¹ (mem_lcoset a₁ hb)
     end
 
-lemma norm_equiv_inv {a₁ a₂ : α} (h : norm_equiv N a₁ a₂) : norm_equiv N a₁⁻¹ a₂⁻¹ := sorry
+lemma norm_equiv_inv {a₁ a₂ : α} (h : norm_equiv N a₁ a₂) : norm_equiv N a₁⁻¹ a₂⁻¹ :=
+begin
+    simp [norm_equiv] at *,
+    have hi : (a₁ * a₂⁻¹)⁻¹ ∈ N, from inv_mem h,
+    simp [mul_inv_rev] at hi,
+    sorry
+end
 
 end norm_equiv
 
@@ -70,7 +76,6 @@ instance quotient_group_is_group {α} [G : group α] (N : set α) [hs : is_norma
     one_mul := λ x, quotient.induction_on x (λ x, show ⟦ 1 * x ⟧ = ⟦ x ⟧, by rw one_mul),
     mul_left_inv := λ x, quotient.induction_on x (λ x, show ⟦ x⁻¹ * x ⟧ = ⟦ 1 ⟧, by rw mul_left_inv)
 }
-
 
 end quotient_group
 

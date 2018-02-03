@@ -50,40 +50,74 @@ lemma rcoset_assoc (S : set α) (a b : α) : S * a * b = S * (a * b) :=
         ((λ x : α, x * b) ∘ (λ x : α, x * a)) c = c * a * b                 : by simp
         ...                                     = (λ x : α, x * (a * b)) c  : by rw mul_assoc; simp),
     calc
-        S * a * b = image ((λ x : α, x * b) ∘ (λ x : α, x * a)) S           : by rw [rcoset, rcoset, ←image_comp]
+        S * a * b   = image ((λ x : α, x * b) ∘ (λ x : α, x * a)) S         : by rw [rcoset, rcoset, ←image_comp]
         ...         = S * (a * b)                                           : by rw [rcoset, h]
 
-lemma lcoset_rcoset (S : set α) (a b : α) : a * S * b = a * (S * b) := sorry
+lemma lcoset_rcoset (S : set α) (a b : α) : a * S * b = a * (S * b) := 
+    have h : (λ x : α, x * b) ∘ (λ x : α, a * x) = (λ x : α, a * (x * b)), from funext (λ c : α, calc
+        ((λ x : α, x * b) ∘ (λ x : α, a * x)) c = a * c * b                 : by simp
+        ...                                     = (λ x : α, a * (c * b)) c  : by rw mul_assoc; simp),
+    calc
+        a * S * b   = image ((λ x : α, x * b) ∘ (λ x : α, a * x)) S         : by rw [rcoset, lcoset, ←image_comp]
+        ...         = a * (S * b)                                           : by rw [rcoset, lcoset, ←image_comp, h]
 
 end coset_semigroup
 
-section coset_monoid
-open coset_notation
-variable [monoid α]
-
-lemma one_lcoset (S : set α) : 1 * S = S := sorry
-
-lemma rcoset_one (S : set α) : S * 1 = S := sorry
-
-end coset_monoid
-
-section coset_group
-open is_subgroup coset_notation
-variable [group α]
-
-lemma eq_set_eq_lcoset {a : α} {S T : set α} (h : a * S = a * T) : S = T := sorry
-
-lemma eq_set_eq_rcoset {a : α} {S T : set α} (h : S * a = T * a) : S = T := sorry
-
-lemma mul_mem_lcoset {a b : α} {S : set α} (abaS : a * b ∈ a * S) : b ∈ S := sorry
-
-lemma mul_mem_rcoset {a b : α} {S : set α} (baSa : b * a ∈ S * a) : b ∈ S := sorry
-
-end coset_group
-
-begin coset_subgroup
+section coset_subgroup
 open is_subgroup coset_notation
 variables [group α] (S : set α) [hs : is_subgroup S]
+include hs
+
+-- Can definitely be cleaned
+
+lemma lcoset_mem_lcoset {a : α} (a ∈ S) : a * S = S := 
+begin
+    simp [lcoset, image],
+    simp [set_eq_def, mem_set_of_eq],
+    intro b,
+    split,
+    { intro h,
+    cases h with x hx,
+    cases hx with hxl hxr,
+    rw [←hxr],
+    exact mul_mem H hxl },
+    { intro h,
+    existsi a⁻¹ * b,
+    split,
+    have : a⁻¹ ∈ S, from inv_mem H,
+    exact mul_mem this h,
+    simp
+    }
+end
+
+lemma rcoset_mem_rcoset {a : α} (a ∈ S) : S * a = S :=
+begin
+    simp [rcoset, image],
+    simp [set_eq_def, mem_set_of_eq],
+    intro b,
+    split,
+    { intro h,
+    cases h with x hx,
+    cases hx with hxl hxr,
+    rw [←hxr],
+    exact mul_mem hxl H},
+    { intro h,
+    existsi b * a⁻¹,
+    split,
+    have : a⁻¹ ∈ S, from inv_mem H,
+    exact mul_mem h this,
+    simp
+    }
+end
+
+lemma mem_own_lcoset (a : α) : a ∈ a * S := 
+    by rw [←mul_one a]; exact (mem_lcoset a (one_mem S))
+
+lemma mem_own_rcoset (a : α) : a ∈ S * a := sorry
+
+lemma mem_lcoset_lcoset {a : α} (ha : a * S = S) : a ∈ S := sorry
+
+lemma mem_rcoset_rcoset {a : α} (ha : S * a = S) : a ∈ S := sorry
 
 theorem normal_iff_eq_cosets : is_normal_subgroup S ↔ ∀ g, g * S = S * g :=
 begin
@@ -118,4 +152,4 @@ split, tactic.swap,
     }
 end
 
-end coset_group
+end coset_subgroup
