@@ -92,17 +92,52 @@ open quotient_group
 open function
 open is_hom
 
+section extend
+variables [group α] [group β]
+variables {N : set α} [hs : is_normal_subgroup N]
+include hs
+
+def q_em (a : α) := ⟦a⟧ 
+
+variables {f : α → β} (resp_f : ∀ a₁ a₂, norm_equiv N a₁ a₂ → f a₁ = f a₂)
+
+def extend : quotient_group N → β := quotient.lift f resp_f
+
+lemma extend_quot (a : α) : extend resp_f ⟦a⟧ = f a := rfl
+
+lemma extend_quot_comp : extend resp_f ∘ q_em = f := rfl
+
+end extend
+
+section
+
+theorem fun_resp_ker [group α] [group β] (f : α → β) [hf : is_hom f] : ∀ a₁ a₂, norm_equiv (hf.kernel) a₁ a₂ → f a₁ = f a₂ := sorry
+
 structure group_isomorphism (β : Type v) (γ : Type w) [group β] [group γ]
   extends equiv β γ :=
 (hom_fun : is_hom to_fun)
 
 infix ` ≃ₕ `:50 := group_isomorphism
 
-def image' ( φ : α → β ) := φ '' univ
+def image' ( f : α → β ) := f '' univ
 
--- set_option trace.class_instances true
+lemma image'_group [G : group α] [H : group β] (f : α → β) [h : is_hom f] : group (image' f) := @subgroup_group β H (image' f) {
+    mul_mem := assume a₁ a₂ ⟨b₁, eq₁⟩ ⟨b₂, eq₂⟩,
+    ⟨b₁ * b₂, by simp [eq₁, eq₂, h.hom_mul]⟩,
+    one_mem := ⟨1, one_mem univ, h.one⟩,
+    inv_mem := assume a ⟨b, eq⟩,
+    ⟨b⁻¹, by rw h.inv; simp *⟩ 
+}
 
-instance {α β} ( G : group α ) ( H : group β ) { φ : α → β } ( h : is_hom φ ) : group (φ '' univ) := @is_subgroup.subgroup_group β H (φ '' univ) (@image_in α β G H φ h univ univ_in)
+attribute [instance] image'_group
 
-theorem first_isomorphism_theorem {α β} ( G : group α ) ( H : group β ) { φ : α → β } ( h : is_hom φ ) 
-    : @group_isomorphism (quotient_group h.kernel) (φ '' univ) _ (set.image.group G H h) := sorry
+end
+
+set_option trace.class_instances true
+
+-- instance {α β} ( G : group α ) ( H : group β ) { f : α → β } ( h : is_hom f ) : group (f '' univ) := @is_subgroup.subgroup_group β H (f '' univ) (@image_in α β G H f h univ univ_in)
+
+#print subgroup_group
+
+theorem first_isomorphism_theorem {α β} ( G : group α ) ( H : group β ) { f : α → β } ( h : is_hom f ) 
+    : group_isomorphism (quotient_group h.kernel) (image' f) := sorry
