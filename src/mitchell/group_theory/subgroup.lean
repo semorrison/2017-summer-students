@@ -34,7 +34,7 @@ attribute [simp] is_subgroup.one_mem
 attribute [instance] is_normal_subgroup.subgroup
 
 -- Subgroup is a group
-instance subgroup_group [group α] {s : set α} [is_subgroup s] : group s :=
+instance subgroup_group [group α] {s : set α} (hs : is_subgroup s) : group s :=
 {   mul := λ ⟨x, hx⟩ ⟨y, hy⟩, ⟨x * y, mul_mem hx hy⟩,
     mul_assoc := λ ⟨x, hx⟩ ⟨y, hy⟩ ⟨z, hz⟩, subtype.eq $ mul_assoc x y z,
     one := ⟨1, one_mem s⟩,
@@ -52,7 +52,7 @@ lemma mem_norm_comm [group α] {a b : α} {S : set α} [is_normal_subgroup S] (h
 @[simp]
 def trivial [group α] : set α := {1}
 
-lemma trivial_in [group α] : is_subgroup (@is_subgroup.trivial α _) :=
+lemma trivial_in [h : group α] : is_subgroup (@is_subgroup.trivial α h) :=
     by split; simp [trivial] {contextual := tt}
 
 lemma univ_in [group α] : is_subgroup (@univ α) :=

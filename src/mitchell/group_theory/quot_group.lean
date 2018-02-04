@@ -33,7 +33,8 @@ lemma norm_equiv_rfl (a : α) : norm_equiv N a a := (norm_equiv_rel N).left a
 
 lemma norm_equiv_symm {a b} (h : norm_equiv N a b) : norm_equiv N b a := (norm_equiv_rel N).right.left h
 
-lemma norm_equiv_trans {a b c} (hab : norm_equiv N a b) (hbc : norm_equiv N b c) : norm_equiv N a c := (norm_equiv_rel N).right.right hab hbc
+lemma norm_equiv_trans {a b c} (hab : norm_equiv N a b) (hbc : norm_equiv N b c) : norm_equiv N a c := 
+    (norm_equiv_rel N).right.right hab hbc
 
 lemma norm_equiv_mul {a₁ a₂ b₁ b₂ : α} (ha : norm_equiv N a₁ a₂) (hb : norm_equiv N b₁ b₂)
     : norm_equiv N (a₁ * b₁) (a₂ * b₂) :=
@@ -99,4 +100,9 @@ infix ` ≃ₕ `:50 := group_isomorphism
 
 def image' ( φ : α → β ) := φ '' univ
 
-theorem first_isomorphism_theorem {α β} ( G : group α ) ( H : group β ) { φ : α → β } ( h : is_hom φ ) : group_isomorphism (quotient_group h.kernel) (image' φ)  := sorry
+-- set_option trace.class_instances true
+
+instance {α β} ( G : group α ) ( H : group β ) { φ : α → β } ( h : is_hom φ ) : group (φ '' univ) := @is_subgroup.subgroup_group β H (φ '' univ) (@image_in α β G H φ h univ univ_in)
+
+theorem first_isomorphism_theorem {α β} ( G : group α ) ( H : group β ) { φ : α → β } ( h : is_hom φ ) 
+    : @group_isomorphism (quotient_group h.kernel) (φ '' univ) _ (set.image.group G H h) := sorry
