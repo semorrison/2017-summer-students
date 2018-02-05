@@ -18,21 +18,18 @@ namespace is_hom
 variables [group α] [group β] [group γ]
 
 section
-variables {f : α → β} {a : α}
-variable (hf: is_hom f)
-include hf
 
 @[simp]
-lemma one : f 1 = 1 := 
+lemma one {f : α → β} (hf : is_hom f) : f 1 = 1 := 
 mul_self_iff_eq_one.1 $ by simp [(hf.hom_mul 1 1).symm]
 
 @[simp]
-lemma inv : f a⁻¹ = (f a)⁻¹ :=
-eq.symm $ inv_eq_of_mul_eq_one $ by simp [(hf.hom_mul a a⁻¹).symm, one hf]
+lemma inv {f : α → β} (hf : is_hom f) (a : α)  : f a⁻¹ = (f a)⁻¹ :=
+eq.symm $ inv_eq_of_mul_eq_one $ by simp [(hf.hom_mul a a⁻¹).symm, hf.one]
 
 end
 
-lemma comp {g : β → γ} {f : α → β} [hg : is_hom g] [hf : is_hom f] : is_hom (g ∘ f) :=
+lemma comp {g : β → γ} {f : α → β} (hg : is_hom g) (hf : is_hom f) : is_hom (g ∘ f) :=
 {   hom_mul := λ x y, calc
     g (f (x * y)) = g (f x * f y)       : by simp [hf.hom_mul]
     ...           = g (f x) * g (f y)   : by simp [hg.hom_mul]
