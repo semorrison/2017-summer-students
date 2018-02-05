@@ -216,27 +216,6 @@ example : has_well_founded test_struct := {
 }
 
 
-
-example {α : Type} (a b : α) (f : α → ℕ) [euclidean_domain α]  : has_well_founded (eea_input a b) := {
-    r :=  λ e1 e2, f(e1.rc) < f(e2.rc),
-    wf :=
-    begin
-        split,
-        intro x,
-        split,
-        intros y hy,
-        have := (f x.rc),
-        cases (f x.rc),
-        {
-            cases hy,
-        },
-        {
-            have h1 : f (y.rc) < n → acc (λ (e1 e2 : eea_input a b), f (e1.rc) < f (e2.rc)) y, 
-        }
-    end
-}
-
-
 #check acc
 
 instance eea_input_has_well_founded' {α :Type} (a b :α) [ed : euclidean_domain α]  : has_well_founded (eea_input a b) := {
@@ -264,7 +243,37 @@ instance eea_input_has_well_founded' {α :Type} (a b :α) [ed : euclidean_domain
     end
 }
 
+instance eea_input_has_well_founded'' {α :Type} (a b :α) [ed : euclidean_domain α]  : has_well_founded (eea_input a b) := {
+    r := λ e1 e2, ∀ (f : α → ℕ) (w : ∀ s t, t = 0 ∨ f(s % t) < f t), f(e1.rc) < f(e2.rc),
+    wf := 
+    begin
+        split,
+        exact exists.elim ed.valuation (assume g : α → ℕ, assume hg : ∀ p q : α, q = 0 ∨ g (p % q) < g q,
+        begin 
+        /- problem: We want to do induction on (g x.rc) for all (x : eea_input a b)
+        If we introduce such an x, then the induction becomes specific to that x
 
+        -/
+
+        intro x,
+        have h : g x.rc < 0 → 
+        (acc (λ (e1 e2 : eea_input a b), -- why is this a type mismatch?
+        ∀ (f : α → ℕ), (∀ (s t : α),
+        t = 0 ∨ f (s % t) < f t) → f (e1.rc) < f (e2.rc)) x), from sorry,
+
+        have n : ℕ,
+        have : (g x.rc < n → 
+        (acc (λ (e1 e2 : eea_input a b),
+        ∀ (f : α → ℕ), (∀ (s t : α),
+        t = 0 ∨ f (s % t) < f t) → f (e1.rc) < f (e2.rc)) x)) → (g x.rc < n+1 → 
+        (acc (λ (e1 e2 : eea_input a b),
+        ∀ (f : α → ℕ), (∀ (s t : α),
+        t = 0 ∨ f (s % t) < f t) → f (e1.rc) < f (e2.rc)) x))
+        end)
+        
+        
+    end
+}
 
 /-
 instance eea_input_has_well_founded {α :Type} (a b :α) [ed : euclidean_domain α]  : has_well_founded (eea_input a b) := {
@@ -387,12 +396,7 @@ match input with ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_c
             have := dvd_add this_left this,
             rw ←h2 at this,
             exact and.intro this_right this,
-        end⟩ in
-        begin
-            have := ed.valuation,
-            
-            exact exists.elim ed.valuation (assume (f : α → ℕ), assume h : ∀ a' b', b' = 0 ∨ f(a' % b') < f b',
-            (extended_euclidean_algorithm_internal' next_input))
-        end
+        end⟩ 
+        in extended_euclidean_algorithm_internal' next_input
 end
 
