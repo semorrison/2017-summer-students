@@ -126,50 +126,44 @@ inductive well_founded {α : Sort u} (r : α → α → Prop) : Prop
 | intro (h : ∀ a, acc r a) : well_founded
 -/
 
+#check acc
 
-example : has_well_founded ℕ := { 
+set_option trace.class_instances true
+
+example : has_well_founded ℕ := by apply_instance
+
+definition nat_has_well_founded : has_well_founded ℕ := { 
     r := λ (n m : nat), n < m,
     wf :=
     begin
-    split,
-    intro a,
-    simp,
-    induction a,
-    {
-    exact acc.intro 0
-        begin
-        intro y,
-        intro,
-        induction y,
-        {
-            have := lt_irrefl 0,
-            exact absurd a this,
-        },
-        {
-            have := not_lt_of_lt (nat.zero_lt_succ y_n),
-            exact absurd a this,
-        }
-        end,
-    },
-    {
+      split, intro a, induction a with b h,
+      {
+          split,
+          intro y,
+          intro h,
+          cases h,
+      },
+      {
         split,
-        intros y ylt,
-        have := nat.succ_le_of_lt ylt,
-        cases this,
+        intro y,
+        intro h,
+        cases h,
         {
-            assumption,
+            assumption
         },
         {
-            cases a_ih,
-            have h1 := nat.lt_of_succ_le this_a,
-            have h2 := a_ih_h y,
-            exact h2 h1,
+            have p : y < b, by sorry,
+            cases h,
+            exact h_h y p
         }
-    }
-    
+      }
     end
 }
 
+def exists_well_founded : inhabited (has_well_founded ℕ) := begin 
+  split,
+  exact nat_has_well_founded
+end
 
 
 structure test_struct :=
@@ -223,14 +217,16 @@ instance eea_input_has_well_founded' {α :Type} (a b :α) [ed : euclidean_domain
     wf := 
     begin
         split,
+        intro x,
+
         exact exists.elim ed.valuation (assume g : α → ℕ, assume hg : ∀ p q : α, q = 0 ∨ g (p % q) < g q,
         begin 
         /- problem: We want to do induction on (g x.rc) for all (x : eea_input a b)
         If we introduce such an x, then the induction becomes specific to that x
 
         -/
+   
 
-        intro x,
         split,
         intros y hy,
         have := hy g,
