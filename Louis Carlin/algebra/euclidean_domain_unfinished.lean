@@ -1,5 +1,64 @@
 import Louis.euclidean_domain
 
+instance default_valuation_as_sizeof {α} [ed : decidable_euclidean_domain α] : has_sizeof α := {
+  sizeof := begin
+  have := ed.valuation,
+  induction this, -- how do I do this without entering tactics?
+  induction this,
+  exact this_val,
+  end
+}
+
+
+example {α} [ed : decidable_euclidean_domain α] : has_well_founded α := {
+    r := begin 
+    have := ed.valuation,
+    induction this,
+    induction this,
+    exact λ e1 e2, this_val e1 < this_val e2
+    end,
+    wf := by sorry,
+}
+#check has_emptyc
+
+definition least_element : set ℕ → ℕ := sorry
+definition least_element_least { U : set ℕ } ( x ∈ U ) : least_element U ≤ x := sorry
+definition least_element_in ( U : set ℕ ) : least_element U ∈ U := sorry
+-- nat.find
+-- well_founded.min
+
+#check well_founded.min
+
+definition optimal_valuation {α} [ed : decidable_euclidean_domain α] : valuation (ed.remainder) := {
+    val := λ a, least_element ((λ f : valuation (ed.remainder), f.val a) '' (set.univ)),
+    property := λ a b,
+    begin
+      cases decidable.em (b = 0), {
+        left, assumption
+      }, 
+      {
+        right,
+        have p : ∃ g : valuation (ed.remainder), least_element ((λ (f : valuation euclidean_domain.remainder), f.val b) '' set.univ) = g.val b, by sorry,
+        induction p with g h,
+        rw h,
+        have q : least_element ((λ (f : valuation euclidean_domain.remainder), f.val (euclidean_domain.remainder a b)) '' set.univ) ≤ g.val (a % b), by sorry,
+        have r : g.val (a % b) < g.val b, begin
+                                            have s := g.property a b,
+                                            induction s,
+                                            contradiction,
+                                            exact s,
+                                          end,
+        sorry --- put together q and r
+      }      
+    end
+}
+
+instance optimal_valuation_as_sizeof {α} [ed : decidable_euclidean_domain α] : has_sizeof α := {
+  sizeof := optimal_valuation.val
+}
+/- nat_abs lemmas -/
+
+
 
 /- lemmas -/
 @[simp] lemma mod_zero {α : Type} [ed : euclidean_domain α] (a : α)  : a % 0 = a :=

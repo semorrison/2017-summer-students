@@ -41,6 +41,9 @@ instance euclidean_domain_has_mod {α : Type} [euclidean_domain α] : has_mod α
 definition least_element : set ℕ → ℕ := sorry
 definition least_element_least { U : set ℕ } ( x ∈ U ) : least_element U ≤ x := sorry
 definition least_element_in ( U : set ℕ ) : least_element U ∈ U := sorry
+-- nat.find
+-- well_founded.min
+
 
 definition optimal_valuation {α} [ed : decidable_euclidean_domain α] : valuation (ed.remainder) := {
     val := λ a, least_element ((λ f : valuation (ed.remainder), f.val a) '' (set.univ)),
