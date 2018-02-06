@@ -1,8 +1,76 @@
 import Louis.euclidean_domain
 
 
-/- misc gcd/ed stuff -/
+/- lemmas -/
+@[simp] lemma mod_zero {α : Type} [ed : euclidean_domain α] (a : α)  : a % 0 = a :=
+begin
+    have := ed.witness,
+    have := this a 0,
+    simp at this,
+    exact this,
+end
 
+lemma zero_value_implies_zero {α : Type} [ed : euclidean_domain α] : ∀ (a : α), ∀ (f : α → ℕ) (hf : ∀ s t, t = 0 ∨ f(s % t) < f t), f a = 0 → a = 0 :=
+begin
+    intros,
+    have := ed.witness,
+    have := hf 0 a,
+    cases this,
+    assumption,
+    rw [a_1] at this_1,
+    cases this_1,
+end
+
+/-
+lemma zero_lowest (α : Type) [ed : decidable_euclidean_domain α] : ∀ (a : α), ∀ (f : α → ℕ) (hf : ∀ s t, t = 0 ∨ f(s % t) < f t), a = 0 ∨ f 0 < f a :=
+begin
+    intros,
+    have := hf 0 a,
+    cases this,
+    left, exact this,
+    
+    by_contradiction, -- possible without this (on non-decidable ed)?
+    rw [not_or_distrib] at a_1,
+    cases a_1,
+    have := ed.valuation,
+
+    have h1 := mod_zero a,
+    exact exists.elim this (assume (f : α → ℕ), 
+    begin
+        intros,
+        have := a_1 0 a,
+        cases this,
+        exact a_1_left this_1,
+
+    end)
+end
+#check not_or_distrib
+
+
+@[simp] lemma zero_div_ed {α : Type} [ed : euclidean_domain α] (b : α) : 0 / b = 0 :=
+begin
+    have := ed.witness,
+    have := this 0 b,
+end 
+
+@[simp] lemma zero_mod {α : Type} [ed : euclidean_domain α] (b : α) : 0 % b = 0 :=
+begin
+    have := ed.witness,
+    have := this 0 b,
+    simp at this,
+    have := zero_div b,
+end
+-/
+
+
+
+#check euclidean_domain_has_div.div
+
+
+
+
+/- misc gcd/ed stuff -/
+/-
 instance field_euclidean_domain {α : Type}  [ decidable_eq α ][fa: field α] : euclidean_domain α:= 
 {
     fa with
@@ -33,6 +101,7 @@ begin
     | _ := 0
     end)
 end
+-/
 
 -- theorem nat_gcd_gcd -- prove equivalence of definitions
 
@@ -57,50 +126,44 @@ inductive well_founded {α : Sort u} (r : α → α → Prop) : Prop
 | intro (h : ∀ a, acc r a) : well_founded
 -/
 
+#check acc
 
-example : has_well_founded ℕ := { 
+set_option trace.class_instances true
+
+example : has_well_founded ℕ := by apply_instance
+
+definition nat_has_well_founded : has_well_founded ℕ := { 
     r := λ (n m : nat), n < m,
     wf :=
     begin
-    split,
-    intro a,
-    simp,
-    induction a,
-    {
-    exact acc.intro 0
-        begin
-        intro y,
-        intro,
-        induction y,
-        {
-            have := lt_irrefl 0,
-            exact absurd a this,
-        },
-        {
-            have := not_lt_of_lt (nat.zero_lt_succ y_n),
-            exact absurd a this,
-        }
-        end,
-    },
-    {
+      split, intro a, induction a with b h,
+      {
+          split,
+          intro y,
+          intro h,
+          cases h,
+      },
+      {
         split,
-        intros y ylt,
-        have := nat.succ_le_of_lt ylt,
-        cases this,
+        intro y,
+        intro h,
+        cases h,
         {
-            assumption,
+            assumption
         },
         {
-            cases a_ih,
-            have h1 := nat.lt_of_succ_le this_a,
-            have h2 := a_ih_h y,
-            exact h2 h1,
+            have p : y < b, by sorry,
+            cases h,
+            exact h_h y p
         }
-    }
-    
+      }
     end
 }
 
+def exists_well_founded : inhabited (has_well_founded ℕ) := begin 
+  split,
+  exact nat_has_well_founded
+end
 
 
 structure test_struct :=
@@ -147,80 +210,64 @@ example : has_well_founded test_struct := {
 }
 
 
-default_has_sizeof
-
-set_option trace.class_instances true
-example {α : Type} (a b : α) (f : α → ℕ) [euclidean_domain α]  : has_well_founded α := 
-begin
--- apply_instance, this is just mapping everything to 0
-have h : has_sizeof α := {sizeof := f},
-apply_instance,
-end
-
-def a : has_well_founded nat := by apply_instance
-set_option trace.class_instances false
-
-example {α : Type} [ed : euclidean_domain α] (h : ∃ (f : α → ℕ), ∀ (a b : α), b = 0 ∨ f ( a % b) < f b) : has_well_founded α :=
-exists.elim ed.valuation (assume (f : α → ℕ), assume h : ∀ (a b : α), b = 0 ∨ f ( a % b) < f b,
-begin
-    have h : has_sizeof α := {sizeof := f},
-    have : has_well_founded α, by apply_instance,
-    exact this,
-end
-
-
-example (α : Type) [ed : euclidean_domain α] : has_sizeof α :=
-exists.elim ed.valuation (assume (f : α → ℕ), assume h : ∀ (a' b' : α), b' = 0 ∨ f ( a' % b') < f b',
-{has_sizeof α . sizeof := f })
-
-
-example {α : Type} (a b : α) (f : α → ℕ) [euclidean_domain α]  : has_well_founded (eea_input a b) := {
-    r :=  λ e1 e2, f(e1.rc) < f(e2.rc),
-    wf :=
-    begin
-        split,
-        intro x,
-        split,
-        intros y hy,
-        have := (f x.rc),
-        cases (f x.rc),
-        {
-            cases hy,
-        },
-        {
-            have h1 : f (y.rc) < n → acc (λ (e1 e2 : eea_input a b), f (e1.rc) < f (e2.rc)) y, 
-        }
-    end
-}
-
+#check acc
 
 instance eea_input_has_well_founded' {α :Type} (a b :α) [ed : euclidean_domain α]  : has_well_founded (eea_input a b) := {
-    r := λ e1 e2, ∃ (f : α → ℕ) (w : ∀ s t, t = 0 ∨ f(s % t) < f t), f(e1.rc) < f(e2.rc),
+    r := λ e1 e2, ∀ (f : α → ℕ) (w : ∀ s t, t = 0 ∨ f(s % t) < f t), f(e1.rc) < f(e2.rc),
     wf := 
     begin
         split,
         intro x,
-        have := ed.valuation,
-        simp,
-        exact exists.elim this (assume (f : α → ℕ), assume h : ∀ (a' b' : α), b' = 0 ∨ f ( a' % b') < f b',
-            let ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_curr, greatest_divisor⟩ := x in 
-            begin
-                
-                have h1 := (f rc),
-                induction h1,
-                {
-                    split,
-                    intros y hy,
-                    simp at hy,
-                    cases hy, -- this doesn't work because the (f : α → ℕ) is a different f
-                    cases hy_h,
-                    admit
-                },
-                {
-                    
-                    admit,
-                }
-            end)
+
+        exact exists.elim ed.valuation (assume g : α → ℕ, assume hg : ∀ p q : α, q = 0 ∨ g (p % q) < g q,
+        begin 
+        /- problem: We want to do induction on (g x.rc) for all (x : eea_input a b)
+        If we introduce such an x, then the induction becomes specific to that x
+
+        -/
+   
+
+        split,
+        intros y hy,
+        have := hy g,
+        have := this hg, -- we really want things to be for all y here
+        induction (g x.rc),
+        admit,
+        end)
+        
+        
+    end
+}
+
+instance eea_input_has_well_founded'' {α :Type} (a b :α) [ed : euclidean_domain α]  : has_well_founded (eea_input a b) := {
+    r := λ e1 e2, ∀ (f : α → ℕ) (w : ∀ s t, t = 0 ∨ f(s % t) < f t), f(e1.rc) < f(e2.rc),
+    wf := 
+    begin
+        split,
+        exact exists.elim ed.valuation (assume g : α → ℕ, assume hg : ∀ p q : α, q = 0 ∨ g (p % q) < g q,
+        begin 
+        /- problem: We want to do induction on (g x.rc) for all (x : eea_input a b)
+        If we introduce such an x, then the induction becomes specific to that x
+
+        -/
+
+        intro x,
+        have h : g x.rc < 0 → 
+        (acc (λ (e1 e2 : eea_input a b), -- why is this a type mismatch?
+        ∀ (f : α → ℕ), (∀ (s t : α),
+        t = 0 ∨ f (s % t) < f t) → f (e1.rc) < f (e2.rc)) x), from sorry,
+
+        have n : ℕ,
+        have : (g x.rc < n → 
+        (acc (λ (e1 e2 : eea_input a b),
+        ∀ (f : α → ℕ), (∀ (s t : α),
+        t = 0 ∨ f (s % t) < f t) → f (e1.rc) < f (e2.rc)) x)) → (g x.rc < n+1 → 
+        (acc (λ (e1 e2 : eea_input a b),
+        ∀ (f : α → ℕ), (∀ (s t : α),
+        t = 0 ∨ f (s % t) < f t) → f (e1.rc) < f (e2.rc)) x))
+        end)
+        
+        
     end
 }
 
@@ -276,10 +323,6 @@ def foo {α : Type} [has_well_founded α] (f: α → α) (h : ∀ b : α, has_we
     from h a,
     foo (f a) using_well_founded
 -/
-
-#check exists.elim
-#check (has_well_founded nat)
-#check Prop
 
 def extended_euclidean_algorithm_internal' {α : Type}  [ed : decidable_euclidean_domain α]  {a b : α } : eea_input a b → bezout_identity a b
 | input := 
@@ -349,12 +392,7 @@ match input with ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_c
             have := dvd_add this_left this,
             rw ←h2 at this,
             exact and.intro this_right this,
-        end⟩ in
-        begin
-            have := ed.valuation,
-            
-            exact exists.elim ed.valuation (assume (f : α → ℕ), assume h : ∀ a' b', b' = 0 ∨ f(a' % b') < f b',
-            (extended_euclidean_algorithm_internal' next_input))
-        end
+        end⟩ 
+        in extended_euclidean_algorithm_internal' next_input
 end
 

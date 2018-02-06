@@ -12,27 +12,23 @@ import tactic.ring
 
 universes u v
 
-class euclidean_domain (α : Type u) extends integral_domain α :=
-( decidable_equality : decidable_eq α . tactic.apply_instance )
+definition valuation {α} [has_zero α] (r : α → α → α) := { f : α → ℕ // ∀ a b, b = 0 ∨ f(r a b) < f b }
 
+class euclidean_domain (α : Type u) extends integral_domain α :=
 ( quotient : α → α → α )
 
 ( remainder : α → α → α )
 
 ( witness : ∀ a b, (quotient a b) * b + (remainder a b) = a )
 
-( valuation : ∃ f : α → ℕ, ∀ a b, b = 0 ∨ f(remainder a b) < f b )
-
+( valuation : inhabited (valuation remainder) )
 
 class decidable_euclidean_domain (α : Type) extends euclidean_domain α := -- ask Scott about this implementation (we only really need to be able to compare with zero)
-
 (decidable_eq : decidable_eq α)
-
 
 
 instance decidable_eq_ab {α : Type} [decidable_euclidean_domain α] (a b : α) : decidable (a = b) := -- why does this have to have a different name?
 decidable_euclidean_domain.decidable_eq α a b
-
 
 instance euclidean_domain_has_div {α : Type} [euclidean_domain α] : has_div α := {
     div := euclidean_domain.quotient
@@ -42,7 +38,37 @@ instance euclidean_domain_has_mod {α : Type} [euclidean_domain α] : has_mod α
     mod := euclidean_domain.remainder
 }
 
+definition least_element : set ℕ → ℕ := sorry
+definition least_element_least { U : set ℕ } ( x ∈ U ) : least_element U ≤ x := sorry
+definition least_element_in ( U : set ℕ ) : least_element U ∈ U := sorry
 
+definition optimal_valuation {α} [ed : decidable_euclidean_domain α] : valuation (ed.remainder) := {
+    val := λ a, least_element ((λ f : valuation (ed.remainder), f.val a) '' (set.univ)),
+    property := λ a b,
+    begin
+      cases decidable.em (b = 0), {
+        left, assumption
+      }, 
+      {
+        right,
+        have p : ∃ g : valuation (ed.remainder), least_element ((λ (f : valuation euclidean_domain.remainder), f.val b) '' set.univ) = g.val b, by sorry,
+        induction p with g h,
+        rw h,
+        have q : least_element ((λ (f : valuation euclidean_domain.remainder), f.val (euclidean_domain.remainder a b)) '' set.univ) ≤ g.val (a % b), by sorry,
+        have r : g.val (a % b) < g.val b, begin
+                                            have s := g.property a b,
+                                            induction s,
+                                            contradiction,
+                                            exact s,
+                                          end,
+        sorry --- put together q and r
+      }      
+    end
+}
+
+instance optimal_valuation_as_sizeof {α} [ed : decidable_euclidean_domain α] : has_sizeof α := {
+  sizeof := optimal_valuation.val
+}
 /- nat_abs lemmas -/
 open int
 
@@ -170,8 +196,11 @@ structure eea_input {α : Type} (a b : α) [euclidean_domain α] :=
 
 (greatest_divisor : ∀ d : common_divisor a b, d.value ∣ rp ∧ d.value ∣ rc)
 
+instance eea_input_has_sizeof {α : Type} (a b : α) [euclidean_domain α] : has_sizeof (eea_input a b) := {
+    sizeof := λ e, sizeof e.rc
+}
 
-
+example {α : Type} (a b : α) [euclidean_domain α] : has_well_founded (eea_input a b) := by apply_instance
 
 def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_euclidean_domain α]  {a b : α } : eea_input a b → bezout_identity a b
 | input := 
