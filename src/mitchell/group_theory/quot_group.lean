@@ -94,6 +94,9 @@ open is_hom
 
 section extend
 variables [group α] [group β]
+
+def image' ( f : α → β ) := f '' univ
+
 variables {N : set α} [hs : is_normal_subgroup N]
 include hs
 
@@ -107,6 +110,8 @@ lemma extend_quot (a : α) : extend resp_f ⟦a⟧ = f a := rfl
 
 lemma extend_quot_comp : extend resp_f ∘ q_em = f := rfl
 
+def extend_im : quotient_group N → image' f := λ x, quotient.lift_on x (λ x, ⟨f x, x, rfl⟩ : α → image' f)
+
 end extend
 
 section
@@ -119,25 +124,20 @@ structure group_isomorphism (β : Type v) (γ : Type w) [group β] [group γ]
 
 infix ` ≃ₕ `:50 := group_isomorphism
 
-def image' ( f : α → β ) := f '' univ
-
-lemma image'_group [G : group α] [H : group β] (f : α → β) [h : is_hom f] : group (image' f) := @subgroup_group β H (image' f) {
-    mul_mem := assume a₁ a₂ ⟨b₁, eq₁⟩ ⟨b₂, eq₂⟩,
-    ⟨b₁ * b₂, by simp [eq₁, eq₂, h.hom_mul]⟩,
-    one_mem := ⟨1, one_mem univ, h.one⟩,
-    inv_mem := assume a ⟨b, eq⟩,
-    ⟨b⁻¹, by rw h.inv; simp *⟩ 
-}
+lemma image'_group [G : group α] [H : group β] (f : α → β) [h : is_hom f] : group (image' f) := 
+    @subgroup_group β H (image' f) (@image_in α β G H f h univ univ_in)
 
 attribute [instance] image'_group
 
 end
 
-set_option trace.class_instances true
+-- set_option trace.class_instances true
 
 -- instance {α β} ( G : group α ) ( H : group β ) { f : α → β } ( h : is_hom f ) : group (f '' univ) := @is_subgroup.subgroup_group β H (f '' univ) (@image_in α β G H f h univ univ_in)
 
 #print subgroup_group
 
-theorem first_isomorphism_theorem {α β} ( G : group α ) ( H : group β ) { f : α → β } ( h : is_hom f ) 
-    : group_isomorphism (quotient_group h.kernel) (image' f) := sorry
+theorem first_isomorphism_theorem {α β} [G : group α] [H : group β] (f : α → β ) [h : is_hom f] 
+    : @group_isomorphism (quotient_group h.kernel) (image' f) _ (@image'_group _ _ _ _ f h) := {
+        to_fun := 
+    }
