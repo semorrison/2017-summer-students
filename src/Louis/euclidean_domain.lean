@@ -16,12 +16,9 @@ definition valuation {α} [has_zero α] (r : α → α → α) := { f : α → �
 
 class euclidean_domain (α : Type u) extends integral_domain α :=
 ( quotient : α → α → α )
-
 ( remainder : α → α → α )
-
 ( witness : ∀ a b, (quotient a b) * b + (remainder a b) = a )
-
-( valuation : inhabited (valuation remainder) )
+( valuation : inhabited (valuation remainder) ) -- does using inhabited here go against what we want??
 
 class decidable_euclidean_domain (α : Type) extends euclidean_domain α := -- ask Scott about this implementation (we only really need to be able to compare with zero)
 (decidable_eq : decidable_eq α)
@@ -38,41 +35,6 @@ instance euclidean_domain_has_mod {α : Type} [euclidean_domain α] : has_mod α
     mod := euclidean_domain.remainder
 }
 
-definition least_element : set ℕ → ℕ := sorry
-definition least_element_least { U : set ℕ } ( x ∈ U ) : least_element U ≤ x := sorry
-definition least_element_in ( U : set ℕ ) : least_element U ∈ U := sorry
--- nat.find
--- well_founded.min
-
-
-definition optimal_valuation {α} [ed : decidable_euclidean_domain α] : valuation (ed.remainder) := {
-    val := λ a, least_element ((λ f : valuation (ed.remainder), f.val a) '' (set.univ)),
-    property := λ a b,
-    begin
-      cases decidable.em (b = 0), {
-        left, assumption
-      }, 
-      {
-        right,
-        have p : ∃ g : valuation (ed.remainder), least_element ((λ (f : valuation euclidean_domain.remainder), f.val b) '' set.univ) = g.val b, by sorry,
-        induction p with g h,
-        rw h,
-        have q : least_element ((λ (f : valuation euclidean_domain.remainder), f.val (euclidean_domain.remainder a b)) '' set.univ) ≤ g.val (a % b), by sorry,
-        have r : g.val (a % b) < g.val b, begin
-                                            have s := g.property a b,
-                                            induction s,
-                                            contradiction,
-                                            exact s,
-                                          end,
-        sorry --- put together q and r
-      }      
-    end
-}
-
-instance optimal_valuation_as_sizeof {α} [ed : decidable_euclidean_domain α] : has_sizeof α := {
-  sizeof := optimal_valuation.val
-}
-/- nat_abs lemmas -/
 open int
 
 lemma lt_nat_abs {a : ℤ} (b : ℤ) (H : a ≥ 0) : a < b → nat_abs a < nat_abs b := 
@@ -103,6 +65,7 @@ begin
     exact p
 end
 
+#check nat_abs_mod_lt_abs
 
 /- Euclidean Domain instances-/
 
@@ -116,7 +79,20 @@ instance int_euclidean_domain : euclidean_domain ℤ :=
                     rw [add_comm, mul_comm],
                     exact mod_add_div a b,
                    end,
-        valuation := begin
+        valuation := 
+            begin
+                split, split, simp, -- order is wrong?
+                {
+                    intros,
+                    cases decidable.em (b = 0),
+                    left, assumption,
+                    right,
+                    exact nat_abs_mod_lt_abs a h,
+                },
+            end
+                    
+                    /-
+                    begin
                         existsi (λ x, nat_abs x),
                         intros,
                         cases decidable.em (b=0), 
@@ -129,7 +105,7 @@ instance int_euclidean_domain : euclidean_domain ℤ :=
                             apply nat_abs_mod_lt_abs,
                             assumption,                        
                         }
-                     end
+                     end-/
 }  
 
 #check inv_mul_self
@@ -137,11 +113,8 @@ instance int_euclidean_domain : euclidean_domain ℤ :=
 /- gcd stuff -/
 
 structure common_divisor {α : Type} [R: comm_ring α] (a b : α) :=
-
 (value : α)
-
 (divides_a : value ∣ a) -- better names?
-
 (divides_b : value ∣ b)
 
 
@@ -180,23 +153,16 @@ theorem gcd_comm {α : Type} [R: comm_ring α] {a b : α}(d : greatest_common_di
 /- euclidean algorithm -/
 
 structure bezout_identity {α : Type} [R: comm_ring α] (a b : α):= 
-
 (x y : α) -- coefficients
-
 (gcd : greatest_common_divisor a b)
-
 (bezout : gcd.value = a * x + b * y)
 
 
 structure eea_input {α : Type} (a b : α) [euclidean_domain α] := 
 (rp rc xp xc yp yc: α)
-
 (bezout_prev : rp = a * xp + b * yp)
-
 (bezout_curr : rc = a * xc + b * yc)
-
 (divides : ∀ x : α, x∣rp ∧ x∣rc → x∣a ∧ x∣b)
-
 (greatest_divisor : ∀ d : common_divisor a b, d.value ∣ rp ∧ d.value ∣ rc)
 
 instance eea_input_has_sizeof {α : Type} (a b : α) [euclidean_domain α] : has_sizeof (eea_input a b) := {
