@@ -95,7 +95,8 @@ open is_hom
 section extend
 variables [group α] [group β]
 
-def image' ( f : α → β ) := f '' univ
+def image ( f : α → β ) := f '' univ
+lemma image_mem (f : α → β) (a : α) : f a ∈ image f := by sorry
 
 variables {N : set α} [hs : is_normal_subgroup N]
 include hs
@@ -110,7 +111,7 @@ lemma extend_quot (a : α) : extend resp_f ⟦a⟧ = f a := rfl
 
 lemma extend_quot_comp : extend resp_f ∘ q_em = f := rfl
 
-def extend_im : quotient_group N → image' f := λ x, quotient.lift_on x (λ x, ⟨f x, x, rfl⟩ : α → image' f)
+-- def extend_im : quotient_group N → image' f := λ x, quotient.lift_on x (λ x, ⟨f x, x, rfl⟩ : α → image' f)
 
 end extend
 
@@ -124,8 +125,8 @@ structure group_isomorphism (β : Type v) (γ : Type w) [group β] [group γ]
 
 infix ` ≃ₕ `:50 := group_isomorphism
 
-lemma image'_group [G : group α] [H : group β] (f : α → β) [h : is_hom f] : group (image' f) := 
-    @subgroup_group β H (image' f) (@image_in α β G H f h univ univ_in)
+lemma image'_group [G : group α] [H : group β] (f : α → β) [h : is_hom f] : group (image f) := 
+    @subgroup_group β H (image f) (@image_in α β G H f h univ univ_in)
 
 attribute [instance] image'_group
 
@@ -137,7 +138,36 @@ end
 
 #print subgroup_group
 
+-- set_option pp.implicit true
+-- protected eliminator eq.rec : Π {α : Sort u} {a : α} {C : α → Sort l}, C a → Π {a_1 : α}, a = a_1 → C a_1
+
+@[simp] lemma {u₁ u₂} parallel_transport_for_trivial_bundles {α : Sort u₁} {a b : α} {β : Sort u₂} (p : a = b) (x : β) : @eq.rec α a (λ a, β) x b p = x :=
+begin
+induction p,
+simp,
+end
+
+#print exists.elim
+#check classical.some
+#check trunc
+
 theorem first_isomorphism_theorem {α β} [G : group α] [H : group β] (f : α → β ) [h : is_hom f] 
-    : @group_isomorphism (quotient_group h.kernel) (image' f) _ (@image'_group _ _ _ _ f h) := {
-        to_fun := 
+    : @group_isomorphism (quotient_group h.kernel) (image f) _ (@image'_group _ _ _ _ f h) := {
+        to_fun := begin 
+                    intros, 
+                    induction a,
+                    split, 
+                    exact image_mem f a, 
+                    simp, 
+                    induction a_p,
+                    sorry -- easy from here! 
+                  end,
+        inv_fun := begin
+                     intros,
+                     induction a with b p,
+                     
+                   end,
+        left_inv := sorry,
+        right_inv := sorry,
+        hom_fun := sorry
     }
