@@ -115,7 +115,7 @@ noncomputable definition optimal_valuation {α} [ed : decidable_euclidean_domain
         right,
 
         have nonempty_b : ((λ (f : valuation euclidean_domain.remainder), f.val b) '' set.univ) ≠ ∅,
-            from sorry,
+            from sorry, -- this is what relies on the existence of a valuation
         have h1 := well_founded.min_mem lt_wf ((λ (f : valuation euclidean_domain.remainder), f.val b) '' set.univ) nonempty_b,
         simp at h1,
         have p : ∃ g : valuation (ed.remainder), well_founded.min
