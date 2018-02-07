@@ -85,6 +85,10 @@ lemma quotient_group_is_group {α} [G : group α] (N : set α) [hs : is_normal_s
 
 attribute [instance] quotient_group_is_group
 
+lemma quot_mul_norm {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] {a b : α} 
+    : @group.mul _ (quotient_group_is_group N) (@quotient.mk _ (quotient_group_setoid N) a) (@quotient.mk _ (quotient_group_setoid N) b) = (@quotient.mk _ (quotient_group_setoid N) (a * b))
+    := sorry
+
 end quotient_group
 
 open is_subgroup
@@ -117,7 +121,7 @@ end extend
 
 section
 
-theorem fun_resp_ker [group α] [group β] (f : α → β) [hf : is_hom f] : ∀ a₁ a₂, norm_equiv (hf.kernel) a₁ a₂ → f a₁ = f a₂ := sorry
+-- theorem fun_resp_ker [group α] [group β] (f : α → β) [hf : is_hom f] : ∀ a₁ a₂, norm_equiv (hf.kernel) a₁ a₂ → f a₁ = f a₂ := sorry
 
 structure group_isomorphism (β : Type v) (γ : Type w) [group β] [group γ]
   extends equiv β γ :=
@@ -147,27 +151,52 @@ induction p,
 simp,
 end
 
-#print exists.elim
-#check classical.some
-#check trunc
+lemma kernel_cosets {α β} [G : group α] [H : group β] (f : α → β ) [h : is_hom f] {a b} (hab : f a = f b) 
+    : @quotient.mk _ (quotient_group_setoid h.kernel) a = @quotient.mk _ (quotient_group_setoid h.kernel) b := sorry
 
-theorem first_isomorphism_theorem {α β} [G : group α] [H : group β] (f : α → β ) [h : is_hom f] 
+noncomputable theorem first_isomorphism_theorem {α β} [G : group α] [H : group β] (f : α → β ) [h : is_hom f] 
     : @group_isomorphism (quotient_group h.kernel) (image f) _ (@image'_group _ _ _ _ f h) := {
-        to_fun := begin 
+        to_fun := 
+        begin 
                     intros, 
                     induction a,
                     split, 
                     exact image_mem f a, 
                     simp, 
                     induction a_p,
-                    sorry -- easy from here! 
-                  end,
-        inv_fun := begin
-                     intros,
-                     induction a with b p,
-                     
-                   end,
-        left_inv := sorry,
-        right_inv := sorry,
-        hom_fun := sorry
+                    rw [h.hom_mul, h.inv] at a_p,
+                    simp [eq_mul_inv_of_mul_eq a_p],
+                    exfalso,
+                    rw mem_empty_eq at a_p,
+                    assumption
+        end,
+        inv_fun :=
+        begin
+            intros,
+            induction a with b h,
+            exact (@quotient.mk _ (quotient_group_setoid _) (classical.some h)),
+        end,
+        left_inv := begin
+        simp [left_inverse],
+        intro x,
+        induction x with y hy,
+        simp,
+        have hz := @classical.some_spec _ (λ z, f z = f y) ⟨y, rfl⟩,
+        exact @kernel_cosets _ _ _ _ f h _ _ hz,
+        simp,
+        end,
+        right_inv := 
+        begin
+        simp [function.right_inverse, left_inverse],
+        intros x hx,
+        apply subtype.eq,
+        simp,
+        sorry
+        end,
+        hom_fun := {
+            hom_mul := λ x y, (@quotient.induction_on₂ _ _ (quotient_group_setoid _) (quotient_group_setoid _) _ x y (begin
+            intros,
+            sorry
+            end))
+        }
     }
