@@ -85,6 +85,10 @@ lemma quotient_group_is_group {α} [G : group α] (N : set α) [hs : is_normal_s
 
 attribute [instance] quotient_group_is_group
 
+lemma quot_mul_norm {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] {a b : α} 
+    : @group.mul _ (quotient_group_is_group N) (@quotient.mk _ (quotient_group_setoid N) a) (@quotient.mk _ (quotient_group_setoid N) b) = (@quotient.mk _ (quotient_group_setoid N) (a * b))
+    := sorry
+
 end quotient_group
 
 open is_subgroup
@@ -147,6 +151,9 @@ induction p,
 simp,
 end
 
+lemma kernel_cosets {α β} [G : group α] [H : group β] (f : α → β ) [h : is_hom f] {a b} (hab : f a = f b) 
+    : @quotient.mk _ (quotient_group_setoid h.kernel) a = @quotient.mk _ (quotient_group_setoid h.kernel) b := sorry
+
 noncomputable theorem first_isomorphism_theorem {α β} [G : group α] [H : group β] (f : α → β ) [h : is_hom f] 
     : @group_isomorphism (quotient_group h.kernel) (image f) _ (@image'_group _ _ _ _ f h) := {
         to_fun := 
@@ -170,10 +177,26 @@ noncomputable theorem first_isomorphism_theorem {α β} [G : group α] [H : grou
             exact (@quotient.mk _ (quotient_group_setoid _) (classical.some h)),
         end,
         left_inv := begin
+        simp [left_inverse],
         intro x,
-        cases @quotient.exists_rep _ (quotient_group_setoid _) x with y hy,
-        rw ← hy,
+        induction x with y hy,
+        simp,
+        have hz := @classical.some_spec _ (λ z, f z = f y) ⟨y, rfl⟩,
+        exact @kernel_cosets _ _ _ _ f h _ _ hz,
         simp,
         end,
-        right_inv := sorry
+        right_inv := 
+        begin
+        simp [function.right_inverse, left_inverse],
+        intros x hx,
+        apply subtype.eq,
+        simp,
+        sorry
+        end,
+        hom_fun := {
+            hom_mul := λ x y, (@quotient.induction_on₂ _ _ (quotient_group_setoid _) (quotient_group_setoid _) _ x y (begin
+            intros,
+            sorry
+            end))
+        }
     }
