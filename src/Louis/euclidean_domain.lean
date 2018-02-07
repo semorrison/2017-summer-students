@@ -163,9 +163,6 @@ def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_euclidean
 | input := 
 match input with ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_curr, greatest_divisor ⟩ :=
    if h : rc = 0 then 
-
-    -- have (lt (rp%rc) rc), from sorry,
-
     {
     bezout_identity . x := xp, y := yp, gcd := 
         {
