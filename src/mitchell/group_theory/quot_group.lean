@@ -117,7 +117,7 @@ end extend
 
 section
 
-theorem fun_resp_ker [group α] [group β] (f : α → β) [hf : is_hom f] : ∀ a₁ a₂, norm_equiv (hf.kernel) a₁ a₂ → f a₁ = f a₂ := sorry
+-- theorem fun_resp_ker [group α] [group β] (f : α → β) [hf : is_hom f] : ∀ a₁ a₂, norm_equiv (hf.kernel) a₁ a₂ → f a₁ = f a₂ := sorry
 
 structure group_isomorphism (β : Type v) (γ : Type w) [group β] [group γ]
   extends equiv β γ :=
@@ -147,27 +147,33 @@ induction p,
 simp,
 end
 
-#print exists.elim
-#check classical.some
-#check trunc
-
-theorem first_isomorphism_theorem {α β} [G : group α] [H : group β] (f : α → β ) [h : is_hom f] 
+noncomputable theorem first_isomorphism_theorem {α β} [G : group α] [H : group β] (f : α → β ) [h : is_hom f] 
     : @group_isomorphism (quotient_group h.kernel) (image f) _ (@image'_group _ _ _ _ f h) := {
-        to_fun := begin 
+        to_fun := 
+        begin 
                     intros, 
                     induction a,
                     split, 
                     exact image_mem f a, 
                     simp, 
                     induction a_p,
-                    sorry -- easy from here! 
-                  end,
-        inv_fun := begin
-                     intros,
-                     induction a with b p,
-                     
-                   end,
-        left_inv := sorry,
-        right_inv := sorry,
-        hom_fun := sorry
+                    rw [h.hom_mul, h.inv] at a_p,
+                    simp [eq_mul_inv_of_mul_eq a_p],
+                    exfalso,
+                    rw mem_empty_eq at a_p,
+                    assumption
+        end,
+        inv_fun :=
+        begin
+            intros,
+            induction a with b h,
+            exact (@quotient.mk _ (quotient_group_setoid _) (classical.some h)),
+        end,
+        left_inv := begin
+        intro x,
+        cases @quotient.exists_rep _ (quotient_group_setoid _) x with y hy,
+        rw ← hy,
+        simp,
+        end,
+        right_inv := sorry
     }
