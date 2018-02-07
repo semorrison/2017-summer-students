@@ -1,16 +1,110 @@
+--TODO
+-- theorem nat_gcd_gcd -- prove equivalence of definitions
+-- examples
+-- polynomials with ED coefficients are a ED
+-- make sure I'm using standard code style
+-- euclid's algorithm (extended)
+
 import Louis.euclidean_domain
 
+/-
+ed1__to_integral_domain : integral_domain α,
+ed1_quotient ed1_remainder : α → α → α,
+ed1_witness : ∀ (a b : α), ed1_quotient a b * b + ed1_remainder a b = a,
+ed1_valuation : trunc (valuation ed1_remainder),
+-/
 
-definition least_element : set ℕ → ℕ := sorry
-definition least_element_least { U : set ℕ } ( x ∈ U ) : least_element U ≤ x := sorry
-definition least_element_in ( U : set ℕ ) : least_element U ∈ U := sorry
--- nat.find
--- well_founded.min
+
+/-
+lemma euclidean_domains_component_equality
+{α : Type} (ed1 ed2 : euclidean_domain α)
+(w1 : ed1.to_integral_domain = ed2.to_integral_domain)
+--(w2 : ∀ a b : α, ed1.quotient a b = ed2.quotient a b) -- what is going on here?
+(w3 : ed1.remainder = ed2.remainder) :
+ed1 = ed2 :=
+begin
+induction ed1,
+induction ed2,
+end
+-/
+
+
+#check nat.find
+#check well_founded
+#check (∅ : set ℕ) 
+
+def foo : inhabited ℕ := ⟨ 5⟩
+
+def bar : inhabited ℕ := ⟨6⟩ 
+
+example : foo = bar :=
+begin
+unfold foo,
+unfold bar,
+admit, -- I don't think this is true
+end 
+
+#check eq
+#check trunc
+#check subtype
+#check has_well_founded
+
+def lt_wf : (well_founded nat.lt) := -- will need to be replaced by more general well_founded
+    begin
+      split, intro a, induction a with b h,
+      {
+          split,
+          intro y,
+          intro h,
+          cases h,
+      },
+      {
+        split,
+        intro y,
+        intro h,
+        cases h,
+        {
+            assumption
+        },
+        {
+            have p : y < b, by sorry,
+            cases h,
+            exact h_h y p,
+        }
+      }
+    end
 
 #check well_founded.min
+-- well_founded β (this needs a proof that some function is well-founded)
+-- p : set β
+-- proof p ≠ ∅ 
 
-definition optimal_valuation {α} [ed : decidable_euclidean_domain α] : valuation (ed.remainder) := {
-    val := λ a, least_element ((λ f : valuation (ed.remainder), f.val a) '' (set.univ)),
+#check set.univ ℕ -- the set containing all natural numbers
+#check set.image
+
+-- notation `∅`   := has_emptyc.emptyc _
+example : ((λ x : ℕ, x = 4) : set ℕ) ≠ (∅ : set ℕ) :=
+begin
+    have h1 : (λ x : ℕ, x = 4) 4 = true,
+    simp,
+    have h2 : (∅ : set ℕ) 4 = false,
+    split,
+    admit, -- WTS : f a ≠ g a → f ≠ g
+end
+
+#check funext
+
+
+
+-- show set of valuations isn't nullset
+-- show non-empty set of functions applied to a value is non-empty
+noncomputable definition optimal_valuation {α} [ed : decidable_euclidean_domain α] : valuation (ed.remainder) := {
+    val := λ a, well_founded.min lt_wf ((λ f : valuation (ed.remainder), f.val a) '' (set.univ)) -- map the valuation application function over the set of all valuations
+    (
+        begin
+        admit,
+        end
+    ),
     property := λ a b,
     begin
       cases decidable.em (b = 0), {
@@ -18,10 +112,10 @@ definition optimal_valuation {α} [ed : decidable_euclidean_domain α] : valuati
       }, 
       {
         right,
-        have p : ∃ g : valuation (ed.remainder), least_element ((λ (f : valuation euclidean_domain.remainder), f.val b) '' set.univ) = g.val b, by sorry,
+        have p : ∃ g : valuation (ed.remainder), well_founded.min lt_wf ((λ (f : valuation euclidean_domain.remainder), f.val b) '' set.univ) (sorry) = g.val b, by sorry,
         induction p with g h,
         rw h,
-        have q : least_element ((λ (f : valuation euclidean_domain.remainder), f.val (euclidean_domain.remainder a b)) '' set.univ) ≤ g.val (a % b), by sorry,
+        have q : nat.le /- replace with more general -/ (well_founded.min lt_wf ((λ (f : valuation euclidean_domain.remainder), f.val (euclidean_domain.remainder a b)) '' set.univ) (sorry)) /- ≤ -/ (g.val (a % b)), by sorry,
         have r : g.val (a % b) < g.val b, begin
                                             have s := g.property a b,
                                             induction s,
@@ -33,24 +127,10 @@ definition optimal_valuation {α} [ed : decidable_euclidean_domain α] : valuati
     end
 }
 
-instance optimal_valuation_as_sizeof {α} [ed : decidable_euclidean_domain α] : has_sizeof α := {
-  sizeof := optimal_valuation.val
-}
+definition least_element : set ℕ → ℕ := sorry
+definition least_element_least { U : set ℕ } ( x ∈ U ) : least_element U ≤ x := sorry
+definition least_element_in ( U : set ℕ ) : least_element U ∈ U := sorry
 
-instance default_valuation_as_sizeof {α} [ed : decidable_euclidean_domain α] : has_sizeof α := {
-  sizeof := begin
-  have := ed.valuation,
-  induction this, -- how do I do this without entering tactics?
-  induction this,
-  exact this_val,
-  end
-}
-
-instance eea_input_has_sizeof {α : Type} (a b : α) [euclidean_domain α] : has_sizeof (eea_input a b) := {
-    sizeof := λ e, sizeof e.rc
-}
-
-example {α : Type} (a b : α) [euclidean_domain α] : has_well_founded (eea_input a b) := by apply_instance
 
 /- nat_abs lemmas -/
 
@@ -118,13 +198,8 @@ end
 -/
 
 
-
-#check euclidean_domain_has_div.div
-
-
-
-
 /- misc gcd/ed stuff -/
+
 /-
 instance field_euclidean_domain {α : Type}  [ decidable_eq α ][fa: field α] : euclidean_domain α:= 
 {
@@ -158,119 +233,24 @@ begin
 end
 -/
 
--- theorem nat_gcd_gcd -- prove equivalence of definitions
 
 
 /- Well founded stuff -/
+set_option trace.class_instances true
 
--- example (p: Prop) [decidable p] : p ∨ ¬ p := if p then (assume hp : p, or.inl hp) else begin admit end -- theorem proving tutorial claims this is dite (page 143), but it is actually ite
-
-example (p : Prop) [decidable p] : p ∨ ¬ p := dite p (assume hp :p, or.inl hp) (assume hnp :¬p, or.inr hnp)
-
--- It looks like the major hurdle now is convincing Lean this is a well-founded recursion. You will need to define an ordering on eea_input,
--- and use "have" to give yourself a hypothesis showing that the argument of the recursive call is smaller than the current argument.
-
-
-/-
-
-inductive acc {α : Sort u} (r : α → α → Prop) : α → Prop
-| intro (x : α) (h : ∀ y, r y x → acc y) : acc x
-
-inductive well_founded {α : Sort u} (r : α → α → Prop) : Prop
-| intro (h : ∀ a, acc r a) : well_founded
--/
-
-definition nat_has_well_founded : has_well_founded ℕ := { 
-    r := λ (n m : nat), n < m,
-    wf :=
-    begin
-      split, intro a, induction a with b h,
-      {
-          split,
-          intro y,
-          intro h,
-          cases h,
-      },
-      {
-        split,
-        intro y,
-        intro h,
-        cases h,
-        {
-            assumption
-        },
-        {
-            have p : y < b, by sorry,
-            cases h,
-            exact h_h y p
-        }
-      }
-    end
+noncomputable instance optimal_valuation_as_sizeof {α} [ed : decidable_euclidean_domain α] : has_sizeof α := {
+  sizeof := optimal_valuation.val
 }
 
-def exists_well_founded : inhabited (has_well_founded ℕ) := begin 
-  split,
-  exact nat_has_well_founded
-end
-
-
-structure test_struct :=
-(n m : nat)
-(x : int)
-
-example : has_well_founded test_struct := {
-    r := λ e1 e2, e1.n < e2.n,
-    wf :=
-    begin
-        split,
-        intro a,
-        exact let ⟨ n, m, x ⟩ := a in
-        begin
-            induction n,
-            {
-                split,
-                intros y hy,
-                simp at hy,
-                cases hy,
-            },
-            {
-                split,
-                intros y hy,
-                simp at hy,
-                have := nat.succ_le_of_lt hy,
-                cases this,
-                {
-                    cases n_ih,
-                    split,
-                    simp at n_ih_h,
-                    assumption,
-                },
-                {
-                    cases n_ih,
-                    have h1 := nat.lt_of_succ_le this_a,
-                    have h2 := n_ih_h y,
-                    exact h2 h1,
-                }
-                
-            }
-        end 
-    end
+instance eea_input_has_sizeof {α : Type} (a b : α) [euclidean_domain α] : has_sizeof (eea_input a b) := {
+    sizeof := λ e, sizeof e.rc
 }
 
+example {α : Type} (a b : α) [euclidean_domain α] : has_well_founded (eea_input a b) := by apply_instance
 
-#check acc
 
 
 /- Euclidean algorithm stuff -/
-/-
-example {α : Type} [decidable_euclidean_domain α] : has_add α := by apply_instance 
-
-def foo {α : Type} [has_well_founded α] (f: α → α) (h : ∀ b : α, has_well_founded.r (f b) b) : α → false
-| a := 
-    have h : has_well_founded.r (f a) a,
-    from h a,
-    foo (f a) using_well_founded
--/
 
 def extended_euclidean_algorithm_internal' {α : Type}  [ed : decidable_euclidean_domain α]  {a b : α } : eea_input a b → bezout_identity a b
 | input := 
@@ -343,7 +323,28 @@ match input with ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_c
         end⟩ 
         in 
         have has_well_founded.r next_input input, {
-            admit,
+            have := ed.valuation,
+            induction this,
+            induction this,
+            have := this_property rp rc, -- might need to name differently
+            cases this,
+            {
+                exact absurd this h,
+            },
+            {
+                unfold has_well_founded.r,
+                unfold sizeof_measure,
+                unfold sizeof,
+                unfold has_sizeof.sizeof,
+                unfold measure,
+                unfold inv_image, simp,
+
+                unfold sizeof,
+                unfold has_sizeof.sizeof,
+                unfold default.sizeof, -- this is using the wrong instance; why?
+                admit,
+            },
+            refl,
         },
         extended_euclidean_algorithm_internal' next_input
 end

@@ -1,24 +1,18 @@
 import data.int.basic
 import tactic.ring
 
-
--- TODO
--- examples
--- polynomials with ED coefficients are a ED
--- make sure I'm using standard code style
--- euclid's algorithm (extended)
-
 /- euclidean domain definitions and instances -/
 
 universes u v
-
+--definition valuation {α} [has_zero α] (r : α → α → α) {β} [has_well_founded β] := { f : α → β // ∀ a b, b = 0 ∨ has_well_founded.r ( f(r a b))  (f b) }
 definition valuation {α} [has_zero α] (r : α → α → α) := { f : α → ℕ // ∀ a b, b = 0 ∨ f(r a b) < f b }
 
 class euclidean_domain (α : Type u) extends integral_domain α :=
 ( quotient : α → α → α )
 ( remainder : α → α → α )
 ( witness : ∀ a b, (quotient a b) * b + (remainder a b) = a )
-( valuation : inhabited (valuation remainder) ) -- does using inhabited here go against what we want??
+( valuation : trunc (valuation remainder) )
+-- ( valuation : inhabited (valuation remainder) ) -- does using inhabited here go against what we want??
 
 class decidable_euclidean_domain (α : Type) extends euclidean_domain α := -- ask Scott about this implementation (we only really need to be able to compare with zero)
 (decidable_eq : decidable_eq α)
@@ -64,8 +58,6 @@ begin
     rw nat_abs_abs at p,
     exact p
 end
-
-#check nat_abs_mod_lt_abs
 
 /- Euclidean Domain instances-/
 
@@ -164,10 +156,6 @@ structure eea_input {α : Type} (a b : α) [euclidean_domain α] :=
 (bezout_curr : rc = a * xc + b * yc)
 (divides : ∀ x : α, x∣rp ∧ x∣rc → x∣a ∧ x∣b)
 (greatest_divisor : ∀ d : common_divisor a b, d.value ∣ rp ∧ d.value ∣ rc)
-
-instance eea_input_has_sizeof {α : Type} (a b : α) [euclidean_domain α] : has_sizeof (eea_input a b) := {
-    sizeof := λ e, sizeof e.rc
-}
 
 example {α : Type} (a b : α) [euclidean_domain α] : has_well_founded (eea_input a b) := by apply_instance
 

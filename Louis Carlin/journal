@@ -45,3 +45,14 @@ How do I break down a structure into its projections and then apply it? simp doe
 How do I use induction on the output of a function (problem is that lean forgets the value of the function)
 
 Can we use existence/forall in our relation? (existence doesn't work, see fields)
+
+Can we define some minimum valuation function? (pointwise minimum of all possible valuation functions is itself a valuation function)
+
+The definition of inhabited allows us to make use of the valuation function.
+
+Induction elimination is hard without the axiom of choice.
+
+Does trunc actually make anything easier?
+- What can we introduce with trunc that is always the same? (not well founded)
+- trunc is a cleaner way of writing exists given the valuation type.
+- We can show that the set of valuations is not the null set, allowing us to find the minimum
