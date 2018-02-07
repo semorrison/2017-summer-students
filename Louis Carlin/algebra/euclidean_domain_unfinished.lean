@@ -6,6 +6,7 @@
 -- euclid's algorithm (extended)
 
 import Louis.euclidean_domain
+import order.order_iso
 
 /-
 ed1__to_integral_domain : integral_domain α,
@@ -91,15 +92,15 @@ begin
     split,
     admit, -- WTS : f a ≠ g a → f ≠ g
 end
-
 #check funext
-
 
 
 -- show set of valuations isn't nullset
 -- show non-empty set of functions applied to a value is non-empty
 noncomputable definition optimal_valuation {α} [ed : decidable_euclidean_domain α] : valuation (ed.remainder) := {
-    val := λ a, well_founded.min lt_wf ((λ f : valuation (ed.remainder), f.val a) '' (set.univ)) -- map the valuation application function over the set of all valuations
+    val := λ a, well_founded.min 
+        lt_wf -- the wf relation we are finding the minimum for 
+        ((λ f : valuation (ed.remainder), f.val a) '' (set.univ)) -- map the valuation application function over the set of all valuations
     (
         begin
         admit,
@@ -112,29 +113,59 @@ noncomputable definition optimal_valuation {α} [ed : decidable_euclidean_domain
       }, 
       {
         right,
-        have p : ∃ g : valuation (ed.remainder), well_founded.min lt_wf ((λ (f : valuation euclidean_domain.remainder), f.val b) '' set.univ) (sorry) = g.val b, by sorry,
+
+        have nonempty_b : ((λ (f : valuation euclidean_domain.remainder), f.val b) '' set.univ) ≠ ∅,
+            from sorry,
+        have h1 := well_founded.min_mem lt_wf ((λ (f : valuation euclidean_domain.remainder), f.val b) '' set.univ) nonempty_b,
+        simp at h1,
+        have p : ∃ g : valuation (ed.remainder), well_founded.min
+            lt_wf 
+            ((λ (f : valuation euclidean_domain.remainder), f.val b) '' set.univ)
+            (nonempty_b) -- proof that the set of valuations applied to a is not equal to ∅ 
+        = g.val b, 
+        {
+            simp,
+            induction h1 with y hy,
+            existsi y,
+            symmetry,
+            exact hy,
+        },
+
         induction p with g h,
         rw h,
-        have q : nat.le /- replace with more general -/ (well_founded.min lt_wf ((λ (f : valuation euclidean_domain.remainder), f.val (euclidean_domain.remainder a b)) '' set.univ) (sorry)) /- ≤ -/ (g.val (a % b)), by sorry,
+
+        -- should I alias something for this set to make things more readable?
+        have nonempty_rem : ((λ (f : valuation euclidean_domain.remainder), f.val (a %b)) '' set.univ) ≠ ∅,
+            from sorry,
+        --need g.val (a%b) ∈ ((λ (f : valuation euclidean_domain.remainder), f.val (a%b)) '' set.univ)
+        have gab_in : g.val (a%b) ∈ ((λ (f : valuation euclidean_domain.remainder), f.val (a%b)) '' set.univ), by sorry,
+        have := well_founded.not_lt_min 
+            lt_wf 
+            ((λ (f : valuation euclidean_domain.remainder), f.val (a %b)) '' set.univ)
+            nonempty_rem gab_in,
+        simp at this, --  ¬nat.lt (g.val (a % b)) fmin.val (a % b)
+        -- how do we get from this to q?
+        have q : nat.le (well_founded.min
+            lt_wf 
+            ((λ (f : valuation euclidean_domain.remainder), f.val (a % b)) '' set.univ) 
+            (nonempty_rem)) /- ≤ -/ 
+        (g.val (a % b)), by sorry, -- the minimum possible f (a%b) is less than or equal to g (a%b)
+        
         have r : g.val (a % b) < g.val b, begin
                                             have s := g.property a b,
                                             induction s,
                                             contradiction,
                                             exact s,
                                           end,
+        rw ←h at r,
         sorry --- put together q and r
-      }      
+      }
     end
 }
-
-definition least_element : set ℕ → ℕ := sorry
-definition least_element_least { U : set ℕ } ( x ∈ U ) : least_element U ≤ x := sorry
-definition least_element_in ( U : set ℕ ) : least_element U ∈ U := sorry
-
-
-/- nat_abs lemmas -/
-
-
+#check set.has_mem.mem
+#check set.mem
+-- well_founded.min_mem {α} {r : α → α → Prop} (H : well_founded r) (p : set α) (h : p ≠ ∅) : H.min p h ∈ p
+-- well_founded.not_lt_min {α} {r : α → α → Prop} (H : well_founded r) (p : set α) (h : p ≠ ∅) {x} (xp : x ∈ p) : ¬ r x (H.min p h)
 
 /- lemmas -/
 @[simp] lemma mod_zero {α : Type} [ed : euclidean_domain α] (a : α)  : a % 0 = a :=
@@ -200,43 +231,9 @@ end
 
 /- misc gcd/ed stuff -/
 
-/-
-instance field_euclidean_domain {α : Type}  [ decidable_eq α ][fa: field α] : euclidean_domain α:= 
-{
-    fa with
-    eq_zero_or_eq_zero_of_mul_eq_zero := by admit,-- apply_instance,
-    quotient := λ x y, x / y,
-    remainder := λ _ _, fa.zero,
-    
-    witness := begin
-                intros,
-                ring,
-                admit
-               end,
-    valuation := begin
-                    existsi (λ x : α,
-                    match x with
-                    | 0 := (0:ℕ),
-                    | _ := (1:ℕ)
-                    end
-                    ),
-                    simp,
-                 end
-}
-
-example : ∃ f : ℕ → ℕ, ∀ n : ℕ, f n > 1 :=
-begin
-    existsi (λ x:ℕ, match x with
-    | 0 := 1
-    | _ := 0
-    end)
-end
--/
-
-
 
 /- Well founded stuff -/
-set_option trace.class_instances true
+--set_option trace.class_instances true
 
 noncomputable instance optimal_valuation_as_sizeof {α} [ed : decidable_euclidean_domain α] : has_sizeof α := {
   sizeof := optimal_valuation.val
@@ -247,7 +244,6 @@ instance eea_input_has_sizeof {α : Type} (a b : α) [euclidean_domain α] : has
 }
 
 example {α : Type} (a b : α) [euclidean_domain α] : has_well_founded (eea_input a b) := by apply_instance
-
 
 
 /- Euclidean algorithm stuff -/
@@ -340,8 +336,8 @@ match input with ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_c
                 unfold inv_image, simp,
 
                 unfold sizeof,
-                unfold has_sizeof.sizeof,
-                unfold default.sizeof, -- this is using the wrong instance; why?
+                unfold has_sizeof.sizeof, -- this is using the wrong instance; why?
+                unfold default.sizeof, 
                 admit,
             },
             refl,
