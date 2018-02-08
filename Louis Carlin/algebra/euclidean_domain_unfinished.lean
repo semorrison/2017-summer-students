@@ -119,24 +119,7 @@ noncomputable definition optimal_valuation {α} [ed : decidable_euclidean_domain
 
         let S_f : set (valuation ed.remainder) := set.univ,
         let S_b := ((λ (f : valuation euclidean_domain.remainder), f.val b) '' S_f),
-        
-        have nonempty_f : S_f ≠ ∅ := trunc.lift 
-        (
-            assume (f : valuation ed.remainder),
-            (
-                have f_in : f ∈ S_f, from set.eq_univ_iff_forall.elim_left  (by {dsimp [S_f], refl}) f,
-                set.ne_empty_of_mem f_in
-            )
-        )
-        (
-            begin
-            intros, refl,
-            end
-        )
-        ed.valuation,
 
-
-        
         have nonempty_b : S_b ≠ ∅ := trunc.lift
         (
             assume (f : valuation ed.remainder),
@@ -146,17 +129,17 @@ noncomputable definition optimal_valuation {α} [ed : decidable_euclidean_domain
                     have := set.ne_empty_of_mem f_in,
 
                     have fb_in : f.val b ∈ S_b, by {
-                    have : S_b (f.val b), by {
-                        dsimp [S_b],
-                        simp,
-                        dsimp [set.range],
-                        unfold set_of,
-                        existsi f,
-                        refl,
+                        have : S_b (f.val b), by {
+                            dsimp [S_b],
+                            simp,
+                            dsimp [set.range],
+                            unfold set_of,
+                            existsi f,
+                            refl,
+                        },
+                        exact set.mem_def.elim_right this,
                     },
-                exact set.mem_def.elim_right this,
-        },
-        exact set.ne_empty_of_mem fb_in,
+                    exact set.ne_empty_of_mem fb_in,
                 end
             )
         )
