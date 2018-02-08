@@ -284,11 +284,14 @@ noncomputable instance optimal_valuation_as_sizeof {α} [ed : decidable_euclidea
   sizeof := optimal_valuation.val
 }
 
+/-
 instance eea_input_has_sizeof {α : Type} (a b : α) [euclidean_domain α] : has_sizeof (eea_input a b) := {
     sizeof := λ e, sizeof e.rc
-}
+}-/
 
-example {α : Type} (a b : α) [euclidean_domain α] : has_well_founded (eea_input a b) := by apply_instance
+noncomputable instance eea_input_has_sizeof {α : Type} (a b : α) [decidable_euclidean_domain α] : has_sizeof (eea_input a b) := {
+    sizeof := λ e, optimal_valuation.val e.rc
+}
 
 
 /- Euclidean algorithm stuff -/
@@ -364,28 +367,27 @@ match input with ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_c
         end⟩ 
         in 
         have has_well_founded.r next_input input, {
-            have := ed.valuation,
-            induction this,
-            induction this,
-            have := this_property rp rc, -- might need to name differently
+            unfold has_well_founded.r,
+            unfold sizeof_measure,
+            unfold sizeof,
+            unfold has_sizeof.sizeof,
+            unfold measure,
+            unfold inv_image, simp,
+            let ov_val : α → ℕ := optimal_valuation.val,
+            --have  : ov_val = optimal_valuation.val, by {dsimp [ov_val], refl},
+            have := optimal_valuation.property rp rc,
             cases this,
             {
                 exact absurd this h,
             },
-            {
-                unfold has_well_founded.r,
-                unfold sizeof_measure,
-                unfold sizeof,
-                unfold has_sizeof.sizeof,
-                unfold measure,
-                unfold inv_image, simp,
-
-                unfold sizeof,
-                unfold has_sizeof.sizeof, -- this is using the wrong instance; why?
-                unfold default.sizeof, 
-                admit,
+            {   
+                dsimp [(%)],
+                have rci : input.rc = rc, by {
+                    sorry,
+                },
+                rw rci,
+                exact this,
             },
-            refl,
         },
         extended_euclidean_algorithm_internal' next_input
 end
