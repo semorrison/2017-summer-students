@@ -97,6 +97,7 @@ end
 
 -- show set of valuations isn't nullset
 -- show non-empty set of functions applied to a value is non-empty
+-- show transitivity-esque property of well-founded relations
 noncomputable definition optimal_valuation {α} [ed : decidable_euclidean_domain α] : valuation (ed.remainder) := {
     val := λ a, well_founded.min 
         lt_wf -- the wf relation we are finding the minimum for 
@@ -114,40 +115,70 @@ noncomputable definition optimal_valuation {α} [ed : decidable_euclidean_domain
       {
         right,
 
-        have nonempty_b : ((λ (f : valuation euclidean_domain.remainder), f.val b) '' set.univ) ≠ ∅,
+        let S_f : set (valuation ed.remainder) := set.univ,
+        have nonempty_f : S_f ≠ ∅ := trunc.lift (assume (f : valuation ed.remainder),
+        begin -- this is really ugly and shouldn't be nearly this long
+            have : S_f ≠ ∅, from (λ (empty_f : S_f = ∅),
+            begin
+                have := set.eq_empty_iff_forall_not_mem.elim_left empty_f,
+                have not_in := this f,
+                have : f ∈ S_f, 
+                    begin
+                        have : S_f f, by {
+                            dsimp [S_f,set.univ],
+                            exact true.intro,
+                        },
+                        exact set.mem_def.elim_right this,
+                    end,
+                have : false := not_in this,
+                exact this,
+            end),
+            exact this,
+        end)
+        (
+            begin
+            intros, refl,
+            end
+        )
+        ed.valuation,
+        
+
+        let S_b := ((λ (f : valuation euclidean_domain.remainder), f.val b) '' set.univ),
+        have nonempty_b : S_b ≠ ∅,
             from sorry, -- this is what relies on the existence of a valuation
-        have h1 := well_founded.min_mem lt_wf ((λ (f : valuation euclidean_domain.remainder), f.val b) '' set.univ) nonempty_b,
+        have h1 := well_founded.min_mem lt_wf S_b nonempty_b,
         simp at h1,
-        have p : ∃ g : valuation (ed.remainder), well_founded.min
-            lt_wf 
-            ((λ (f : valuation euclidean_domain.remainder), f.val b) '' set.univ)
-            (nonempty_b) -- proof that the set of valuations applied to a is not equal to ∅ 
-        = g.val b, 
+        have p : ∃ g : valuation (ed.remainder), well_founded.min lt_wf S_b nonempty_b = g.val b, 
         {
+            dsimp [S_b],
             simp,
             induction h1 with y hy,
             existsi y,
             symmetry,
+            dsimp [S_b] at hy, simp at hy,
             exact hy,
         },
 
         induction p with g h,
         rw h,
 
-        -- should I alias something for this set to make things more readable?
-        have nonempty_rem : ((λ (f : valuation euclidean_domain.remainder), f.val (a %b)) '' set.univ) ≠ ∅,
+        let S_rem := ((λ (f : valuation euclidean_domain.remainder), f.val (a %b)) '' set.univ),
+
+        have nonempty_rem : S_rem ≠ ∅,
             from sorry,
+        
         --need g.val (a%b) ∈ ((λ (f : valuation euclidean_domain.remainder), f.val (a%b)) '' set.univ)
-        have gab_in : g.val (a%b) ∈ ((λ (f : valuation euclidean_domain.remainder), f.val (a%b)) '' set.univ), by sorry,
+        have gab_in : g.val (a%b) ∈ S_rem, by sorry,
         have := well_founded.not_lt_min 
             lt_wf 
-            ((λ (f : valuation euclidean_domain.remainder), f.val (a %b)) '' set.univ)
+            S_rem
             nonempty_rem gab_in,
+        dsimp [S_rem] at this,
         simp at this, --  ¬nat.lt (g.val (a % b)) fmin.val (a % b)
         -- how do we get from this to q?
         have q : nat.le (well_founded.min
             lt_wf 
-            ((λ (f : valuation euclidean_domain.remainder), f.val (a % b)) '' set.univ) 
+            S_rem
             (nonempty_rem)) /- ≤ -/ 
         (g.val (a % b)), by sorry, -- the minimum possible f (a%b) is less than or equal to g (a%b)
         
@@ -164,8 +195,15 @@ noncomputable definition optimal_valuation {α} [ed : decidable_euclidean_domain
 }
 #check set.has_mem.mem
 #check set.mem
+#check set.eq_empty_iff_forall_not_mem
+#check set.image
+#check set.univ
+#check set.mem_def.elim_right
+
+
 -- well_founded.min_mem {α} {r : α → α → Prop} (H : well_founded r) (p : set α) (h : p ≠ ∅) : H.min p h ∈ p
 -- well_founded.not_lt_min {α} {r : α → α → Prop} (H : well_founded r) (p : set α) (h : p ≠ ∅) {x} (xp : x ∈ p) : ¬ r x (H.min p h)
+
 
 /- lemmas -/
 @[simp] lemma mod_zero {α : Type} [ed : euclidean_domain α] (a : α)  : a % 0 = a :=

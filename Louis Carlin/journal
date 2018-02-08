@@ -56,3 +56,5 @@ Does trunc actually make anything easier?
 - What can we introduce with trunc that is always the same? (not well founded)
 - trunc is a cleaner way of writing exists given the valuation type.
 - We can show that the set of valuations is not the null set, allowing us to find the minimum
+
+infers wrong instance of sizeof?
