@@ -116,25 +116,16 @@ noncomputable definition optimal_valuation {α} [ed : decidable_euclidean_domain
         right,
 
         let S_f : set (valuation ed.remainder) := set.univ,
-        have nonempty_f : S_f ≠ ∅ := trunc.lift (assume (f : valuation ed.remainder),
-        begin -- this is really ugly and shouldn't be nearly this long
-            have : S_f ≠ ∅, from (λ (empty_f : S_f = ∅),
-            begin
-                have := set.eq_empty_iff_forall_not_mem.elim_left empty_f,
-                have not_in := this f,
-                have : f ∈ S_f, 
-                    begin
-                        have : S_f f, by {
-                            dsimp [S_f,set.univ],
-                            exact true.intro,
-                        },
-                        exact set.mem_def.elim_right this,
-                    end,
-                have : false := not_in this,
-                exact this,
-            end),
-            exact this,
-        end)
+        have nonempty_f : S_f ≠ ∅ := trunc.lift 
+        (
+            assume (f : valuation ed.remainder),
+            (
+                λ (empty_f : S_f = ∅),
+                have f_not_in : f ∉ S_f, from set.eq_empty_iff_forall_not_mem.elim_left empty_f f,
+                have f_in : f ∈ S_f, from set.eq_univ_iff_forall.elim_left  (by {dsimp [S_f], refl}) f,
+                f_not_in f_in
+            )
+        )
         (
             begin
             intros, refl,
@@ -199,6 +190,7 @@ noncomputable definition optimal_valuation {α} [ed : decidable_euclidean_domain
 #check set.image
 #check set.univ
 #check set.mem_def.elim_right
+
 
 
 -- well_founded.min_mem {α} {r : α → α → Prop} (H : well_founded r) (p : set α) (h : p ≠ ∅) : H.min p h ∈ p
