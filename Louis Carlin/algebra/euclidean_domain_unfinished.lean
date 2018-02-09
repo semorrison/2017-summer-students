@@ -95,8 +95,10 @@ end
 #check funext
 
 
--- show set of valuations isn't nullset
+#check set.eq_empty_iff_forall_not_mem
+
 -- show non-empty set of functions applied to a value is non-empty
+-- show transitivity-esque property of well-founded relations
 noncomputable definition optimal_valuation {α} [ed : decidable_euclidean_domain α] : valuation (ed.remainder) := {
     val := λ a, well_founded.min 
         lt_wf -- the wf relation we are finding the minimum for 
@@ -108,46 +110,89 @@ noncomputable definition optimal_valuation {α} [ed : decidable_euclidean_domain
     ),
     property := λ a b,
     begin
-      cases decidable.em (b = 0), {
+    cases decidable.em (b = 0), 
+    {
         left, assumption
-      }, 
-      {
+    }, 
+    {
         right,
 
-        have nonempty_b : ((λ (f : valuation euclidean_domain.remainder), f.val b) '' set.univ) ≠ ∅,
-            from sorry, -- this is what relies on the existence of a valuation
-        have h1 := well_founded.min_mem lt_wf ((λ (f : valuation euclidean_domain.remainder), f.val b) '' set.univ) nonempty_b,
+        let S_f : set (valuation ed.remainder) := set.univ,
+        let S_b := ((λ (f : valuation euclidean_domain.remainder), f.val b) '' S_f),
+
+        have nonempty_b : S_b ≠ ∅ := trunc.lift
+        (
+            assume (f : valuation ed.remainder),
+            (
+                begin
+                    have f_in : f ∈ S_f, from set.eq_univ_iff_forall.elim_left  (by {dsimp [S_f], refl}) f,
+                    have := set.ne_empty_of_mem f_in,
+
+                    have fb_in : f.val b ∈ S_b, by {
+                        have : S_b (f.val b), by {
+                            dsimp [S_b],
+                            simp,
+                            dsimp [set.range],
+                            unfold set_of,
+                            existsi f,
+                            refl,
+                        },
+                        exact set.mem_def.elim_right this,
+                    },
+                    exact set.ne_empty_of_mem fb_in,
+                end
+            )
+        )
+        (
+            begin
+            intros,
+            refl,
+            end
+        )
+        ed.valuation,
+
+
+        have h1 := well_founded.min_mem lt_wf S_b nonempty_b,
         simp at h1,
-        have p : ∃ g : valuation (ed.remainder), well_founded.min
-            lt_wf 
-            ((λ (f : valuation euclidean_domain.remainder), f.val b) '' set.univ)
-            (nonempty_b) -- proof that the set of valuations applied to a is not equal to ∅ 
-        = g.val b, 
+        have p : ∃ g : valuation (ed.remainder), well_founded.min lt_wf S_b nonempty_b = g.val b, 
         {
+            dsimp [S_b],
             simp,
             induction h1 with y hy,
             existsi y,
             symmetry,
+            dsimp [S_b] at hy, simp at hy,
             exact hy,
         },
 
         induction p with g h,
         rw h,
 
-        -- should I alias something for this set to make things more readable?
-        have nonempty_rem : ((λ (f : valuation euclidean_domain.remainder), f.val (a %b)) '' set.univ) ≠ ∅,
-            from sorry,
-        --need g.val (a%b) ∈ ((λ (f : valuation euclidean_domain.remainder), f.val (a%b)) '' set.univ)
-        have gab_in : g.val (a%b) ∈ ((λ (f : valuation euclidean_domain.remainder), f.val (a%b)) '' set.univ), by sorry,
-        have := well_founded.not_lt_min 
+        let S_rem := ((λ (f : valuation euclidean_domain.remainder), f.val (a %b)) '' S_f),
+
+        have gab_in : g.val (a%b) ∈ S_rem, by {
+            have : S_rem (g.val (a%b)), by {
+                dsimp [S_rem],
+                simp,
+                dsimp [set.range],
+                unfold set_of,
+                existsi g,
+                refl,
+            },
+            exact set.mem_def.elim_right this,
+        },
+        have nonempty_rem : S_rem ≠ ∅, from set.ne_empty_of_mem gab_in,
+        
+        have q := well_founded.not_lt_min 
             lt_wf 
-            ((λ (f : valuation euclidean_domain.remainder), f.val (a %b)) '' set.univ)
+            S_rem
             nonempty_rem gab_in,
-        simp at this, --  ¬nat.lt (g.val (a % b)) fmin.val (a % b)
-        -- how do we get from this to q?
-        have q : nat.le (well_founded.min
+        dsimp [S_rem] at q,
+        --  ¬nat.lt (g.val (a % b)) fmin.val (a % b)
+
+        have q_i : nat.le (well_founded.min -- probs don't need this
             lt_wf 
-            ((λ (f : valuation euclidean_domain.remainder), f.val (a % b)) '' set.univ) 
+            S_rem
             (nonempty_rem)) /- ≤ -/ 
         (g.val (a % b)), by sorry, -- the minimum possible f (a%b) is less than or equal to g (a%b)
         
@@ -162,10 +207,10 @@ noncomputable definition optimal_valuation {α} [ed : decidable_euclidean_domain
       }
     end
 }
-#check set.has_mem.mem
-#check set.mem
+
 -- well_founded.min_mem {α} {r : α → α → Prop} (H : well_founded r) (p : set α) (h : p ≠ ∅) : H.min p h ∈ p
 -- well_founded.not_lt_min {α} {r : α → α → Prop} (H : well_founded r) (p : set α) (h : p ≠ ∅) {x} (xp : x ∈ p) : ¬ r x (H.min p h)
+
 
 /- lemmas -/
 @[simp] lemma mod_zero {α : Type} [ed : euclidean_domain α] (a : α)  : a % 0 = a :=
@@ -239,11 +284,14 @@ noncomputable instance optimal_valuation_as_sizeof {α} [ed : decidable_euclidea
   sizeof := optimal_valuation.val
 }
 
+/-
 instance eea_input_has_sizeof {α : Type} (a b : α) [euclidean_domain α] : has_sizeof (eea_input a b) := {
     sizeof := λ e, sizeof e.rc
-}
+}-/
 
-example {α : Type} (a b : α) [euclidean_domain α] : has_well_founded (eea_input a b) := by apply_instance
+noncomputable instance eea_input_has_sizeof {α : Type} (a b : α) [decidable_euclidean_domain α] : has_sizeof (eea_input a b) := {
+    sizeof := λ e, optimal_valuation.val e.rc
+}
 
 
 /- Euclidean algorithm stuff -/
@@ -319,28 +367,27 @@ match input with ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_c
         end⟩ 
         in 
         have has_well_founded.r next_input input, {
-            have := ed.valuation,
-            induction this,
-            induction this,
-            have := this_property rp rc, -- might need to name differently
+            unfold has_well_founded.r,
+            unfold sizeof_measure,
+            unfold sizeof,
+            unfold has_sizeof.sizeof,
+            unfold measure,
+            unfold inv_image, simp,
+            let ov_val : α → ℕ := optimal_valuation.val,
+            --have  : ov_val = optimal_valuation.val, by {dsimp [ov_val], refl},
+            have := optimal_valuation.property rp rc,
             cases this,
             {
                 exact absurd this h,
             },
-            {
-                unfold has_well_founded.r,
-                unfold sizeof_measure,
-                unfold sizeof,
-                unfold has_sizeof.sizeof,
-                unfold measure,
-                unfold inv_image, simp,
-
-                unfold sizeof,
-                unfold has_sizeof.sizeof, -- this is using the wrong instance; why?
-                unfold default.sizeof, 
-                admit,
+            {   
+                dsimp [(%)],
+                have rci : input.rc = rc, by {
+                    sorry,
+                },
+                rw rci,
+                exact this,
             },
-            refl,
         },
         extended_euclidean_algorithm_internal' next_input
 end
