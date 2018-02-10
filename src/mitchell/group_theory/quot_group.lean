@@ -88,9 +88,18 @@ instance quotient_group_mul {α} [G : group α] (N : set α) [hs : is_normal_sub
 attribute [instance] quotient_group_is_group
 
 lemma quot_mul_norm {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] {a b : α} 
+<<<<<<< HEAD
     : has_mul.mul (@quotient.mk _ (quotient_group_setoid N) a) (@quotient.mk _ (quotient_group_setoid N) b) = (@quotient.mk _ (quotient_group_setoid N) (a * b))
     := sorry
 
+=======
+    : @group.mul _ (quotient_group_is_group N) (@quotient.mk _ (quotient_group_setoid N) a) (@quotient.mk _ (quotient_group_setoid N) b) =
+    (@quotient.mk _ (quotient_group_setoid N) (a * b))
+    := sorry
+
+
+
+>>>>>>> 90019ef81ded6a5827b9e39c543dd5d3714fbe7f
 end quotient_group
 
 open is_subgroup
@@ -163,6 +172,12 @@ simp,
 sorry -- easy
 end
 
+<<<<<<< HEAD
+=======
+-- set_option pp.implicit true
+
+
+>>>>>>> 90019ef81ded6a5827b9e39c543dd5d3714fbe7f
 variable {r : α → α → Prop}
 variable {S : quot r → Sort v}
 
@@ -220,7 +235,11 @@ noncomputable theorem first_isomorphism_theorem {α β} [G : group α] [H : grou
         hom_fun := {
             hom_mul := λ x y, (@quotient.induction_on₂ _ _ (quotient_group_setoid _) (quotient_group_setoid _) _ x y (begin
             intros,
+<<<<<<< HEAD
             erw [quot.rec_eq, quot.rec_eq],
+=======
+            erw quot.rec_eq,
+>>>>>>> 90019ef81ded6a5827b9e39c543dd5d3714fbe7f
             sorry
             end))
         }
