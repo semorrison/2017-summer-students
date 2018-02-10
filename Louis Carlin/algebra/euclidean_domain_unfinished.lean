@@ -294,20 +294,18 @@ instance eea_input_has_sizeof {α : Type} (a b : α) [euclidean_domain α] : has
     sizeof := λ e, sizeof e.rc
 }-/
 
-noncomputable instance eea_input_has_sizeof {α : Type} (a b : α) [decidable_euclidean_domain α] : has_sizeof (eea_input a b) := {
-    sizeof := λ e, optimal_valuation.val e.rc
-}
+-- noncomputable instance eea_input_has_sizeof {α : Type} (a b : α) [decidable_euclidean_domain α] : has_sizeof (eea_input a b) := {
+--     sizeof := λ e, optimal_valuation.val e.rc
+-- }
 
 
 /- Euclidean algorithm stuff -/
 
 
 def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_euclidean_domain α]  {a b : α } : eea_input a b → bezout_identity a b
-| input := 
--- match input with ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_curr, greatest_divisor ⟩ :=
-begin
-cases h0 : input,
-    exact if h : rc = 0 then 
+| input := begin
+    cases h0 : input,
+    exact (if h : rc = 0 then 
     {
     bezout_identity . x := xp, y := yp, gcd := 
         {
@@ -337,8 +335,8 @@ cases h0 : input,
     bezout := bezout_prev
     }
     else 
-        let q : α := (rp/rc),
-            next_input : eea_input a b := ⟨ rc, ( rp%rc) , xc, (xp-q*xc), yc, (yp -q*yc), bezout_curr,
+        let q : α:= (rp/rc) in
+        let next_input : eea_input a b := ⟨ rc, ( rp%rc) , xc, (xp-q*xc), yc, (yp -q*yc), bezout_curr,
         
         begin -- proof that rp % rc = a * (xp - q * xc) + b * (yp - q * yc). Used to show gcd = a*x + b*y at end                                                       
             have : q * rc + (rp%rc) = rp, by apply ed.witness,                                                  
@@ -380,22 +378,24 @@ cases h0 : input,
             unfold sizeof,
             unfold has_sizeof.sizeof,
             unfold measure,
-            unfold inv_image, simp,
-            let ov_val : α → ℕ := optimal_valuation.val,
+            unfold inv_image,
+            let ov_val : α → ℕ := ed.valuation.out.val,
             --have  : ov_val = optimal_valuation.val, by {dsimp [ov_val], refl},
-            have := optimal_valuation.property rp rc,
+            have := ed.valuation.out.property rp rc,
             cases this,
             {
                 exact absurd this h,
             },
             {   
                 dsimp [(%)],
-                have rci : input.rc = rc, from congr_arg eea_input.rc h0,
+                have rci : input.rc = rc, by {
+                    exact congr_arg eea_input.rc h0
+                },
                 rw rci,
                 exact this,
             },
         },
-        extended_euclidean_algorithm_internal next_input
+        extended_euclidean_algorithm_internal next_input)
 end
 
 def extended_euclidean_algorithm {α : Type} [decidable_euclidean_domain α] (a b : α) : bezout_identity a b :=
@@ -437,3 +437,5 @@ gcd.induction m n
   (λn, by rw gcd_zero_left; exact ⟨dvd_zero n, dvd_refl n⟩)
   (λm n npos, by rw ←gcd_rec; exact λ ⟨IH₁, IH₂⟩, ⟨IH₂, (dvd_mod_iff IH₂).1 IH₁⟩)
 -/
+
+/- rewrite -/
