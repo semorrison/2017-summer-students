@@ -70,7 +70,6 @@
 \newcommand{\bop}{\bigoplus}
 %\newcommand{\tr}{\text{tr}}
 
-
 \newtheorem{lemma}[theorem]{Lemma}
 \newtheorem{proposition}[theorem]{Proposition}
 \newtheorem{corollary}[theorem]{Corollary}
@@ -111,9 +110,84 @@ Computational formal verification of mathematical theorems comes in two main for
 
 Lean is primarily an interactive theorem prover, with a variety of automated tools. It encodes a formal mathematical language, based on dependent type theory, as well as a method for checking the correctness of terms written in this language.
 
+\section{Lean Theorem Prover}
+
+Lean is a proof assistant which encodes a variety of dependent type theory (described below) and provides a method for checking derivations made in that encoding. Lean also provides many features which aid the user in defining objects and proving theorems, the most relevant of which are discussed later in this section.
+
+\subsection{Type Theory}
+
+A type theory is a formal system in which every term has a type, and operations are restricted to terms of a certain type. It is built by specifying judgments and rules. The basic judgment in type theory is of the form $a : A$, which is read as the statement `a is a term of type A'. Further, operations can be defined with types. The judgment $f : A \to B$ is the statement that $f$ has the type of a function with domain $A$ and co-domain $B$.
+
+Type theory allows the construction of further objects, given prior judgments. For example, the expression
+\[
+4 * (5 + 7) : \textbf{nat}
+\]
+is a type judgment states that $4 * (5 + 7)^8$ is of type \textbf{nat}, which is true because 4, 5, and 7 are of type \textbf{nat}, while $*$ and $+$ are operations on natural numbers.\\
+
+The simple type theory described above is limited in that the only types which exist are the types built into the language and those which can be constructed using $\to$ (i.e. functions from one type to another). Simple type systems generally have other simple constructions as well -- for example, a conjuction operator which gives types of the form $A \land B$.
+
+There are many types which cannot be described using this system -- for example, a list of terms where all the terms are of type $A$, expressed as the type `list $A$'. The construction of this type clearly depends on the type $A$, hence a type theory where constructions of this form are possible is called a dependent type theory.\\
+
+Type systems are commonly used in programming languages to check the syntactic correctness of code. For example, if $x$ is given as an argument to a function which takes an integer as an argument, then a type system as described above can be used to check whether $x$ indeed has the type integer, and so can provide a compile-time check of the syntactic correctness of the program.
+
+Proof assistants can use the same method of type checking to ensure the correctness of a mathematical proof of some theorem, by relying on the Curry-Howard isomorphism. The isomorphism simply amounts to a correspondence between two possible readings of the judgment
+\[
+p : A
+\]
+\begin{itemize}
+\item $p$ is a term (variable, function output) of the data type $A$
+\item $p$ is a proof of the hypothesis $A$
+\end{itemize}
+
+To generalise, the former is how a programmer would understand the judgment, while the latter is the point of view of a proof theorist. Interactive theorem provers use both, in which a term (proof) of the correct type (hypothesis) is sought interactively by both the user and the system. In other words, a type checking algorithm can be used to check whether $p$ is a correct proof of the hypothesis $A$, as this will be the case if and only if $p$ is a correct term of the type $A$.
+
+In this manner, Lean encodes a dependent type theory called the Calculus of Inductive Constructions (CIC).
+
+\subsection{Elaboration}
+
+One issue proof assistants run into is that building more complex structures can require a lot of details. In 'pen-and-paper' mathematics, these details are omitted as they can be easily inferred.
+
+To facilitate this, Lean has an elaborator, which allows the user to leave arguments implicit by putting them in curly brackets when defining a function. The elaborator will then convert this partially specified expression into a fully specified, type correct term. For example, Lean defines the identity function as
+
+\vspace{2 mm}
+\hspace{4 em}\textbf{def id \{$\a$ : Type\} (a : $\a$) : $\a$ := a}
+\vspace{2 mm}
+
+Unpacking this definition will show most of the essential lean syntax. The \textbf{def} keyword creates a function called \textbf{id}. The next two terms, \textbf{\{$\a$ : Type\} (a : $\a$)}, are arguments to the function -- $\a$ is a Type, while \textbf{a} is a term of type $\a$. The syntax \textbf{: $\a$} means that the result of the function will be a term of type $\a$, and \textbf{:= a} is the result of the function -- given a type $\a$ and a term of that type \textbf{a}, return \textbf{a}.
+
+Note, however, the difference between the syntax of the two arguments. The use of curly brackets allows the user to write \textbf{id a} rather than \textbf{id A a}. The elaborator can infer the type required.\\
+
+The elaborator also supports overloading. For example, we later use the following: let $a$ and $b$ be elements of a group $G$, and $S$ a subgroup of $G$. Then $a*b$ is used to denote group multiplication, while $a * S$ is used to denote the left coset of $S$ by $a$. The elaborator also inserts coercions (for example, from \textbf{nat} to \textbf{int}) where necessary.
+
+\subsection{Type Class Inference}
+
+Another way in which the elaborator allows details to be omitted is through type class inference, which works as follows. First, a structure is marked as a class. Then, an instance of this class is declared, either by adding it as a hypothesis or by proving that it must be present due to existing hypotheses. Finally, in any definition/theorem/lemma in which this structure is used, we can mark the argument as implicit using square brackets rather than curly brackets, which informs the elaborator that these arguments should be inferred by the type class mechanism.
+
+A relevant example of type class inference is the construction of the group structure.
+
+\subsection{Group Construction}
+
+Without any kind of implicit arguments, the statement $\forall a\; b : \a,\; a*b : \a$ would be insufficient on its own. We would need to give as an argument to $*$ the fact that multiplication on terms of type $\a$ is actually possible. However, using type class inference we can get around this:
+
+\vspace{2 mm}
+\hspace{4 em}\textbf{class has\_mul ($\a$ : Type u) := (mul : $\a \to \a \to \a$)}
+\vspace{2 mm}
+
+This means that a proof or hypothesis $p$ : has\_mul $\a$ is the statement that $\a$ is a type with multiplication, and so we can write (for example) $\forall a\; b : \a,\; a*b : \a$. Further, since it is a class, we do not have to explicitly tell Lean that this is possible. So long as $p$ is in the context, we can write $a * b$, and the elaborator will use type class inference to check that multiplication on terms of type $\a$ is possible.
+
+Type class inference can also use the information that one type marked as a class inherits from another type marked as a class. For example:
+
+\vspace{2 mm}
+\hspace{4 em}\textbf{class semigroup ($\a$ : Type u) extends has\_mul $\a$
+ := }
+
+\hspace{6 em}\textbf{(mul\_assoc : $\forall a\; b\; c : \a, a * b * c = a * (b * c)$)}
+\vspace{2 mm}
+
+
 \section{Group Theory}
 
-The next section describes Lean in more detail. In order to have more relevant examples when doing so, we will first review the elementary group theory\cite{artin} which will be formalised in this report.
+In this section we will review the elementary group theory\cite{artin} which will be formalised in this report.
 
 \begin{definition}[Group] 
 A group is a set $G$ together with an operation $* : G \times G \to G$, which we will call multiplication, such that:
@@ -188,44 +262,6 @@ A homomorphism is called an isomorphism if it is bijective. Two groups are said 
 Let G and G' be groups, and let $\phi : G \to G'$ be a homomorphism. Let K be the kernel of $\phi$. Note that the image of $\phi$ forms a group. Then $G/K$ is isomorphic to the image of $\phi$.
 \end{theorem}
 
-\section{Lean Theorem Prover}
-
-Lean is a proof assistant which encodes a variety of dependent type theory (described below) and provides a method for checking derivations made in that encoding. Lean also provides many features which aid the user in defining objects and proving theorems, the most relevant of which are discussed later in this section.
-
-\subsection{Type Theory}
-
-A type theory is a formal system in which every term has a type, and operations are restricted to terms of a certain type. It is built by specifying judgments and rules. The basic judgment in type theory is of the form $a : A$, which is read as the statement `a is a term of type A'. Further, operations can be defined with types. The judgment $f : A \to B$ is the statement that $f$ has the type of a function with domain $A$ and co-domain $B$.
-
-Type theory allows the construction of further objects, given prior judgments. For example, the expression
-\[
-4 * (5 + 7) : \textbf{nat}
-\]
-is a type judgment states that $4 * (5 + 7)^8$ is of type \textbf{nat}, which is true because 4, 5, and 7 are of type \textbf{nat}, while $*$ and $+$ are operations on natural numbers.
-
-The simple type theory described above is limited in that the only types which exist are the types built into the language and those which can be constructed using $\to$ (i.e. functions from one type to another). Simple type systems generally have other simple constructions as well -- for example, a conjuction operator which gives types of the form $A \land B$.
-
-There are many types which cannot be described using this system -- for example, a list of terms where all the terms are of type $A$, expressed as the type `list $A$'. The construction of this type clearly depends on the type $A$, hence a type theory where constructions of this form are possible is called a dependent type theory.
-
-Type systems are commonly used in programming languages to check the syntactic correctness of code. For example, if $x$ is given as an argument to a function which takes an integer as an argument, then a type system as described above can be used to check whether $x$ indeed has the type integer, and so can provide a compile-time check of the syntactic correctness of the program.
-
-Proof assistants can use the same method of type checking to ensure the correctness of a mathematical proof of some theorem, by relying on the Curry-Howard isomorphism. The isomorphism simply amounts to a correspondence between two possible readings of the judgment
-\[
-p : A
-\]
-\begin{itemize}
-\item $p$ is a term (variable, function output) of the data type $A$
-\item $p$ is a proof of the hypothesis $A$
-\end{itemize}
-
-To generalise, the former is how a programmer would understand the judgment, while the latter is the point of view of a proof theorist. Interactive theorem provers use both, in which a term (proof) of the correct type (hypothesis) is sought interactively by both the user and the system. In other words, a type checking algorithm can be used to check whether $p$ is a correct proof of the hypothesis $A$, as this will be the case if and only if $p$ is a correct term of the type $A$.
-
-In this manner, Lean encodes a dependent type theory called the Calculus of Inductive Constructions (CIC).
-
-\subsection{Structures in Lean}
-
-\subsection{Type Classes}
-
-\subsection{Type Classes and Groups}
 
 \section{Homomorphisms}
 
@@ -244,6 +280,10 @@ In this manner, Lean encodes a dependent type theory called the Calculus of Indu
 \bibitem{artin} M. Artin. {\em Algebra, 2nd Edition.} Pearson. 2010.
 
 \bibitem{type} H. Geuvers. {\em Introduction to Type Theory.} Radboud University Nijmegen and Technical University Eindhoven. 2008.
+
+\bibitem{tpl} Theorem Proving in Lean.
+
+\bibitem{mathlib} Mathlib (how to reference?)
 
 \end{thebibliography}
 
