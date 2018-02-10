@@ -70,16 +70,6 @@
 \newcommand{\bop}{\bigoplus}
 %\newcommand{\tr}{\text{tr}}
 
-%Representation Theory
-\newcommand{\fsl}{\mathfrak{sl}}
-\newcommand{\fg}{\mathfrak{g}}
-\newcommand{\gl}{\mathfrak{gl}}
-
-%Galois Theory
-\DeclareMathOperator{\Aut}{Aut}
-\DeclareMathOperator{\Perm}{Perm}
-\DeclareMathOperator{\Gal}{Gal}
-
 
 \newtheorem{lemma}[theorem]{Lemma}
 \newtheorem{proposition}[theorem]{Proposition}
@@ -116,15 +106,122 @@
 In this report, we describe a formalisation of elementary group theory in the proof assistant Lean. We begin with an introduction to interactive theorem proving, and to the Lean Theorem Prover in particular. We then detail the construction of this formalisation in Lean, culminating in a proof of the first isomorphism theorem.
 
 \section{Introduction}
-Computational formal verification of mathematical theorems comes in two main forms. Automated theorem proving focuses on proving assertions fully automatically, with little or no input from a user. Interactive theorem proving involves a user actively guiding the proof, and builds mathematical structures 
+
+Computational formal verification of mathematical theorems comes in two main forms. Automated theorem proving focuses on proving assertions fully automatically, with little or no input from a user. Interactive theorem proving involves a user actively guiding the proof, and builds mathematical structures from a suitable axiomatic framework.
+
+Lean is primarily an interactive theorem prover, with a variety of automated tools. It encodes a formal mathematical language, based on dependent type theory, as well as a method for checking the correctness of terms written in this language.
 
 \section{Group Theory}
 
+The next section describes Lean in more detail. In order to have more relevant examples when doing so, we will first review the elementary group theory\cite{artin} which will be formalised in this report.
+
+\begin{definition}[Group] 
+A group is a set $G$ together with an operation $* : G \times G \to G$, which we will call multiplication, such that:
+\begin{itemize}
+\item $G$ is closed under multiplication: for all $a$ and $b$ in $G$, $a*b$ in $G$
+\item Multiplication is associative: for all a, b, c, in $G$, $(a*b)*c = a*(b*c)$
+\item G contains an identity element 1: for all a in $G$, $1*a = a$ and $a*1=a$
+\item Every element $a$ of $G$ has an inverse, an element $b$ such that $a*b = 1$ and $b*a =1$
+\end{itemize}
+
+We denote the inverse of $a$ as $a^{-1}$.
+\end{definition}
+
+\subsection{Subgroups}
+
+\begin{definition}[Subgroup]
+A subset $H$ of a group $G$ is a subgroup if it has the following properties:
+\begin{itemize}
+\item Closure: If a and b are in H, then $a * b$ is in H
+\item Identity: 1 is in H
+\item Inverses: If a is in H, then $a^{-1}$ is in H
+\end{itemize}
+\end{definition}
+
+\begin{definition}[Normal]
+A subgroup N of a group G is a normal subgroup if for every a in N and every g in G, $g * a * g^{-1}$ is in N.
+\end{definition}
+
+\begin{definition}[Trivial Subgroup] The set containing only 1 is a subgroup, and is called the trivial subgroup.
+\end{definition}
+
+\begin{definition}[Center]
+The center of a group G is the set of elements that commute with every element of G:
+\[
+\left\{ z \in G \mid z*x = x*z \text{ for all } x \in G \right\}
+\]
+\end{definition}
+
+\begin{definition}[Left Coset]
+If H is a subgroup of a group G and a is an element of G, then the left coset of H by a is 
+\[
+a * H = \{ g \in G \mid g = a * h \text{ for some } h \in H \}
+\]
+We similarly define the right coset of H by a and denote it $H * a$.
+\end{definition}
+
+\subsection{Homomorphisms}
+
+\begin{definition}[Homomorphism]
+Homomorphism: Let G and G' be groups. A homomorphism $\phi : G \to G'$ is a map from G to G' such that for all a, b in G:
+\[
+\phi (a * b) = \phi(a) * \phi(b)
+\]
+\end{definition}
+
+\begin{definition}[Kernel]
+Suppose G and G' are groups, and let $\phi : G \to G'$ be a homomorphism. The kernel of $\phi$ is the set of elements of G which are mapped to the identity in G'.
+\[
+\left\{ a \in G \mid \phi(a) = 1 \right\}
+\]
+\end{definition}
+
+\begin{definition}[Quotient Group]
+Let G be a group, and N a normal subgroup. Then there is an equivalence relation on elements of G, given by $a \sim b$ if $a * b^{-1} \in N$. The equivalence class of b given by this relation is denoted $[b]$, and the set of equivalence classes is denoted $G/N$. $G/N$ is a group, and is called the quotient of G by N.
+\end{definition}
+
+\begin{definition}[Isomorphism]
+A homomorphism is called an isomorphism if it is bijective. Two groups are said to be isomorphic if there exists an isomorphism between them.
+\end{definition}
+
+\begin{theorem}[First Isomorphism Theorem]
+Let G and G' be groups, and let $\phi : G \to G'$ be a homomorphism. Let K be the kernel of $\phi$. Note that the image of $\phi$ forms a group. Then $G/K$ is isomorphic to the image of $\phi$.
+\end{theorem}
+
 \section{Lean Theorem Prover}
 
-\subsection{Types}
+Lean is a proof assistant which encodes a variety of dependent type theory (described below) and provides a method for checking derivations made in that encoding. Lean also provides many features which aid the user in defining objects and proving theorems, the most relevant of which are discussed later in this section.
 
-\subsection{Structures}
+\subsection{Type Theory}
+
+A type theory is a formal system in which every term has a type, and operations are restricted to terms of a certain type. It is built by specifying judgments and rules. The basic judgment in type theory is of the form $a : A$, which is read as the statement `a is a term of type A'. Further, operations can be defined with types. The judgment $f : A \to B$ is the statement that $f$ has the type of a function with domain $A$ and co-domain $B$.
+
+Type theory allows the construction of further objects, given prior judgments. For example, the expression
+\[
+4 * (5 + 7) : \textbf{nat}
+\]
+is a type judgment states that $4 * (5 + 7)^8$ is of type \textbf{nat}, which is true because 4, 5, and 7 are of type \textbf{nat}, while $*$ and $+$ are operations on natural numbers.
+
+The simple type theory described above is limited in that the only types which exist are the types built into the language and those which can be constructed using $\to$ (i.e. functions from one type to another). Simple type systems generally have other simple constructions as well -- for example, a conjuction operator which gives types of the form $A \land B$.
+
+There are many types which cannot be described using this system -- for example, a list of terms where all the terms are of type $A$, expressed as the type `list $A$'. The construction of this type clearly depends on the type $A$, hence a type theory where constructions of this form are possible is called a dependent type theory.
+
+Type systems are commonly used in programming languages to check the syntactic correctness of code. For example, if $x$ is given as an argument to a function which takes an integer as an argument, then a type system as described above can be used to check whether $x$ indeed has the type integer, and so can provide a compile-time check of the syntactic correctness of the program.
+
+Proof assistants can use the same method of type checking to ensure the correctness of a mathematical proof of some theorem, by relying on the Curry-Howard isomorphism. The isomorphism simply amounts to a correspondence between two possible readings of the judgment
+\[
+p : A
+\]
+\begin{itemize}
+\item $p$ is a term (variable, function output) of the data type $A$
+\item $p$ is a proof of the hypothesis $A$
+\end{itemize}
+
+To generalise, the former is how a programmer would understand the judgment, while the latter is the point of view of a proof theorist. Interactive theorem provers use both, in which a term (proof) of the correct type (hypothesis) is sought interactively by both the user and the system. In other words, a type checking algorithm can be used to check whether $p$ is a correct proof of the hypothesis $A$, as this will be the case if and only if $p$ is a correct term of the type $A$.
+
+In this manner, Lean encodes a dependent type theory called the Calculus of Inductive Constructions (CIC).
+
+\subsection{Structures in Lean}
 
 \subsection{Type Classes}
 
@@ -140,9 +237,14 @@ Computational formal verification of mathematical theorems comes in two main for
 
 \section{First Isomorphism Theorem}
 
+\begin{thebibliography}{1}
 
-% \begin{thebibliography}{1}
+\bibitem{lean} L. de Moura, S. Kong, J. Avigad, F. van Doorn, J. von Raumer. {\em The Lean Theorem Prover (system description).} Microsoft Research and Carnegie Mellon University. Research Showcase @ CMU. 2015.
 
-% \end{thebibliography}
+\bibitem{artin} M. Artin. {\em Algebra, 2nd Edition.} Pearson. 2010.
+
+\bibitem{type} H. Geuvers. {\em Introduction to Type Theory.} Radboud University Nijmegen and Technical University Eindhoven. 2008.
+
+\end{thebibliography}
 
 \end{document}
