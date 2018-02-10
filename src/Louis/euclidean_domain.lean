@@ -3,11 +3,11 @@ import tactic.ring
 
 /- euclidean domain definitions and instances -/
 
---universes u v
+--universes u v (what do these do?)
 --definition valuation {α} [has_zero α] (r : α → α → α) {β} [has_well_founded β] := { f : α → β // ∀ a b, b = 0 ∨ has_well_founded.r ( f(r a b))  (f b) }
 definition valuation {α} [has_zero α] (r : α → α → α) := { f : α → ℕ // ∀ a b, b = 0 ∨ f(r a b) < f b }
 
-class euclidean_domain (α : Type u) extends integral_domain α :=
+class euclidean_domain (α : Type) extends integral_domain α :=
 ( quotient : α → α → α )
 ( remainder : α → α → α )
 ( witness : ∀ a b, (quotient a b) * b + (remainder a b) = a )
