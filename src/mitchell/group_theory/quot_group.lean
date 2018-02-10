@@ -83,6 +83,8 @@ lemma quotient_group_is_group {α} [G : group α] (N : set α) [hs : is_normal_s
     mul_left_inv := λ x, quotient.induction_on x (λ x, show ⟦ x⁻¹ * x ⟧ = ⟦ 1 ⟧, by rw mul_left_inv)
 }
 
+-- instance quotient_group_mul {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] : has_mul (quotient (quotient_group_setoid N)) := sorry
+
 attribute [instance] quotient_group_is_group
 
 lemma quot_mul_norm {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] {a b : α} 
@@ -164,9 +166,6 @@ simp,
 sorry -- easy
 end
 
--- set_option pp.implicit true
-
-
 variable {r : α → α → Prop}
 variable {S : quot r → Sort v}
 
@@ -224,7 +223,7 @@ noncomputable theorem first_isomorphism_theorem {α β} [G : group α] [H : grou
         hom_fun := {
             hom_mul := λ x y, (@quotient.induction_on₂ _ _ (quotient_group_setoid _) (quotient_group_setoid _) _ x y (begin
             intros,
-            erw quot.rec_eq,
+            erw [quot.rec_eq, quot.rec_eq],
             sorry
             end))
         }
