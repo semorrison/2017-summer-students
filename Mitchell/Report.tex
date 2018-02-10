@@ -173,7 +173,7 @@ Without any kind of implicit arguments, the statement $\forall a\; b : \a,\; a*b
 \hspace{4 em}\textbf{class has\_mul ($\a$ : Type u) := (mul : $\a \to \a \to \a$)}
 \vspace{2 mm}
 
-This means that a proof or hypothesis $p$ : has\_mul $\a$ is the statement that $\a$ is a type with multiplication, and so we can write (for example) $\forall a\; b : \a,\; a*b : \a$. Further, since it is a class, we do not have to explicitly tell Lean that this is possible. So long as $p$ is in the context, we can write $a * b$, and the elaborator will use type class inference to check that multiplication on terms of type $\a$ is possible.
+This means that a proof or hypothesis \textbf{$p$ : has\_mul $\a$} is the statement that $\a$ is a type with multiplication, and so we can write (for example) $\forall a\; b : \a,\; a*b : \a$. Further, since it is a class, we do not have to explicitly tell Lean that this is possible. So long as $p$ is in the context, we can write $a * b$, and the elaborator will use type class inference to check that multiplication on terms of type $\a$ is possible.
 
 Type class inference can also use the information that one type marked as a class inherits from another type marked as a class. For example:
 
@@ -181,9 +181,58 @@ Type class inference can also use the information that one type marked as a clas
 \hspace{4 em}\textbf{class semigroup ($\a$ : Type u) extends has\_mul $\a$
  := }
 
-\hspace{6 em}\textbf{(mul\_assoc : $\forall a\; b\; c : \a, a * b * c = a * (b * c)$)}
+\hspace{6 em}\textbf{(mul\_assoc : $\forall a\; b\; c : \a,\; a * b * c = a * (b * c)$)}
 \vspace{2 mm}
 
+Since \textbf{semigroup} inherits from \textbf{has\_mul}, one of the implicit fields of \textbf{semigroup} is \textbf{(mul : $\a \to \a \to \a$)}. Given \textbf{[h : semigroup $\a$]} in the context, we can write $a * b$ and Lean will recognise that \textbf{semigroup} inherits from \textbf{has\_mul}, and so can use type class inference to check that multiplication on terms of type $\a$ is possible.
+
+We will now quickly show the remaining steps required to create a group structure. First, it is necessary for the type to have an identity element:
+
+\vspace{2 mm}
+\hspace{4 em}\textbf{class has\_one ($\a$ : Type u) := (one : $\a$)}
+\vspace{2 mm}
+
+This allows us to create the monoid structure:
+
+\vspace{2 mm}
+\hspace{4 em}\textbf{class monoid ($\a$ : Type u) extends semigroup $\a$, has\_one $\a$ := }
+
+\hspace{6 em}\textbf{(one\_mul : $\forall a : \a,\; 1 * a = a$) (mul\_one : $\forall a : \a,\; a * 1 = a$)}
+\vspace{2 mm}
+
+It is also necessary for every term of the type to have an inverse:
+
+\vspace{2 mm}
+\hspace{4 em}\textbf{class has\_inv ($\a$ : Type u) := (inv : $\a \to \a$)}
+\vspace{2 mm}
+
+Finally we can create the group structure:
+
+\vspace{2 mm}
+\hspace{4 em}\textbf{class group ($\a$ : Type u) extends monoid $\a$, has\_inv $\a$ := }
+
+\hspace{6 em}\textbf{(mul\_left\_inv : $\forall a : \a,\; a^{-1} * a = 1$)}
+\vspace{2 mm}
+
+If we were to write every field of the group structure explicitly, it would be:
+
+\vspace{2 mm}
+\hspace{4 em}\textbf{class group ($\a$ : Type u) := }
+
+\hspace{6 em}\textbf{(mul : $\a \to \a \to \a$)}
+
+\hspace{6 em}\textbf{(mul\_assoc : $\forall a\; b\; c : \a,\; a * b * c = a * (b * c)$)}
+
+\hspace{6 em}\textbf{(one : $\a$)}
+
+\hspace{6 em}\textbf{(one\_mul : $\forall a : \a,\; 1 * a = a$)}
+
+\hspace{6 em}\textbf{(mul\_one : $\forall a : \a,\; a * 1 = a$)}
+
+\hspace{6 em}\textbf{(inv : $\a \to \a$)}
+
+\hspace{6 em}\textbf{(mul\_left\_inv : $\forall a : \a,\; a^{-1} * a = 1$)}
+\vspace{2 mm}
 
 \section{Group Theory}
 
@@ -272,6 +321,8 @@ Let G and G' be groups, and let $\phi : G \to G'$ be a homomorphism. Let K be th
 \section{Quotient Groups}
 
 \section{First Isomorphism Theorem}
+
+\todo[inline]{Sets}
 
 \begin{thebibliography}{1}
 
