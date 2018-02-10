@@ -235,11 +235,7 @@ noncomputable theorem first_isomorphism_theorem {α β} [G : group α] [H : grou
         hom_fun := {
             hom_mul := λ x y, (@quotient.induction_on₂ _ _ (quotient_group_setoid _) (quotient_group_setoid _) _ x y (begin
             intros,
-<<<<<<< HEAD
             erw [quot.rec_eq, quot.rec_eq],
-=======
-            erw quot.rec_eq,
->>>>>>> 90019ef81ded6a5827b9e39c543dd5d3714fbe7f
             sorry
             end))
         }
