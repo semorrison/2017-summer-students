@@ -1,4 +1,9 @@
 --TODO
+-- write induction principle :(
+-- convert to well founded instead of ℕ
+-- change to require only decidability for (x=0) (get rid of decidable_euclidean_domain entirely?)
+
+
 -- theorem nat_gcd_gcd -- prove equivalence of definitions
 -- examples
 -- polynomials with ED coefficients are a ED
@@ -297,7 +302,7 @@ noncomputable instance eea_input_has_sizeof {α : Type} (a b : α) [decidable_eu
 /- Euclidean algorithm stuff -/
 
 
-def extended_euclidean_algorithm_internal' {α : Type}  [ed : decidable_euclidean_domain α]  {a b : α } : eea_input a b → bezout_identity a b
+def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_euclidean_domain α]  {a b : α } : eea_input a b → bezout_identity a b
 | input := 
 -- match input with ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_curr, greatest_divisor ⟩ :=
 begin
@@ -390,5 +395,45 @@ cases h0 : input,
                 exact this,
             },
         },
-        extended_euclidean_algorithm_internal' next_input
+        extended_euclidean_algorithm_internal next_input
 end
+
+def extended_euclidean_algorithm {α : Type} [decidable_euclidean_domain α] (a b : α) : bezout_identity a b :=
+extended_euclidean_algorithm_internal ⟨ a, b, 1, 0, 0, 1,
+     by ring,
+     by ring,
+     begin
+         intros,
+         cases a_1,
+         split,
+         assumption,
+         assumption,
+     end,
+     begin
+         intro,
+         exact and.intro d.divides_a d.divides_b,
+     end ⟩ 
+
+theorem induction {α} [decidable_euclidean_domain α]
+                {P : α → α → Prop}
+                (m n : α)
+                (H0 : ∀n, P 0 n)
+                (H1 : ∀m n, /- has_well_founded.r 0 m -/ m ≠ 0 → P (n % m) m → P m n) :
+            P m n := sorry
+
+/-
+@[elab_as_eliminator]
+theorem gcd.induction {P : ℕ → ℕ → Prop}
+                   (m n : ℕ)
+                   (H0 : ∀n, P 0 n)
+                   (H1 : ∀m n, 0 < m → P (n % m) m → P m n) :
+                 P m n :=
+@induction _ _ lt_wf (λm, ∀n, P m n) m (λk IH,
+  by {induction k with k ih, exact H0,
+      exact λn, H1 _ _ (succ_pos _) (IH _ (mod_lt _ (succ_pos _)) _)}) n
+
+theorem gcd_dvd (m n : ℕ) : (gcd m n ∣ m) ∧ (gcd m n ∣ n) :=
+gcd.induction m n
+  (λn, by rw gcd_zero_left; exact ⟨dvd_zero n, dvd_refl n⟩)
+  (λm n npos, by rw ←gcd_rec; exact λ ⟨IH₁, IH₂⟩, ⟨IH₂, (dvd_mod_iff IH₂).1 IH₁⟩)
+-/
