@@ -83,23 +83,17 @@ lemma quotient_group_is_group {α} [G : group α] (N : set α) [hs : is_normal_s
     mul_left_inv := λ x, quotient.induction_on x (λ x, show ⟦ x⁻¹ * x ⟧ = ⟦ 1 ⟧, by rw mul_left_inv)
 }
 
-instance quotient_group_mul {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] : has_mul (quotient (quotient_group_setoid N)) := sorry
+-- instance quotient_group_mul {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] : has_mul (quotient (quotient_group_setoid N)) := sorry
 
 attribute [instance] quotient_group_is_group
 
 lemma quot_mul_norm {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] {a b : α} 
-<<<<<<< HEAD
-    : has_mul.mul (@quotient.mk _ (quotient_group_setoid N) a) (@quotient.mk _ (quotient_group_setoid N) b) = (@quotient.mk _ (quotient_group_setoid N) (a * b))
-    := sorry
-
-=======
     : @group.mul _ (quotient_group_is_group N) (@quotient.mk _ (quotient_group_setoid N) a) (@quotient.mk _ (quotient_group_setoid N) b) =
     (@quotient.mk _ (quotient_group_setoid N) (a * b))
     := sorry
 
 
 
->>>>>>> 90019ef81ded6a5827b9e39c543dd5d3714fbe7f
 end quotient_group
 
 open is_subgroup
