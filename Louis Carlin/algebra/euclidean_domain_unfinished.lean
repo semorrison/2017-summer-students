@@ -296,6 +296,7 @@ noncomputable instance eea_input_has_sizeof {α : Type} (a b : α) [decidable_eu
 
 /- Euclidean algorithm stuff -/
 
+
 def extended_euclidean_algorithm_internal' {α : Type}  [ed : decidable_euclidean_domain α]  {a b : α } : eea_input a b → bezout_identity a b
 | input := 
 match input with ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_curr, greatest_divisor ⟩ :=
@@ -329,8 +330,8 @@ match input with ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_c
     bezout := bezout_prev
     }
     else 
-        let q : α:= (rp/rc) in
-        let next_input : eea_input a b := ⟨ rc, ( rp%rc) , xc, (xp-q*xc), yc, (yp -q*yc), bezout_curr,
+        let q : α := (rp/rc),
+            next_input : eea_input a b := ⟨ rc, ( rp%rc) , xc, (xp-q*xc), yc, (yp -q*yc), bezout_curr,
         
         begin -- proof that rp % rc = a * (xp - q * xc) + b * (yp - q * yc). Used to show gcd = a*x + b*y at end                                                       
             have : q * rc + (rp%rc) = rp, by apply ed.witness,                                                  
@@ -383,6 +384,7 @@ match input with ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_c
             {   
                 dsimp [(%)],
                 have rci : input.rc = rc, by {
+                    
                     sorry,
                 },
                 rw rci,
@@ -391,4 +393,3 @@ match input with ⟨ rp, rc, xp, xc, yp, yc, bezout_prev, bezout_curr, divides_c
         },
         extended_euclidean_algorithm_internal' next_input
 end
-
