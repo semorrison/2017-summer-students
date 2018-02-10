@@ -86,8 +86,11 @@ lemma quotient_group_is_group {α} [G : group α] (N : set α) [hs : is_normal_s
 attribute [instance] quotient_group_is_group
 
 lemma quot_mul_norm {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] {a b : α} 
-    : @group.mul _ (quotient_group_is_group N) (@quotient.mk _ (quotient_group_setoid N) a) (@quotient.mk _ (quotient_group_setoid N) b) = (@quotient.mk _ (quotient_group_setoid N) (a * b))
+    : @group.mul _ (quotient_group_is_group N) (@quotient.mk _ (quotient_group_setoid N) a) (@quotient.mk _ (quotient_group_setoid N) b) =
+    (@quotient.mk _ (quotient_group_setoid N) (a * b))
     := sorry
+
+
 
 end quotient_group
 
@@ -152,7 +155,24 @@ simp,
 end
 
 lemma kernel_cosets {α β} [G : group α] [H : group β] (f : α → β ) [h : is_hom f] {a b} (hab : f a = f b) 
-    : @quotient.mk _ (quotient_group_setoid h.kernel) a = @quotient.mk _ (quotient_group_setoid h.kernel) b := sorry
+    : @quotient.mk _ (quotient_group_setoid h.kernel) a = @quotient.mk _ (quotient_group_setoid h.kernel) b :=
+begin
+apply quot.sound,
+unfold setoid.r,
+unfold norm_equiv,
+simp,
+sorry -- easy
+end
+
+-- set_option pp.implicit true
+
+
+variable {r : α → α → Prop}
+variable {S : quot r → Sort v}
+
+lemma quot.rec_eq
+   (f : Π a, S (quot.mk r a)) (h : ∀ (a b : α) (p : r a b), (eq.rec (f a) (quot.sound p) : S (quot.mk r b)) = f b)
+   (a : α) : @quot.rec α r S f h (quot.mk r a) = f a := by refl
 
 noncomputable theorem first_isomorphism_theorem {α β} [G : group α] [H : group β] (f : α → β ) [h : is_hom f] 
     : @group_isomorphism (quotient_group h.kernel) (image f) _ (@image'_group _ _ _ _ f h) := {
@@ -177,25 +197,34 @@ noncomputable theorem first_isomorphism_theorem {α β} [G : group α] [H : grou
             exact (@quotient.mk _ (quotient_group_setoid _) (classical.some h)),
         end,
         left_inv := begin
-        simp [left_inverse],
-        intro x,
-        induction x with y hy,
-        simp,
-        have hz := @classical.some_spec _ (λ z, f z = f y) ⟨y, rfl⟩,
-        exact @kernel_cosets _ _ _ _ f h _ _ hz,
-        simp,
-        end,
-        right_inv := 
-        begin
-        simp [function.right_inverse, left_inverse],
-        intros x hx,
-        apply subtype.eq,
-        simp,
-        sorry
-        end,
+                        simp [left_inverse],
+                        intro x,
+                        induction x with y hy,
+                        simp,
+                        have hz := @classical.some_spec _ (λ z, f z = f y) ⟨y, rfl⟩,
+                        exact @kernel_cosets _ _ _ _ f h _ _ hz,
+                        simp,
+                    end,
+        right_inv := begin
+                        
+                        simp [function.right_inverse, left_inverse],
+                        intros x hx,
+                        apply subtype.eq,
+                        simp,
+                        induction hx,
+                        induction hx_h,
+                        induction hx_h_right,
+                        dsimp,
+                        have p : @quotient.mk  _ (quotient_group_setoid _) (@classical.some α (λ (a : α), f a = f hx_w) _) = @quotient.mk  _ (quotient_group_setoid _) (hx_w), {
+                          sorry, -- not too hard
+                        },
+                        rw p,
+                        erw quot.rec_eq,
+                      end,
         hom_fun := {
             hom_mul := λ x y, (@quotient.induction_on₂ _ _ (quotient_group_setoid _) (quotient_group_setoid _) _ x y (begin
             intros,
+            erw quot.rec_eq,
             sorry
             end))
         }
