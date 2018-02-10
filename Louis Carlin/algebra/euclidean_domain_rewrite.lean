@@ -1,14 +1,21 @@
 import Louis.euclidean_domain
 
+-- notation for has_well_founded.r?
+notation  a < b := has_well_founded.r a b
+notation a > b := has_well_founded.r b a
+
 #check (5/3)
 
 noncomputable instance ed_has_sizeof {α : Type} [ed:decidable_euclidean_domain α] : has_sizeof α := {
     sizeof := λ x, ed.valuation.out.val x, -- note that out uses choice
 }
 
--- notation for has_well_founded.r?
-notation  a < b := has_well_founded.r a b
-notation a > b := has_well_founded.r b a
+-- noncomputable instance ed_has_well_founded {α : Type} [ed: decidable_euclidean_domain α] : has_sizeof α := {
+--     r := λ x y, 
+--     wf :=
+-- }
+
+
 
 
 /- lemmas -/
@@ -23,6 +30,7 @@ end
 #check integral_domain.to_no_zero_divisors
 #check no_zero_divisors -- (eq_zero_or_eq_zero_of_mul_eq_zero : ∀ a b : α, a * b = 0 → a = 0 ∨ b = 0)
 #check zero_div
+#check dvd_zero
 
 @[simp] lemma zero_div_ed {α : Type} [ed : euclidean_domain α] (b : α) : 0 / b = 0 :=
 begin
@@ -44,41 +52,41 @@ begin -- TODO: shorten/tidy this
     exact h1,
 end
 
-lemma eq_zero_or_pos {α : Type} [ed:decidable_euclidean_domain α] (n : α) : n = 0 ∨ n > (0 : α) :=
-begin
-cases decidable.em (n=0),
-left, exact h,
-right, simp, unfold has_well_founded.r,
-unfold sizeof_measure,
-unfold sizeof,
-unfold has_sizeof.sizeof,
-unfold measure,
-unfold inv_image,
-have := ed.valuation.out.property 0 n,
-cases this,
-{
-    contradiction
-},
-{
+-- lemma eq_zero_or_pos {α : Type} [ed:decidable_euclidean_domain α] (n : α) : n = 0 ∨ n > (0 : α) :=
+-- begin
+-- cases decidable.em (n=0),
+-- left, exact h,
+-- right, simp, unfold has_well_founded.r,
+-- unfold sizeof_measure,
+-- unfold sizeof,
+-- unfold has_sizeof.sizeof,
+-- unfold measure,
+-- unfold inv_image,
+-- have := ed.valuation.out.property 0 n,
+-- cases this,
+-- {
+--     contradiction
+-- },
+-- {
     
-    admit,
-}
-end
+--     admit,
+-- }
+-- end
 
-#reduce (0%5)
+-- #reduce (0%5)
 
-lemma mod_eq_sub_mod {a b : nat} (h : a ≥ b) : a % b = (a - b) % b :=
-or.elim (eq_zero_or_pos b)
-  (λb0, by rw [b0, nat.sub_zero])
-  (λh₂, by rw [mod_def, if_pos (and.intro h₂ h)])
+-- lemma mod_eq_sub_mod {a b : nat} (h : a ≥ b) : a % b = (a - b) % b :=
+-- or.elim (eq_zero_or_pos b)
+--   (λb0, by rw [b0, nat.sub_zero])
+--   (λh₂, by rw [mod_def, if_pos (and.intro h₂ h)])
 
-@[simp] theorem mod_self (n : nat) : n % n = 0 :=
-by rw [mod_eq_sub_mod (le_refl _), nat.sub_self, zero_mod]
-
-
+-- @[simp] theorem mod_self (n : nat) : n % n = 0 :=
+-- by rw [mod_eq_sub_mod (le_refl _), nat.sub_self, zero_mod]
 
 
-def gcd {α : Type} [ed : decidable_euclidean_domain α] : α → α → α
+
+
+noncomputable def gcd {α : Type} [ed : decidable_euclidean_domain α] : α → α → α
 | x y := if x_zero : x = 0 then y
 else have (y % x) < x, by {
     unfold has_well_founded.r,
@@ -101,15 +109,18 @@ else have (y % x) < x, by {
 
 @[simp] theorem gcd_zero_left {α : Type} [decidable_euclidean_domain α] (x : α) : gcd 0 x = x := 
 begin
-    have : 0 = 0, by refl,
-    -- unfold gcd, -- hangs on non-computability?
-    sorry
+    rw gcd,
+    simp,
 end
 
-@[simp] theorem gcd_next {α : Type} [decidable_euclidean_domain α] (x y : α) (h : x ≠ 0) : gcd x y = gcd (y % x) x :=
-by sorry --simp [gcd]
 
-@[simp] theorem gcd_self (n : ℕ) : gcd n n = n :=
+@[simp] theorem gcd_next {α : Type} [decidable_euclidean_domain α] (x y : α) (h : x ≠ 0) : gcd x y = gcd (y % x) x :=
+begin
+    rw gcd,
+    simp [h],
+end
+
+@[simp] theorem gcd_self {α : Type} [decidable_euclidean_domain α] (n : α) : gcd n n = n :=
 by cases n;
  simp [gcd, mod_self]
 
