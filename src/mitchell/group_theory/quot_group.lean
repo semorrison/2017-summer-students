@@ -172,12 +172,6 @@ simp,
 sorry -- easy
 end
 
-<<<<<<< HEAD
-=======
--- set_option pp.implicit true
-
-
->>>>>>> 90019ef81ded6a5827b9e39c543dd5d3714fbe7f
 variable {r : α → α → Prop}
 variable {S : quot r → Sort v}
 
