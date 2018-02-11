@@ -43,8 +43,6 @@ lemma subgroup_group [h : group α] {s : set α} (hs : is_subgroup s) : group s 
     inv := λ ⟨x, hx⟩, ⟨x⁻¹, inv_mem hx⟩,
     mul_left_inv := λ ⟨x, hx⟩, subtype.eq $ mul_left_inv x }
 
-#print subgroup_group
-
 -- Normal subgroup properties
 lemma mem_norm_comm [group α] {a b : α} {S : set α} [is_normal_subgroup S] (hab : a * b ∈ S) : b * a ∈ S := 
     have h : a⁻¹ * (a * b) * a⁻¹⁻¹ ∈ S, from is_normal_subgroup.normal (a * b) hab a⁻¹,
@@ -81,8 +79,6 @@ lemma center_subg [group α] : is_subgroup (center α) := {
     end
 }
 
-attribute [instance] center_subg
-
 lemma center_normal [group α] : is_normal_subgroup (center α) := {
     is_normal_subgroup .
     subgroup := is_subgroup.center_subg,
@@ -95,6 +91,9 @@ lemma center_normal [group α] : is_normal_subgroup (center α) := {
         ...               = g * n * g⁻¹ * h     : by rw [mul_assoc g, ha g⁻¹, ←mul_assoc]
     end
 }
+
+
+attribute [instance] center_subg center_normal
 
 end is_subgroup
 

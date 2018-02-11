@@ -234,6 +234,16 @@ If we were to write every field of the group structure explicitly, it would be:
 \hspace{6 em}\textbf{(mul\_left\_inv : $\forall a : \a,\; a^{-1} * a = 1$)}
 \vspace{2 mm}
 
+\subsection{Sets}
+
+In order to later understand the construction of a subgroup, it is necessary to here describe how Lean defines a set. In the standard library, the set type is defined as:
+
+\vspace{2 mm}
+\hspace{4 em}\textbf{def set ($\a$ : Type u) := $\a \to$ Prop}
+\vspace{2 mm}
+
+So for any Type $\a$, a term of type \textbf{set $\a$} is a function from $\a$ to \textbf{Prop} (the type of propositions). Suppose \textbf{p : set $\a$}. Then for \textbf{x : $\a$}, \textbf{p x : Prop} is the proposition that 
+
 \section{Group Theory}
 
 In this section we will review the elementary group theory\cite{artin} which will be formalised in this report.
@@ -311,10 +321,15 @@ A homomorphism is called an isomorphism if it is bijective. Two groups are said 
 Let G and G' be groups, and let $\phi : G \to G'$ be a homomorphism. Let K be the kernel of $\phi$. Note that the image of $\phi$ forms a group. Then $G/K$ is isomorphic to the image of $\phi$.
 \end{theorem}
 
+\section{Subgroups}
+
+Given the definition of a subgroup described in section 3, 
+
 
 \section{Homomorphisms}
 
-\section{Subgroups}
+
+
 
 \section{Cosets}
 
