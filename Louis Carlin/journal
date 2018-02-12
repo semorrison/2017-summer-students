@@ -58,3 +58,8 @@ Does trunc actually make anything easier?
 - We can show that the set of valuations is not the null set, allowing us to find the minimum
 
 infers wrong instance of sizeof?
+
+[Lean] rec_fn_macro only allowed in meta definitions
+- this happens because our well_founded relation is non-computable?
+
+Define a valuation satisfying EF2

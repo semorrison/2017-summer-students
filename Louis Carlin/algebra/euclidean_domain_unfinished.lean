@@ -1,4 +1,9 @@
 --TODO
+-- write induction principle :(
+-- convert to well founded instead of ℕ
+-- change to require only decidability for (x=0) (get rid of decidable_euclidean_domain entirely?)
+
+
 -- theorem nat_gcd_gcd -- prove equivalence of definitions
 -- examples
 -- polynomials with ED coefficients are a ED
@@ -50,30 +55,30 @@ end
 #check subtype
 #check has_well_founded
 
--- def lt_wf : (well_founded nat.lt) := -- will need to be replaced by more general well_founded
---     begin
---       split, intro a, induction a with b h,
---       {
---           split,
---           intro y,
---           intro h,
---           cases h,
---       },
---       {
---         split,
---         intro y,
---         intro h,
---         cases h,
---         {
---             assumption
---         },
---         {
---             have p : y < b, by sorry,
---             cases h,
---             exact h_h y p,
---         }
---       }
---     end
+def lt_wf : (well_founded nat.lt) := -- will need to be replaced by more general well_founded
+    begin
+      split, intro a, induction a with b h,
+      {
+          split,
+          intro y,
+          intro h,
+          cases h,
+      },
+      {
+        split,
+        intro y,
+        intro h,
+        cases h,
+        {
+            assumption
+        },
+        {
+            have p : y < b, by sorry,
+            cases h,
+            exact h_h y p,
+        }
+      }
+    end
 
 #check well_founded.min
 -- well_founded β (this needs a proof that some function is well-founded)
@@ -93,120 +98,120 @@ begin
     admit, -- WTS : f a ≠ g a → f ≠ g
 end
 #check funext
-
+#check nat.find
 
 #check set.eq_empty_iff_forall_not_mem
 
 -- show non-empty set of functions applied to a value is non-empty
 -- show transitivity-esque property of well-founded relations
--- noncomputable definition optimal_valuation {α} [ed : decidable_euclidean_domain α] : valuation (ed.remainder) := {
---     val := λ a, well_founded.min 
---         lt_wf -- the wf relation we are finding the minimum for 
---         ((λ f : valuation (ed.remainder), f.val a) '' (set.univ)) -- map the valuation application function over the set of all valuations
---     (
---         begin
---         admit,
---         end
---     ),
---     property := λ a b,
---     begin
---     cases decidable.em (b = 0), 
---     {
---         left, assumption
---     }, 
---     {
---         right,
+noncomputable definition optimal_valuation {α} [ed : decidable_euclidean_domain α] : valuation (ed.remainder) := {
+    val := λ a, well_founded.min 
+        lt_wf -- the wf relation we are finding the minimum for 
+        ((λ f : valuation (ed.remainder), f.val a) '' (set.univ)) -- map the valuation application function over the set of all valuations
+    (
+        begin
+        admit,
+        end
+    ),
+    property := λ a b,
+    begin
+    cases decidable.em (b = 0), 
+    {
+        left, assumption
+    }, 
+    {
+        right,
 
---         let S_f : set (valuation ed.remainder) := set.univ,
---         let S_b := ((λ (f : valuation euclidean_domain.remainder), f.val b) '' S_f),
+        let S_f : set (valuation ed.remainder) := set.univ,
+        let S_b := ((λ (f : valuation euclidean_domain.remainder), f.val b) '' S_f),
 
---         have nonempty_b : S_b ≠ ∅ := trunc.lift
---         (
---             assume (f : valuation ed.remainder),
---             (
---                 begin
---                     have f_in : f ∈ S_f, from set.eq_univ_iff_forall.elim_left  (by {dsimp [S_f], refl}) f,
---                     have := set.ne_empty_of_mem f_in,
+        have nonempty_b : S_b ≠ ∅ := trunc.lift
+        (
+            assume (f : valuation ed.remainder),
+            (
+                begin
+                    have f_in : f ∈ S_f, from set.eq_univ_iff_forall.elim_left  (by {dsimp [S_f], refl}) f,
+                    have := set.ne_empty_of_mem f_in,
 
---                     have fb_in : f.val b ∈ S_b, by {
---                         have : S_b (f.val b), by {
---                             dsimp [S_b],
---                             simp,
---                             dsimp [set.range],
---                             unfold set_of,
---                             existsi f,
---                             refl,
---                         },
---                         exact set.mem_def.elim_right this,
---                     },
---                     exact set.ne_empty_of_mem fb_in,
---                 end
---             )
---         )
---         (
---             begin
---             intros,
---             refl,
---             end
---         )
---         ed.valuation,
+                    have fb_in : f.val b ∈ S_b, by {
+                        have : S_b (f.val b), by {
+                            dsimp [S_b],
+                            simp,
+                            dsimp [set.range],
+                            unfold set_of,
+                            existsi f,
+                            refl,
+                        },
+                        exact set.mem_def.elim_right this,
+                    },
+                    exact set.ne_empty_of_mem fb_in,
+                end
+            )
+        )
+        (
+            begin
+            intros,
+            refl,
+            end
+        )
+        ed.valuation,
 
 
---         have h1 := well_founded.min_mem lt_wf S_b nonempty_b,
---         simp at h1,
---         have p : ∃ g : valuation (ed.remainder), well_founded.min lt_wf S_b nonempty_b = g.val b, 
---         {
---             dsimp [S_b],
---             simp,
---             induction h1 with y hy,
---             existsi y,
---             symmetry,
---             dsimp [S_b] at hy, simp at hy,
---             exact hy,
---         },
+        have h1 := well_founded.min_mem lt_wf S_b nonempty_b,
+        simp at h1,
+        have p : ∃ g : valuation (ed.remainder), well_founded.min lt_wf S_b nonempty_b = g.val b, 
+        {
+            dsimp [S_b],
+            simp,
+            induction h1 with y hy,
+            existsi y,
+            symmetry,
+            dsimp [S_b] at hy, simp at hy,
+            exact hy,
+        },
 
---         induction p with g h,
---         rw h,
+        induction p with g h,
+        rw h,
 
---         let S_rem := ((λ (f : valuation euclidean_domain.remainder), f.val (a %b)) '' S_f),
+        let S_rem := ((λ (f : valuation euclidean_domain.remainder), f.val (a %b)) '' S_f),
 
---         have gab_in : g.val (a%b) ∈ S_rem, by {
---             have : S_rem (g.val (a%b)), by {
---                 dsimp [S_rem],
---                 simp,
---                 dsimp [set.range],
---                 unfold set_of,
---                 existsi g,
---                 refl,
---             },
---             exact set.mem_def.elim_right this,
---         },
---         have nonempty_rem : S_rem ≠ ∅, from set.ne_empty_of_mem gab_in,
+        have gab_in : g.val (a%b) ∈ S_rem, by {
+            have : S_rem (g.val (a%b)), by {
+                dsimp [S_rem],
+                simp,
+                dsimp [set.range],
+                unfold set_of,
+                existsi g,
+                refl,
+            },
+            exact set.mem_def.elim_right this,
+        },
+        have nonempty_rem : S_rem ≠ ∅, from set.ne_empty_of_mem gab_in,
         
---         have q := well_founded.not_lt_min 
---             lt_wf 
---             S_rem
---             nonempty_rem gab_in,
---         dsimp [S_rem] at q,
---         --  ¬nat.lt (g.val (a % b)) fmin.val (a % b)
+        have q := well_founded.not_lt_min 
+            lt_wf 
+            S_rem
+            nonempty_rem gab_in,
+        dsimp [S_rem] at q,
+        --  ¬nat.lt (g.val (a % b)) fmin.val (a % b)
 
---         have q_i : nat.le (well_founded.min -- probs don't need this
---             lt_wf 
---             S_rem
---             (nonempty_rem)) /- ≤ -/ 
---         (g.val (a % b)), by sorry, -- the minimum possible f (a%b) is less than or equal to g (a%b)
+        have q_i : nat.le (well_founded.min -- probs don't need this
+            lt_wf 
+            S_rem
+            (nonempty_rem)) /- ≤ -/ 
+        (g.val (a % b)), by sorry, -- the minimum possible f (a%b) is less than or equal to g (a%b)
         
---         have r : g.val (a % b) < g.val b, begin
---                                             have s := g.property a b,
---                                             induction s,
---                                             contradiction,
---                                             exact s,
---                                           end,
---         rw ←h at r,
---         sorry --- put together q and r
---       }
---     end
--- }
+        have r : g.val (a % b) < g.val b, begin
+                                            have s := g.property a b,
+                                            induction s,
+                                            contradiction,
+                                            exact s,
+                                          end,
+        rw ←h at r,
+        sorry --- put together q and r
+      }
+    end
+}
 
 -- well_founded.min_mem {α} {r : α → α → Prop} (H : well_founded r) (p : set α) (h : p ≠ ∅) : H.min p h ∈ p
 -- well_founded.not_lt_min {α} {r : α → α → Prop} (H : well_founded r) (p : set α) (h : p ≠ ∅) {x} (xp : x ∈ p) : ¬ r x (H.min p h)
@@ -280,26 +285,24 @@ end
 /- Well founded stuff -/
 --set_option trace.class_instances true
 
--- noncomputable instance optimal_valuation_as_sizeof {α} [ed : decidable_euclidean_domain α] : has_sizeof α := {
---   sizeof := optimal_valuation.val
--- }
+noncomputable instance optimal_valuation_as_sizeof {α} [ed : decidable_euclidean_domain α] : has_sizeof α := {
+  sizeof := optimal_valuation.val
+}
 
 /-
 instance eea_input_has_sizeof {α : Type} (a b : α) [euclidean_domain α] : has_sizeof (eea_input a b) := {
     sizeof := λ e, sizeof e.rc
 }-/
 
-noncomputable instance eea_input_has_sizeof {α : Type} (a b : α) [ed:decidable_euclidean_domain α] : has_sizeof (eea_input a b) := {
-    --sizeof := λ e, optimal_valuation.val e.rc
-    sizeof := λ e, ed.valuation.out.val e.rc, 
-}
+-- noncomputable instance eea_input_has_sizeof {α : Type} (a b : α) [decidable_euclidean_domain α] : has_sizeof (eea_input a b) := {
+--     sizeof := λ e, optimal_valuation.val e.rc
+-- }
 
---noncomputable instance 
 
 /- Euclidean algorithm stuff -/
 
 
-def extended_euclidean_algorithm_internal' {α : Type}  [ed : decidable_euclidean_domain α]  {a b : α } : eea_input a b → bezout_identity a b
+def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_euclidean_domain α]  {a b : α } : eea_input a b → bezout_identity a b
 | input := begin
     cases h0 : input,
     exact (if h : rc = 0 then 
@@ -332,8 +335,8 @@ def extended_euclidean_algorithm_internal' {α : Type}  [ed : decidable_euclidea
     bezout := bezout_prev
     }
     else 
-        let q : α := (rp/rc),
-            next_input : eea_input a b := ⟨ rc, ( rp%rc) , xc, (xp-q*xc), yc, (yp -q*yc), bezout_curr,
+        let q : α:= (rp/rc) in
+        let next_input : eea_input a b := ⟨ rc, ( rp%rc) , xc, (xp-q*xc), yc, (yp -q*yc), bezout_curr,
         
         begin -- proof that rp % rc = a * (xp - q * xc) + b * (yp - q * yc). Used to show gcd = a*x + b*y at end                                                       
             have : q * rc + (rp%rc) = rp, by apply ed.witness,                                                  
@@ -369,39 +372,70 @@ def extended_euclidean_algorithm_internal' {α : Type}  [ed : decidable_euclidea
             exact and.intro this_right this,
         end⟩ 
         in 
-        have has_well_founded.r next_input input, {
-            unfold has_well_founded.r,
-            unfold sizeof_measure,
-            unfold sizeof,
-            unfold has_sizeof.sizeof,
-            unfold measure,
-            unfold inv_image, simp,
-            let ov_val : α → ℕ := ed.valuation.out.val,
-            --have  : ov_val = optimal_valuation.val, by {dsimp [ov_val], refl},
-            have := ed.valuation.out.property rp rc,
-            cases this,
-            {
-                exact absurd this h,
-            },
-            {   
-                dsimp [(%)],
-                have rci : input.rc = rc, by {
-<<<<<<< HEAD
-                    
-                    sorry,
-=======
-                    exact congr_arg eea_input.rc h0
->>>>>>> 36458a280f17c573e960e4bc413ae16e9b8d5fc9
-                },
-                rw rci,
-                exact this,
-            },
-        },
-<<<<<<< HEAD
-        extended_euclidean_algorithm_internal' next_input
-end
-=======
-        extended_euclidean_algorithm_internal' next_input)
+        -- have has_well_founded.r next_input input, {
+        --     unfold has_well_founded.r,
+        --     unfold sizeof_measure,
+        --     unfold sizeof,
+        --     unfold has_sizeof.sizeof,
+        --     unfold measure,
+        --     unfold inv_image,
+        --     let ov_val : α → ℕ := ed.valuation.out.val,
+        --     --have  : ov_val = optimal_valuation.val, by {dsimp [ov_val], refl},
+        --     have := ed.valuation.out.property rp rc,
+        --     cases this,
+        --     {
+        --         exact absurd this h,
+        --     },
+        --     {   
+        --         dsimp [(%)],
+        --         have rci : input.rc = rc, by {
+        --             exact congr_arg eea_input.rc h0
+        --         },
+        --         rw rci,
+        --         exact this,
+        --     },
+        --},
+        extended_euclidean_algorithm_internal next_input)
 end
 
->>>>>>> 36458a280f17c573e960e4bc413ae16e9b8d5fc9
+def extended_euclidean_algorithm {α : Type} [decidable_euclidean_domain α] (a b : α) : bezout_identity a b :=
+extended_euclidean_algorithm_internal ⟨ a, b, 1, 0, 0, 1,
+     by ring,
+     by ring,
+     begin
+         intros,
+         cases a_1,
+         split,
+         assumption,
+         assumption,
+     end,
+     begin
+         intro,
+         exact and.intro d.divides_a d.divides_b,
+     end ⟩ 
+
+theorem induction {α} [decidable_euclidean_domain α]
+                {P : α → α → Prop}
+                (m n : α)
+                (H0 : ∀n, P 0 n)
+                (H1 : ∀m n, /- has_well_founded.r 0 m -/ m ≠ 0 → P (n % m) m → P m n) :
+            P m n := sorry
+
+/-
+@[elab_as_eliminator]
+theorem gcd.induction {P : ℕ → ℕ → Prop}
+                   (m n : ℕ)
+                   (H0 : ∀n, P 0 n)
+                   (H1 : ∀m n, 0 < m → P (n % m) m → P m n) :
+                 P m n :=
+@induction _ _ lt_wf (λm, ∀n, P m n) m (λk IH,
+  by {induction k with k ih, exact H0,
+      exact λn, H1 _ _ (succ_pos _) (IH _ (mod_lt _ (succ_pos _)) _)}) n
+
+theorem gcd_dvd (m n : ℕ) : (gcd m n ∣ m) ∧ (gcd m n ∣ n) :=
+gcd.induction m n
+  (λn, by rw gcd_zero_left; exact ⟨dvd_zero n, dvd_refl n⟩)
+  (λm n npos, by rw ←gcd_rec; exact λ ⟨IH₁, IH₂⟩, ⟨IH₂, (dvd_mod_iff IH₂).1 IH₁⟩)
+-/
+
+/- rewrite -/
