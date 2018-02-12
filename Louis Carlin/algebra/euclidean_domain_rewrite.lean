@@ -2,9 +2,11 @@
 -- write induction principle :(
 -- convert to well founded instead of ℕ
 -- change to require only decidability for (x=0) (get rid of decidable_euclidean_domain entirely?)
+-- do I do well founded on the valuation or just the inputs? 
 
 import data.int.basic
 import tactic.ring
+import init.meta.well_founded_tactics
 
 universes u v
 
@@ -284,4 +286,51 @@ begin
     }
 end
 
+theorem gcd.induction {α : Type} [decidable_euclidean_domain α] 
+                    {P : α → α → Prop}
+                    (m n : α)
+                    (H0 : ∀ x, P 0 x)
+                    (H1 : ∀ m n, has_well_founded.r 0 m → P (n%m) m → P m n) :
+                P m n := 
+@well_founded.induction _ _ (has_well_founded.wf α) (λm, ∀n, P m n) m (λk IH,
+begin
+    cases decidable.em (k=0),
+    {
+        rw h,
+        exact H0,
+    },
+    {
+        intro n,
+        exact H1 _ _ (/- has_well_founded.wf (0:α) _ -/)
+        sorry
+    }
+end
+--   by {induction k with k ih, exact H0,
+--       exact λn, H1 _ _ (succ_pos _) (IH _ (mod_lt _ (succ_pos _)) _)}
+      ) n
 
+
+-- @[elab_as_eliminator]
+-- theorem gcd.induction {P : ℕ → ℕ → Prop}
+--                    (m n : ℕ)
+--                    (H0 : ∀n, P 0 n)
+--                    (H1 : ∀m n, 0 < m → P (n % m) m → P m n) :
+--                  P m n :=
+-- @induction _ _ lt_wf (λm, ∀n, P m n) m (λk IH,
+--   by {induction k with k ih, exact H0,
+--       exact λn, H1 _ _ (succ_pos _) (IH _ (mod_lt _ (succ_pos _)) _)}) n
+
+#reduce nat.lt_wf
+example : well_founded nat.lt :=
+begin
+    split,
+end
+
+-- class has_well_founded (α : Sort u) : Type u :=
+-- (r : α → α → Prop) (wf : well_founded r)
+
+-- lemma recursion {C : α → Sort v} (a : α) (h : Π x, (Π y, y ≺ x → C y) → C x) : C a :=
+-- acc.rec_on (apply hwf a) (λ x₁ ac₁ ih, h x₁ ih)
+
+-- lemma induction {C : α → Prop} (a : α) (h : ∀ x, (∀ y, y ≺ x → C y) → C x) : C a :=
+-- recursion a h
