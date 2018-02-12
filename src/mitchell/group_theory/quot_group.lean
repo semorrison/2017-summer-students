@@ -18,6 +18,8 @@ open is_subgroup coset_notation
 variables [hg : group α] (N : set α) [hn : is_normal_subgroup N] (a : α)
 include hn hg
 
+local notation a `∼` b := norm_equiv N a b
+
 lemma norm_equiv_rel : equivalence (norm_equiv N) :=
 ⟨ λ x, calc
         x * x⁻¹ = (1 : α) : mul_right_inv x
@@ -31,12 +33,12 @@ lemma norm_equiv_rel : equivalence (norm_equiv N) :=
 
 lemma norm_equiv_rfl (a : α) : norm_equiv N a a := (norm_equiv_rel N).left a
 
-lemma norm_equiv_symm {a b} (h : norm_equiv N a b) : norm_equiv N b a := (norm_equiv_rel N).right.left h
+lemma norm_equiv_symm {a b} (h : a ∼ b) : b ∼ a := (norm_equiv_rel N).right.left h
 
-lemma norm_equiv_trans {a b c} (hab : norm_equiv N a b) (hbc : norm_equiv N b c) : norm_equiv N a c := 
+lemma norm_equiv_trans {a b c} (hab : a ∼ b) (hbc : b ∼ c) : a ∼ c := 
     (norm_equiv_rel N).right.right hab hbc
 
-lemma norm_equiv_mul {a₁ a₂ b₁ b₂ : α} (ha : norm_equiv N a₁ a₂) (hb : norm_equiv N b₁ b₂)
+lemma norm_equiv_mul {a₁ a₂ b₁ b₂ : α} (ha : a₁ ∼ a₂) (hb : b₁ ∼ b₂)
     : norm_equiv N (a₁ * b₁) (a₂ * b₂) :=
     begin
     simp [norm_equiv] at *,
@@ -60,6 +62,8 @@ begin
 end
 
 end norm_equiv
+
+#print quotient.sound
 
 definition quotient_group_setoid {α} [group α] (N : set α) [is_normal_subgroup N] : setoid α := {
     r := norm_equiv N,

@@ -6,8 +6,8 @@ open set
 universe u
 variable {α : Type u}
 
-definition lcoset [has_mul α] (a : α) (S : set α) : set α := image (λ x, a * x) S
-definition rcoset [has_mul α] (S : set α) (a : α) : set α := image (λ x, x * a) S
+def lcoset [has_mul α] (a : α) (S : set α) : set α := image (λ x, a * x) S
+def rcoset [has_mul α] (S : set α) (a : α) : set α := image (λ x, x * a) S
 
 namespace coset_notation
 
@@ -139,7 +139,6 @@ split, tactic.swap,
     {
     intros hg,
     split,
-    { assumption },
     {  -- Can probably be cleaned further
         intros n hn g,
         have hl : g * n ∈ g * S, from mem_lcoset g hn,
