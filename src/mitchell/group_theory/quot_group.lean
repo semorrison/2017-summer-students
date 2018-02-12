@@ -9,13 +9,13 @@ open set
 
 namespace quotient_group
 open is_subgroup coset_notation
-variable [group α]
 
-def norm_equiv (N : set α) (a b : α) := a * b⁻¹ ∈ N
+def norm_equiv [group α] (N : set α) (a b : α) := a * b⁻¹ ∈ N
 
 section norm_equiv
 open is_subgroup coset_notation
-variables [hg : group α] (N : set α) [hn : is_normal_subgroup N] (a : α)
+-- Check that all of these lemmas need all of these variables
+variables [group α] [hg : group α] (N : set α) [hn : is_normal_subgroup N] (a : α)
 include hn hg
 
 local notation a `∼` b := norm_equiv N a b
@@ -39,7 +39,7 @@ lemma norm_equiv_trans {a b c} (hab : a ∼ b) (hbc : b ∼ c) : a ∼ c :=
     (norm_equiv_rel N).right.right hab hbc
 
 lemma norm_equiv_mul {a₁ a₂ b₁ b₂ : α} (ha : a₁ ∼ a₂) (hb : b₁ ∼ b₂)
-    : norm_equiv N (a₁ * b₁) (a₂ * b₂) :=
+    : (a₁ * b₁) ∼ (a₂ * b₂) :=
     begin
     simp [norm_equiv] at *,
     have h : (a₁ * N) * a₂⁻¹ = N, {
@@ -54,7 +54,7 @@ lemma norm_equiv_mul {a₁ a₂ b₁ b₂ : α} (ha : a₁ ∼ a₂) (hb : b₁ 
         ...                     ∈ (a₁ * N) * a₂⁻¹           : mem_rcoset a₂⁻¹ (mem_lcoset a₁ hb)
     end
 
-lemma norm_equiv_inv {a₁ a₂ : α} (h : norm_equiv N a₁ a₂) : norm_equiv N a₁⁻¹ a₂⁻¹ :=
+lemma norm_equiv_inv {a₁ a₂ : α} (h : a₁ ∼ a₂) : a₁⁻¹ ∼ a₂⁻¹ :=
 begin
     apply norm_equiv_symm N,
     simp [norm_equiv] at *,
@@ -63,20 +63,18 @@ end
 
 end norm_equiv
 
-#print quotient.sound
-
-definition quotient_group_setoid {α} [group α] (N : set α) [is_normal_subgroup N] : setoid α := {
+definition quotient_group_setoid [group α] (N : set α) [is_normal_subgroup N] : setoid α := {
     r := norm_equiv N,
     iseqv := norm_equiv_rel N
 }
 
 attribute [instance] quotient_group_setoid
 
-def quotient_group {α} [group α] (N : set α) [h : is_normal_subgroup N] := quotient (quotient_group_setoid N)
+def quotient_group (α) [group α] (N : set α) [h : is_normal_subgroup N] := quotient (quotient_group_setoid N)
 
-notation G `/` N := quotient_group N
+notation G `/` N := quotient_group G N
 
-lemma quotient_group_is_group {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] : group (G / N) := {
+lemma quotient_group_is_group {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] : group (α / N) := {
     one := ⟦ 1 ⟧,
     mul := quotient.lift₂ (λ x y : α, ⟦x*y⟧) (λ x₁ x₂ y₁ y₂ h₁ h₂, quot.sound (norm_equiv_mul N h₁ h₂)),
     inv := quotient.lift  (λ x : α, ⟦x⁻¹⟧)   (λ x₁ x₂ h, quot.sound (norm_equiv_inv N h)),
@@ -86,6 +84,8 @@ lemma quotient_group_is_group {α} [G : group α] (N : set α) [hs : is_normal_s
     one_mul := λ x, quotient.induction_on x (λ x, show ⟦ 1 * x ⟧ = ⟦ x ⟧, by rw one_mul),
     mul_left_inv := λ x, quotient.induction_on x (λ x, show ⟦ x⁻¹ * x ⟧ = ⟦ 1 ⟧, by rw mul_left_inv)
 }
+
+-- After this point it just becomes a mess
 
 -- instance quotient_group_mul {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] : has_mul (quotient (quotient_group_setoid N)) := sorry
 
@@ -105,28 +105,8 @@ open quotient_group
 open function
 open is_hom
 
-section extend
-variables [group α] [group β]
-
-def image ( f : α → β ) := f '' univ
-lemma image_mem (f : α → β) (a : α) : f a ∈ image f := by sorry
-
-variables {N : set α} [hs : is_normal_subgroup N]
-include hs
-
-def q_em (a : α) := ⟦a⟧ 
-
-variables {f : α → β} (resp_f : ∀ a₁ a₂, norm_equiv N a₁ a₂ → f a₁ = f a₂)
-
-def extend : quotient_group N → β := quotient.lift f resp_f
-
-lemma extend_quot (a : α) : extend resp_f ⟦a⟧ = f a := rfl
-
-lemma extend_quot_comp : extend resp_f ∘ q_em = f := rfl
-
--- def extend_im : quotient_group N → image' f := λ x, quotient.lift_on x (λ x, ⟨f x, x, rfl⟩ : α → image' f)
-
-end extend
+def image [group α] [group β] ( f : α → β ) := f '' univ
+lemma image_mem [group α] [group β] (f : α → β) (a : α) : f a ∈ image f := by sorry
 
 section
 
@@ -178,7 +158,7 @@ lemma quot.rec_eq
    (a : α) : @quot.rec α r S f h (quot.mk r a) = f a := by refl
 
 noncomputable theorem first_isomorphism_theorem {α β} [G : group α] [H : group β] (f : α → β ) [h : is_hom f] 
-    : @group_isomorphism (quotient_group h.kernel) (image f) _ (@image'_group _ _ _ _ f h) := {
+    : @group_isomorphism (α / h.kernel) (image f) _ (@image'_group _ _ _ _ f h) := {
         to_fun := 
         begin 
                     intros, 

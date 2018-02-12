@@ -464,8 +464,6 @@ Equivalence relations are defined as expected in Lean. Given \textbf{{$\a$ : Sor
 \hspace{2 em}\textbf{def equivalence := reflexive r $\land$ symmetric r $\land$ transitive r}
 \vspace{2 mm}
 
-\textbf{Sort u} is (barring some slight nuances) another way of saying \textbf{Type (u-1)}
-
 We also have a constructor \textbf{mk\_equivalence}, which takes proofs of \textbf{reflexive r}, \textbf{symmetric r}, and \textbf{transitive r}, and creates a proof that $r$ is an equivalence relation. With this in mind, we can provide a very simple proof:
 
 \vspace{2 mm}
@@ -554,8 +552,50 @@ it is sufficient to prove
 
 Finally, \textbf{sound} is the axiom that ensures the quotient construction indeed acts how we expect it to -- that if $a \sim b$, then $[a] = [b]$. (The converse of this is encoded as a lemma called \textbf{quotient.exact}.)
 
+\subsection{Construction of Quotient Groups}
+
+To construct the quotient group in Lean given a particular normal subgroup, we must
+\begin{enumerate}
+    \item Define an appropriate equivalence relation on the group
+    \item Use Lean's quotient constructor to build a quotient type
+    \item Prove that this quotient type is a group
+\end{enumerate}
+
+We begin by defining an equivalence relation based on normal subgroups.
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{def norm\_equiv [group $\a$] (N : set $\a$) (a b : $\a$) := a $*$ b$^{-1}$ $\in$ N}
+\vspace{2 mm}
+
+It is not difficult to show that this is an equivalence relation -- in fact, it is fairly simple to show that this is in fact the same equivalence relation as the coset relation described in section 6.
+
+We can then define use this equivalence relation to define a setoid, and with that setoid we can give our definition of a quotient group.
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{def quotient\_group (G : group $\a$) (N : set $\a$) [h : is\_normal\_subgroup N]}
+
+\hspace{4 em}\textbf{:= quotient (quotient\_group\_setoid N)}
+\vspace{2 mm}
+
+We also define an easier notation:
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{notation G / N := quotient\_group G N}
+\vspace{2 mm}
+
+Finally, we prove
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{lemma quotient\_group\_is\_group \{$\a$\} [G : group $\a$] (N : set $\a$)}
+
+\hspace{4 em}\textbf{[hs : is\_normal\_subgroup N] : group ($\a$ / N)}
+\vspace{2 mm}
+
+which involves proving each of the seven sub-propositions listed at the end of section 2. These can all be proven fairly simply by lifting the proof from the base group.
 
 \section{First Isomorphism Theorem}
+
+\todo[inline]{This section will be written after this theorem is actually working}
 
 \section{Alternative Subgroup Construction}
 
