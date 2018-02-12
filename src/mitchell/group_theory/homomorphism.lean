@@ -9,8 +9,8 @@ universes u v w
 variables {α : Type u} {β : Type v} {γ : Type w}
 
 -- Structure or class?
-structure is_hom [group α] [group β] (f : α → β) : Prop :=
-    (hom_mul : ∀ a b, f (a * b) = (f a) * (f b))
+class is_hom [group α] [group β] (f : α → β) : Prop :=
+    (hom_mul : ∀ a b, f (a * b) = f a * f b)
 
 attribute [simp] is_hom.hom_mul
 
@@ -21,11 +21,11 @@ section
 
 @[simp]
 lemma one {f : α → β} (hf : is_hom f) : f 1 = 1 := 
-mul_self_iff_eq_one.1 $ by simp [(hf.hom_mul 1 1).symm]
+mul_self_iff_eq_one.1 $ by rw ← hom_mul f (1 : α) (1 : α); simp
 
 @[simp]
 lemma inv {f : α → β} (hf : is_hom f) (a : α)  : f a⁻¹ = (f a)⁻¹ :=
-eq.symm $ inv_eq_of_mul_eq_one $ by simp [(hf.hom_mul a a⁻¹).symm, hf.one]
+eq.symm $ inv_eq_of_mul_eq_one $ by rw ← hom_mul f a a⁻¹; simp [hf.one]
 
 end
 
