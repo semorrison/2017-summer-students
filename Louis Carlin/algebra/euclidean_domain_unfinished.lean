@@ -372,29 +372,29 @@ def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_euclidean
             exact and.intro this_right this,
         end⟩ 
         in 
-        have has_well_founded.r next_input input, {
-            unfold has_well_founded.r,
-            unfold sizeof_measure,
-            unfold sizeof,
-            unfold has_sizeof.sizeof,
-            unfold measure,
-            unfold inv_image,
-            let ov_val : α → ℕ := ed.valuation.out.val,
-            --have  : ov_val = optimal_valuation.val, by {dsimp [ov_val], refl},
-            have := ed.valuation.out.property rp rc,
-            cases this,
-            {
-                exact absurd this h,
-            },
-            {   
-                dsimp [(%)],
-                have rci : input.rc = rc, by {
-                    exact congr_arg eea_input.rc h0
-                },
-                rw rci,
-                exact this,
-            },
-        },
+        -- have has_well_founded.r next_input input, {
+        --     unfold has_well_founded.r,
+        --     unfold sizeof_measure,
+        --     unfold sizeof,
+        --     unfold has_sizeof.sizeof,
+        --     unfold measure,
+        --     unfold inv_image,
+        --     let ov_val : α → ℕ := ed.valuation.out.val,
+        --     --have  : ov_val = optimal_valuation.val, by {dsimp [ov_val], refl},
+        --     have := ed.valuation.out.property rp rc,
+        --     cases this,
+        --     {
+        --         exact absurd this h,
+        --     },
+        --     {   
+        --         dsimp [(%)],
+        --         have rci : input.rc = rc, by {
+        --             exact congr_arg eea_input.rc h0
+        --         },
+        --         rw rci,
+        --         exact this,
+        --     },
+        --},
         extended_euclidean_algorithm_internal next_input)
 end
 
