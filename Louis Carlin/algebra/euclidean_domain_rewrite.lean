@@ -113,20 +113,6 @@ instance ed_has_sizeof {α : Type} [ed:decidable_euclidean_domain α] : has_size
     sizeof := λ x, ed.valuation.val x, -- note that out uses choice
 }
 
-
-
--- instance ed_has_well_founded {α : Type} [ed: decidable_euclidean_domain α] : has_well_founded α := {
---     r := λ (x y : α), has_well_founded.r (ed.valuation.val x) (ed.valuation.val y),
---     wf := 
---         begin
---             split,
---             admit,
---         end
--- }
-
-
-/- lemmas -/
-
 def gcd {α : Type} [ed : decidable_euclidean_domain α] : α → α → α
 | x y := if x_zero : x = 0 then y
 else have has_well_founded.r (y % x) x, by {
@@ -148,18 +134,18 @@ else have has_well_founded.r (y % x) x, by {
         gcd (y%x) x
 
 
-@[simp] theorem gcd_zero_left {α : Type} [decidable_euclidean_domain α] (x : α) : gcd 0 x = x := 
-begin
-    rw gcd,
-    simp,
-end
+
+-- instance ed_has_well_founded {α : Type} [ed: decidable_euclidean_domain α] : has_well_founded α := {
+--     r := λ (x y : α), has_well_founded.r (ed.valuation.val x) (ed.valuation.val y),
+--     wf := 
+--         begin
+--             split,
+--             admit,
+--         end
+-- }
 
 
-@[simp] theorem gcd_next {α : Type} [decidable_euclidean_domain α] (x y : α) (h : x ≠ 0) : gcd x y = gcd (y % x) x :=
-begin
-    rw gcd,
-    simp [h],
-end
+/- misc lemmas -/
 
 @[simp] lemma mod_zero {α : Type} [ed : euclidean_domain α] (a : α)  : a % 0 = a :=
 begin
@@ -230,18 +216,72 @@ begin
     contradiction,
 end
 
+@[simp] lemma mod_self {α : Type} [ed : decidable_euclidean_domain α] (x : α) : x % x = 0 :=
+begin
+    have wit := ed.witness,
+    have := wit x x,
+    have divides : x ∣ x % x, from sorry,
+    induction divides with m x_mul,
+    have := valuation'_property_2 x m,
+    cases this, rw this_1, exact mod_zero (0:α),
+    cases this_1, rw [x_mul, this_1], simp,
+    rw ←x_mul at this_1,
+    have h1 := valuation'.property x x,
+    cases h1, rw h1, exact mod_zero (0:α),
+    sorry -- contradiction between this_1 and h1
+end 
+
+#check
+
+@[simp] lemma div_self' {α : Type} [ed : decidable_euclidean_domain α] (x : α) : x / x = (1:α) :=
+begin
+    have wit := ed.witness,
+    have := wit x x,
+    have xx := mod_self x, dsimp [(%)] at xx,
+    rw xx at this, simp at this,
+    have h1 : 1 * x = x, from one_mul x,
+    have : (euclidean_domain.quotient x x) * x = 1 * x, from sorry,
+    -- have := right_cancel this,
+    sorry
+end
+
+
+
+/- gcd lemmas -/
+
+@[simp] theorem gcd_zero_left {α : Type} [decidable_euclidean_domain α] (x : α) : gcd 0 x = x := 
+begin
+    rw gcd,
+    simp,
+end
+
+
+@[simp] theorem gcd_next {α : Type} [decidable_euclidean_domain α] (x y : α) (h : x ≠ 0) : gcd x y = gcd (y % x) x :=
+begin
+    rw gcd,
+    simp [h],
+end
+
+
+
 #check no_zero_divisors
 
 @[simp] theorem gcd_one_left {α : Type} [decidable_euclidean_domain α] (n : α) : gcd 1 n = 1 := 
 begin
 rw [gcd],
 simp,
-rw [gcd],
-simp, -- does n % 1 always equal 0?
-sorry,
 end
 
 @[simp] theorem gcd_self {α : Type} [decidable_euclidean_domain α] (n : α) : gcd n n = n :=
-by cases n;
- simp [gcd, mod_self]
+begin
+cases decidable.em (n=0),
+{
+    rw h,
+    simp,
+},
+{
+    have := gcd_next n n h,
+    sorry
+}
+end
 
