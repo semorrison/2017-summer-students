@@ -43,19 +43,6 @@ class euclidean_domain (α : Type) extends integral_domain α :=
 ( witness : ∀ a b, (quotient a b) * b + (remainder a b) = a )
 ( valuation : euclidean_valuation remainder)
 
-
-
-def p : ℕ → Prop := λ n, n > 10
-
-lemma ep : ∃ n : ℕ, p n :=
-begin
-existsi 14,
-rw p,
-exact dec_trivial,
-end
-
-#check well_founded.min
-
 class decidable_euclidean_domain (α : Type) extends euclidean_domain α:=
 (decidable_eq_zero : ∀ a : α, decidable (a = 0))
 
@@ -231,18 +218,17 @@ begin
     sorry -- contradiction between this_1 and h1
 end 
 
-#check
 
-@[simp] lemma div_self' {α : Type} [ed : decidable_euclidean_domain α] (x : α) : x / x = (1:α) :=
+lemma div_self' {α : Type} [ed : decidable_euclidean_domain α] (x : α) : x = 0 ∨ x / x = (1:α) :=
 begin
     have wit := ed.witness,
     have := wit x x,
     have xx := mod_self x, dsimp [(%)] at xx,
     rw xx at this, simp at this,
-    have h1 : 1 * x = x, from one_mul x,
+    have h1 : 1 * x = x, from one_mul x, -- use cases on x = 0
     have : (euclidean_domain.quotient x x) * x = 1 * x, from sorry,
     -- have := right_cancel this,
-    sorry
+    sorry,
 end
 
 
@@ -274,14 +260,28 @@ end
 
 @[simp] theorem gcd_self {α : Type} [decidable_euclidean_domain α] (n : α) : gcd n n = n :=
 begin
-cases decidable.em (n=0),
+cases decidable.em (n=0), -- do I even
 {
     rw h,
     simp,
 },
 {
-    have := gcd_next n n h,
-    sorry
+    rw [gcd_next n n h,mod_self n],
+    simp,
 }
 end
+
+@[simp] theorem gcd_zero_right {α : Type} [decidable_euclidean_domain α]  (n : α) : gcd n 0 = n :=
+begin
+    cases decidable.em (n=0),
+    {
+        rw h,
+        simp,
+    },
+    {
+        rw gcd,
+        simp [h],
+    }
+end
+
 
