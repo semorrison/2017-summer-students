@@ -99,6 +99,14 @@ include G H
 @[simp]
 def kernel {f : α → β} (hf : is_hom f) : set α := preimage f (trivial H)
 
+lemma mem_ker_one {f : α → β} (hf : is_hom f) {x : α} (h : x ∈ hf.kernel) : f x = 1 := sorry
+
+lemma ker_inv {f : α → β} (hf : is_hom f) {a b : α} (h : a * b⁻¹ ∈ hf.kernel) : f a = f b := sorry
+
+lemma inv_ker {f : α → β} (hf : is_hom f) {a b : α} (h : f a = f b) : a * b⁻¹ ∈ hf.kernel := sorry
+
+lemma inv_ker_one {f : α → β} (hf : is_hom f) {a b : α} (h : f a = f b) : f (a * b⁻¹) = 1 := mem_ker_one hf $ inv_ker hf h
+
 lemma image_in {f : α → β} (hf: is_hom f) (S : set α) [is_subgroup S] : is_subgroup (f '' S) := {
     is_subgroup .
     mul_mem := assume a₁ a₂ ⟨b₁, hb₁, eq₁⟩ ⟨b₂, hb₂, eq₂⟩,
