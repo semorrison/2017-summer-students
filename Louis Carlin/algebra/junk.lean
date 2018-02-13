@@ -142,3 +142,28 @@ well_founded.induction : ∀ {α : Sort ?} {r : α → α → Prop},
 
 -- @[simp] theorem mod_self (n : nat) : n % n = 0 :=
 -- by rw [mod_eq_sub_mod (le_refl _), nat.sub_self, zero_mod]
+
+--def lt_wf : (well_founded nat.lt) := -- will need to be replaced by more general well_founded
+--     begin
+--       split, intro a, induction a with b h,
+--       {
+--           split,
+--           intro y,
+--           intro h,
+--           cases h,
+--       },
+--       {
+--         split,
+--         intro y,
+--         intro h,
+--         cases h,
+--         {
+--             assumption
+--         },
+--         {
+--             have p : y < b, by sorry,
+--             cases h,
+--             exact h_h y p,
+--         }
+--       }
+--     end

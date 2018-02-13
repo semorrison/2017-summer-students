@@ -63,3 +63,7 @@ infers wrong instance of sizeof?
 - this happens because our well_founded relation is non-computable?
 
 Define a valuation satisfying EF2
+
+Map to a well-ordered type NOT a well-founded one.
+- You're running out of time, just do naturals for now and generalise later?
+- You can use well_founded.min for well ordered sets and then show that the result is less than or equal
