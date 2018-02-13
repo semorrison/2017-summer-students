@@ -1,4 +1,4 @@
-
+universe u
 
 -- def wf_measure {α : Sort u} {β : Sort u} [has_well_founded β] : (α → β) → α → α → Prop :=
 -- inv_image has_well_founded.r
@@ -20,11 +20,72 @@
 -- instance has_well_founded_of_has_sizeof (α : Sort u) [has_sizeof α] : has_well_founded α :=
 -- {r := sizeof_measure α, wf := sizeof_measure_wf α}
 
+#reduce measure (λ x:nat, x + 1)
+
+def measure' {α : Sort u} {β} [has_well_founded β] : (α → β) → α → α → Prop :=
+inv_image (has_well_founded.r)
+
+def measure_wf' {α : Sort u} {β} [hwf : has_well_founded β] (f : α → β) : well_founded (measure' f) :=
+inv_image.wf f hwf.wf
+
+def sizeof_measure' (α : Sort u) [has_sizeof α] : α → α → Prop :=
+measure sizeof
+
+-- def sizeof_measure_wf (α : Sort u) [has_sizeof α] : well_founded (sizeof_measure α) :=
+-- measure_wf sizeof
+
+instance has_well_founded_of_has_sizeof' (α : Sort u) {β} [has_well_founded β] (f: α → β) : has_well_founded α :=
+{r := measure' f, wf := measure_wf' f}
+
+
+example (α β : Type) (f : α → β) [has_well_founded β] : has_well_founded α :=
+{
+    r := λ x y, has_well_founded.r (f x) (f y),
+    wf :=
+    begin
+        sorry
+        -- split,--intro a,
+        -- have := (has_well_founded.wf β),
+        -- induction this,
+        -- have h1 : ∀ (b : β) (h: ∃ a : α , b = f a), acc has_well_founded.r b,
+        --     intros b hb,
+        --     exact this b,
+        -- have defs : has_well_founded.r = λ x y : β, has_well_founded.r x y,
+        -- {
+        --     sorry,
+        -- },
 
 
 
+        -- intro a,
+        -- have := this (f a),
+        -- have defs : has_well_founded.r = λ x y : β, has_well_founded.r x y,
+        -- {
+        --     sorry,
+        -- },
+        -- rw defs at this,
 
 
+        -- cases this,
+        -- split,
+
+
+        -- intro y,
+        -- --have fy := f y,
+        -- have := this_h (f y),simp at this,
+        -- intro hy,
+        -- have := this hy,
+
+        -- -- intros y hy,have := this_h (f y),
+        -- -- have := @well_founded.induction _ _ (has_well_founded.wf β) ,
+    end
+}
+
+/-
+well_founded.induction : ∀ {α : Sort ?} {r : α → α → Prop},
+                     well_founded r →
+                    ∀ {C : α → Prop} (a : α), (∀ (x : α), (∀ (y : α), r y x → C y) → C x) → C a
+-/
 
 
 
@@ -81,3 +142,28 @@
 
 -- @[simp] theorem mod_self (n : nat) : n % n = 0 :=
 -- by rw [mod_eq_sub_mod (le_refl _), nat.sub_self, zero_mod]
+
+--def lt_wf : (well_founded nat.lt) := -- will need to be replaced by more general well_founded
+--     begin
+--       split, intro a, induction a with b h,
+--       {
+--           split,
+--           intro y,
+--           intro h,
+--           cases h,
+--       },
+--       {
+--         split,
+--         intro y,
+--         intro h,
+--         cases h,
+--         {
+--             assumption
+--         },
+--         {
+--             have p : y < b, by sorry,
+--             cases h,
+--             exact h_h y p,
+--         }
+--       }
+--     end

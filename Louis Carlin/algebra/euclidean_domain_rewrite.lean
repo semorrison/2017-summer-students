@@ -10,30 +10,16 @@ import init.meta.well_founded_tactics
 
 universes u v
 
-def lt_wf : (well_founded nat.lt) := -- will need to be replaced by more general well_founded
-    begin
-      split, intro a, induction a with b h,
-      {
-          split,
-          intro y,
-          intro h,
-          cases h,
-      },
-      {
-        split,
-        intro y,
-        intro h,
-        cases h,
-        {
-            assumption
-        },
-        {
-            have p : y < b, by sorry,
-            cases h,
-            exact h_h y p,
-        }
-      }
-    end
+-- set_option trace.class_instances true
+example : is_well_order ℕ nat.lt := by apply_instance
+
+
+def lt_wf : well_founded nat.lt :=
+begin
+    have : is_well_order ℕ nat.lt, by apply_instance,
+    induction this,
+    exact this_wf, -- why can't lean work this out itself?
+end
 
 
 
@@ -94,12 +80,51 @@ noncomputable def valuation' {α : Type} [ed : decidable_euclidean_domain α] : 
     end,
 }
 
-lemma valuation'_property_2 {α : Type} [ed : decidable_euclidean_domain α] : ∀ a b : α, a = 0 ∨ b = 0 ∨ has_well_founded.r (valuation'.val a) (valuation'.val (a*b)) :=
-sorry
+lemma valuation'_property_2 {α : Type} [ed : decidable_euclidean_domain α] :
+    ∀ a b : α, a = 0 ∨ b = 0 ∨ nat.le (valuation'.val a) (valuation'.val (b*a)) :=
+begin
+    intros,
+    cases decidable.em (a=0),
+    {
+        left,
+        exact h
+    },
+    {
+        cases decidable.em (b=0),
+        {
+            right, left, exact h_1,
+        },
+        {
+            right, right,
+            rw [valuation'],
+            cases decidable.em (b*a=0),
+            {
+                have := eq_zero_or_eq_zero_of_mul_eq_zero h_2,
+                cases this, contradiction, contradiction,
+            },
+            {
+                simp [h,h_1,h_2],
+                have := well_founded.min_mem
+            }
+            
 
+
+            -- have := valuation'.property a b,
+            -- cases this,
+            --     contradiction,
+            --     {
+
+            --     }
+        }
+    }
+end
+
+#check well_founded.not_lt_min
+
+#check no_zero_divisors
 
 instance ed_has_sizeof {α : Type} [ed:decidable_euclidean_domain α] : has_sizeof α := {
-    sizeof := λ x, ed.valuation.val x, -- note that out uses choice
+    sizeof := λ x, ed.valuation.val x,
 }
 
 def gcd {α : Type} [ed : decidable_euclidean_domain α] : α → α → α
@@ -122,17 +147,72 @@ else have has_well_founded.r (y % x) x, by {
 },
         gcd (y%x) x
 
+#check has_sizeof
+
+-- def measure' {α : Sort u} {β} [has_well_founded β] : (α → β) → α → α → Prop :=
+-- inv_image (has_well_founded.r)
+
+-- def measure_wf' {α : Sort u} {β} [hwf : has_well_founded β] (f : α → β) : well_founded (measure' f) :=
+-- inv_image.wf f hwf.wf
+
+-- def has_well_founded_of_has_wf {α : Sort u} {β} [has_well_founded β] (f: α → β) : has_well_founded α :=
+-- {r := measure' f, wf := measure_wf' f}
+
+-- instance ed_has_well_founded {α : Type} [ed: decidable_euclidean_domain α] : has_well_founded α := has_well_founded_of_has_wf ed.valuation.val
+
+class has_well_order (β : Type) :=
+(ordering : β → β → Prop)
+(iwo : is_well_order β ordering)
 
 
--- instance ed_has_well_founded {α : Type} [ed: decidable_euclidean_domain α] : has_well_founded α := {
---     r := λ (x y : α), has_well_founded.r (ed.valuation.val x) (ed.valuation.val y),
---     wf := 
---         begin
---             split,
---             admit,
---         end
--- }
+def measure' {α} {β} [hwo : has_well_order β] : (α → β) → α → α → Prop :=
+inv_image (hwo.ordering)
 
+def measure_wf' {α} {β} [hwo : has_well_order β] (f : α → β) : well_founded (measure'  f) :=
+inv_image.wf f hwo.iwo.wf
+
+def measure_wo' {α} {β} [hwo : has_well_order β] (f : α → β) : is_well_order α (measure'  f) :=
+begin
+    split,
+    {
+        split,
+        {
+            split,
+            intros,
+            unfold measure',
+            unfold inv_image,
+            have := hwo.iwo.trichotomous,
+            have := this (f a) (f b),
+        },
+        {
+            sorry
+        }
+    },
+    {
+        exact inv_image.wf f hwo.iwo.wf,
+    }
+
+end
+
+def has_well_founded_of_has_wo {α : Sort u} {β} [hwo : has_well_order β] (f: α → β) : has_well_founded α :=
+{r := measure' f, wf := measure_wf' f}
+
+def has_well_ordered_of_has_wo {α} {β} [hwo : has_well_order β] (f: α → β) : has_well_order α :=
+{
+    ordering := measure' f,
+    iwo := measure_wo' f
+}
+
+instance has_well_order_nat : has_well_order ℕ :=
+{
+    ordering := nat.lt,
+    iwo := by apply_instance
+} 
+
+instance ed_has_well_founded {α : Type} [ed: decidable_euclidean_domain α] : has_well_order α := has_well_founded_of_has_wo ed.valuation.val
+
+-- uses valuation' which was defined to have property f a ≤ f (a*b)
+-- def ed_has_well_founded_of_has_
 
 /- misc lemmas -/
 
@@ -262,7 +342,7 @@ end
 
 @[simp] theorem gcd_self {α : Type} [decidable_euclidean_domain α] (n : α) : gcd n n = n :=
 begin
-cases decidable.em (n=0), -- do I even
+cases decidable.em (n=0),
 {
     rw h,
     simp,
@@ -286,28 +366,29 @@ begin
     }
 end
 
-theorem gcd.induction {α : Type} [decidable_euclidean_domain α] 
-                    {P : α → α → Prop}
-                    (m n : α)
-                    (H0 : ∀ x, P 0 x)
-                    (H1 : ∀ m n, has_well_founded.r 0 m → P (n%m) m → P m n) :
-                P m n := 
-@well_founded.induction _ _ (has_well_founded.wf α) (λm, ∀n, P m n) m (λk IH,
-begin
-    cases decidable.em (k=0),
-    {
-        rw h,
-        exact H0,
-    },
-    {
-        intro n,
-        exact H1 _ _ (/- has_well_founded.wf (0:α) _ -/)
-        sorry
-    }
-end
+-- theorem gcd.induction {α : Type} [decidable_euclidean_domain α] 
+--                     {P : α → α → Prop}
+--                     (m n : α)
+--                     (H0 : ∀ x, P 0 x)
+--                     (H1 : ∀ m n, has_well_founded.r 0 m → P (n%m) m → P m n) :
+--                 P m n := 
+-- @well_founded.induction _ _ (has_well_founded.wf α) (λm, ∀n, P m n) m (λk IH,
+-- begin
+--     cases decidable.em (k=0),
+--     {
+--         rw h,
+--         exact H0,
+--     },
+--     {
+--         intro n,
+--         have hwf : has_well_founded α, by apply_instance,
+--         have hzlt : hwf.r (0)
+--         exact H1 _ _ (has_well_founded.r (0:α) _) (IH _ (sorry) _) n
+--         sorry
+--     }
+-- end
 --   by {induction k with k ih, exact H0,
 --       exact λn, H1 _ _ (succ_pos _) (IH _ (mod_lt _ (succ_pos _)) _)}
-      ) n
 
 
 -- @[elab_as_eliminator]
@@ -319,13 +400,16 @@ end
 -- @induction _ _ lt_wf (λm, ∀n, P m n) m (λk IH,
 --   by {induction k with k ih, exact H0,
 --       exact λn, H1 _ _ (succ_pos _) (IH _ (mod_lt _ (succ_pos _)) _)}) n
+#check nat.succ_pos
 
-#reduce nat.lt_wf
-example : well_founded nat.lt :=
+-- set_option trace.class_instances true
+
+def zero_lt_nonzero {α : Type} [decidable_euclidean_domain α] : ∀ a : α, has_well_founded.r (0:α) a :=
 begin
-    split,
+    intro a,
+    -- how do I unfold this?
+    sorry
 end
-
 -- class has_well_founded (α : Sort u) : Type u :=
 -- (r : α → α → Prop) (wf : well_founded r)
 
@@ -334,3 +418,12 @@ end
 
 -- lemma induction {C : α → Prop} (a : α) (h : ∀ x, (∀ y, y ≺ x → C y) → C x) : C a :=
 -- recursion a h
+
+
+/-
+@[algebra] class is_well_order (α : Type u) (r : α → α → Prop) extends is_strict_total_order' α r : Prop :=
+(wf : well_founded r)
+
+@[algebra] class is_strict_total_order' (α : Type u) (lt : α → α → Prop) extends is_trichotomous α lt, is_strict_order α lt : Prop.
+
+-/
