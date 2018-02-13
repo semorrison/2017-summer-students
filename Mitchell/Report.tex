@@ -150,7 +150,7 @@ One issue proof assistants run into is that building more complex structures can
 To facilitate this, Lean has an elaborator, which allows the user to leave arguments implicit by putting them in curly brackets when defining a function. The elaborator will then convert this partially specified expression into a fully specified, type correct term. For example, Lean defines the identity function as
 
 \vspace{2 mm}
-\hspace{4 em}\textbf{def id \{$\a$ : Type\} (a : $\a$) : $\a$ := a}
+\hspace{2 em}\textbf{def id \{$\a$ : Type\} (a : $\a$) : $\a$ := a}
 \vspace{2 mm}
 
 Unpacking this definition will show most of the essential lean syntax. The \textbf{def} keyword creates a function called \textbf{id}. The next two terms, \textbf{\{$\a$ : Type\} (a : $\a$)}, are arguments to the function -- $\a$ is a Type, while \textbf{a} is a term of type $\a$. The syntax \textbf{: $\a$} means that the result of the function will be a term of type $\a$, and \textbf{:= a} is the result of the function -- given a type $\a$ and a term of that type \textbf{a}, return \textbf{a}.
@@ -170,7 +170,7 @@ A relevant example of type class inference is the construction of the group stru
 Without any kind of implicit arguments, the statement $\forall a\; b : \a,\; a*b : \a$ would be insufficient on its own. We would need to give as an argument to $*$ the fact that multiplication on terms of type $\a$ is actually possible. However, using type class inference we can get around this:
 
 \vspace{2 mm}
-\hspace{4 em}\textbf{class has\_mul ($\a$ : Type u) := (mul : $\a \to \a \to \a$)}
+\hspace{2 em}\textbf{class has\_mul ($\a$ : Type u) := (mul : $\a \to \a \to \a$)}
 \vspace{2 mm}
 
 This means that a proof or hypothesis \textbf{$p$ : has\_mul $\a$} is the statement that $\a$ is a type with multiplication, and so we can write (for example) $\forall a\; b : \a,\; a*b : \a$. Further, since it is a class, we do not have to explicitly tell Lean that this is possible. So long as $p$ is in the context, we can write $a * b$, and the elaborator will use type class inference to check that multiplication on terms of type $\a$ is possible.
@@ -178,10 +178,10 @@ This means that a proof or hypothesis \textbf{$p$ : has\_mul $\a$} is the statem
 Type class inference can also use the information that one type marked as a class inherits from another type marked as a class. For example:
 
 \vspace{2 mm}
-\hspace{4 em}\textbf{class semigroup ($\a$ : Type u) extends has\_mul $\a$
+\hspace{2 em}\textbf{class semigroup ($\a$ : Type u) extends has\_mul $\a$
  := }
 
-\hspace{6 em}\textbf{(mul\_assoc : $\forall a\; b\; c : \a,\; a * b * c = a * (b * c)$)}
+\hspace{4 em}\textbf{(mul\_assoc : $\forall a\; b\; c : \a,\; a * b * c = a * (b * c)$)}
 \vspace{2 mm}
 
 Since \textbf{semigroup} inherits from \textbf{has\_mul}, one of the implicit fields of \textbf{semigroup} is \textbf{(mul : $\a \to \a \to \a$)}. Given \textbf{[h : semigroup $\a$]} in the context, we can write $a * b$ and Lean will recognise that \textbf{semigroup} inherits from \textbf{has\_mul}, and so can use type class inference to check that multiplication on terms of type $\a$ is possible.
@@ -189,49 +189,49 @@ Since \textbf{semigroup} inherits from \textbf{has\_mul}, one of the implicit fi
 We will now quickly show the remaining steps required to create a group structure. First, it is necessary for the type to have an identity element:
 
 \vspace{2 mm}
-\hspace{4 em}\textbf{class has\_one ($\a$ : Type u) := (one : $\a$)}
+\hspace{2 em}\textbf{class has\_one ($\a$ : Type u) := (one : $\a$)}
 \vspace{2 mm}
 
 This allows us to create the monoid structure:
 
 \vspace{2 mm}
-\hspace{4 em}\textbf{class monoid ($\a$ : Type u) extends semigroup $\a$, has\_one $\a$ := }
+\hspace{2 em}\textbf{class monoid ($\a$ : Type u) extends semigroup $\a$, has\_one $\a$ := }
 
-\hspace{6 em}\textbf{(one\_mul : $\forall a : \a,\; 1 * a = a$) (mul\_one : $\forall a : \a,\; a * 1 = a$)}
+\hspace{4 em}\textbf{(one\_mul : $\forall a : \a,\; 1 * a = a$) (mul\_one : $\forall a : \a,\; a * 1 = a$)}
 \vspace{2 mm}
 
 It is also necessary for every term of the type to have an inverse:
 
 \vspace{2 mm}
-\hspace{4 em}\textbf{class has\_inv ($\a$ : Type u) := (inv : $\a \to \a$)}
+\hspace{2 em}\textbf{class has\_inv ($\a$ : Type u) := (inv : $\a \to \a$)}
 \vspace{2 mm}
 
 Finally we can create the group structure:
 
 \vspace{2 mm}
-\hspace{4 em}\textbf{class group ($\a$ : Type u) extends monoid $\a$, has\_inv $\a$ := }
+\hspace{2 em}\textbf{class group ($\a$ : Type u) extends monoid $\a$, has\_inv $\a$ := }
 
-\hspace{6 em}\textbf{(mul\_left\_inv : $\forall a : \a,\; a^{-1} * a = 1$)}
+\hspace{4 em}\textbf{(mul\_left\_inv : $\forall a : \a,\; a^{-1} * a = 1$)}
 \vspace{2 mm}
 
 If we were to write every field of the group structure explicitly, it would be:
 
 \vspace{2 mm}
-\hspace{4 em}\textbf{class group ($\a$ : Type u) := }
+\hspace{2 em}\textbf{class group ($\a$ : Type u) := }
 
-\hspace{6 em}\textbf{(mul : $\a \to \a \to \a$)}
+\hspace{4 em}\textbf{(mul : $\a \to \a \to \a$)}
 
-\hspace{6 em}\textbf{(mul\_assoc : $\forall a\; b\; c : \a,\; a * b * c = a * (b * c)$)}
+\hspace{4 em}\textbf{(mul\_assoc : $\forall a\; b\; c : \a,\; a * b * c = a * (b * c)$)}
 
-\hspace{6 em}\textbf{(one : $\a$)}
+\hspace{4 em}\textbf{(one : $\a$)}
 
-\hspace{6 em}\textbf{(one\_mul : $\forall a : \a,\; 1 * a = a$)}
+\hspace{4 em}\textbf{(one\_mul : $\forall a : \a,\; 1 * a = a$)}
 
-\hspace{6 em}\textbf{(mul\_one : $\forall a : \a,\; a * 1 = a$)}
+\hspace{4 em}\textbf{(mul\_one : $\forall a : \a,\; a * 1 = a$)}
 
-\hspace{6 em}\textbf{(inv : $\a \to \a$)}
+\hspace{4 em}\textbf{(inv : $\a \to \a$)}
 
-\hspace{6 em}\textbf{(mul\_left\_inv : $\forall a : \a,\; a^{-1} * a = 1$)}
+\hspace{4 em}\textbf{(mul\_left\_inv : $\forall a : \a,\; a^{-1} * a = 1$)}
 \vspace{2 mm}
 
 \section{Group Theory}
@@ -311,16 +311,295 @@ A homomorphism is called an isomorphism if it is bijective. Two groups are said 
 Let G and G' be groups, and let $\phi : G \to G'$ be a homomorphism. Let K be the kernel of $\phi$. Note that the image of $\phi$ forms a group. Then $G/K$ is isomorphic to the image of $\phi$.
 \end{theorem}
 
+\section{Subgroups}
+
+Given the definition of a subgroup described in section 3, we define a subgroup as follows.
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{class is\_subgroup [group $\a$] (s : set $\a$) : Prop :=}
+
+\hspace{4 em}\textbf{(mul\_mem : $\forall \{a\; b\},\; a \in s \to b \in s \to a * b \in s$)}
+
+\hspace{4 em}\textbf{(one\_mem : $(1 : \a) \in s$)}
+
+\hspace{4 em}\textbf{(inv\_mem : $\forall \{a\},\; a \in s \to a^{-1} \in s$)}
+\vspace{2 mm}
+
+\textbf{is\_subgroup} takes as its only explicit argument a set of $\a$, with which it will try to find an instance of the fact that $\a$ is a group. \textbf{is\_subgroup s} is of type \textbf{Prop}, as it is the proposition that $s$ is a subgroup.
+
+This distinction is important. \textbf{is\_subgroup} does not take a subset and return a subgroup. It is simply the assertion that the set \textbf{s} is also a subgroup.
+
+A term \textbf{h : is\_subgroup s} is effectively the statement that the propositions \textbf{mul\_mem}, \textbf{one\_mem}, and \textbf{inv\_mem} hold. Likewise, in order to prove \textbf{is\_subgroup s} it is necessary to prove that all three of these propositions hold for \textbf{s}.
+
+We can similarly define a normal subgroup, which extends the subgroup structure.
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{class is\_normal\_subgroup [group $\a$] (s : set $\a$) extends is\_subgroup s : Prop :=}
+
+\hspace{4 em}\textbf{(normal : $\forall n \in s,\; \forall g : \a,\; g * n * g^{-1} \in s$)}
+\vspace{2 mm}
+
+For example, 
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{def trivial (group $\a$) : set $\a$ := \{1\}}
+\vspace{2 mm}
+
+We can define the set \textbf{trivial}, which it is then easy to prove is a normal subgroup.
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{lemma trivial\_in [h : group $\a$] : is\_normal\_subgroup (trivial h) :=}
+
+\hspace{4 em}\textbf{by refine \{..\}; simp}
+\vspace{2 mm}
+
+\textbf{refine} is a tactic (part of Lean's automation of theorem proving) which splits the goal of proving \textbf{is\_normal\_subgroup (trivial h)} into four goals: \textbf{mul\_mem}, \textbf{one\_mem}, \textbf{inv\_mem}, and \textbf{normal}. \textbf{simp} is a powerful tactic which is used for automatically simplifying statements -- in this case, it is sufficient to prove all four goals.\\
+
+
+\todo[inline]{Center example}
+
+\todo[inline]{Proof that subgroup is a group}
 
 \section{Homomorphisms}
 
-\section{Subgroups}
+Given two types $\a$ and $\b$, we can construct the type of functions between them, $\a \to \b$. We can then define the assertion that a function is a homomorphism as follows.
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{class is\_hom [group $\a$] [group $\b$] (f : $\a \to \b$) : Prop :=}
+
+\hspace{4 em}\textbf{(hom\_mul : $\forall a\; b,\; f\; (a * b) = f\; a * f\; b$)}
+\vspace{2 mm}
+
+This definition is a good example of the benefits of the elaborator. On the left side of the equality, $a * b$ is multiplication of terms of type $\a$, which is possible because the elaborator can determine that since $\a$ is a group, we have that \textbf{has\_mul $\a$}. On the right side of the equality, $f\; a * f\; b$ is multiplication of terms of type $\b$. Lean supports this overloading of the notation $*$, using type class inference to determine which operator to use.\\
+
+We can also define certain structures based on the existence of homomorphisms.
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{def kernel [G : group $\a$] [H : group $\b$] \{f : $\a \to \b$\} (hf : is\_hom f) : set $\a$ :=}
+
+\hspace{4 em}\textbf{preimage f (trivial H)}
+\vspace{2 mm}
+
+\textbf{preimage} is already defined in Lean -- it is the preimage of \textbf{trivial H}, where \textbf{f} is considered as a function on sets. We need to show that it is a normal subgroup of $\a$, which we can do by showing the more general proposition that the preimage of a normal subgroup is a normal subgroup.
+
+\vspace{2 mm}
+\hspace{0 em}\textbf{lemma preimage\_norm\_in {f : $\a \to \b$} (hf : is\_hom f) (S : set $\b$) [is\_normal\_subgroup S]}
+
+\hspace{2 em}\textbf{: is\_normal\_subgroup (preimage f S) :=}
+
+\hspace{4 em}\textbf{by refine \{..\}; simp [hf.hom\_mul, hf.one, hf.inv]}
+\vspace{2 mm}
+
+The terms in square brackets after \textbf{simp} are additional lemmas which the \textbf{simp} tactic can use to simplify the goals.\\
+
+We also prove some important lemmas to do with kernels (note that each of the type signatures below should also contain the implicit arguments \textbf{[G : group $\a$] [H : group $\b$]}).
+
+\begin{lemma}
+Let $G$ and $G'$ be groups, and $f: G \to G'$ a homomorphism. Then for all $a,b \in G$, $f\; a = f\; b$ if and only if $a * b^{-1} \in \ker (f)$.
+\end{lemma}
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{lemma kernel\_iff\_equiv \{f : $\a \to \b$\} (hf: is\_hom f) (a b : $\a$)}
+
+\hspace{4 em}\textbf{: $f\; b = f\; a \leftrightarrow a^{-1} * b \in$ hf.kernel}
+\vspace{2 mm}
+
+\begin{lemma}
+Let $G$ and $G'$ be groups, and $f: G \to G'$ a homomorphism. Then $f$ is injective if and only if $\ker (f)$ is the trivial subgroup of $G$. 
+\end{lemma}
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{lemma inj\_iff\_trivial\_kernel \{f : $\a \to \b$\} (hf: is\_hom f)}
+
+\hspace{4 em}\textbf{: function.injective f $\leftrightarrow$ hf.kernel = trivial G}
+\vspace{2 mm}
+
+The proofs of these lemmas are fairly simple, and the proofs in Lean closely follow the intuitive proofs.
 
 \section{Cosets}
 
+Given \textbf{\{$\a$ : Type u\} [has\_mul $\a$] (a : $\a$) (S : set $\a$)}, we can construct the left and right cosets of \textbf{S} by \textbf{a}.
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{def lcoset [has\_mul $\a$] (a : $\a$) (S : set $\a$) : set $\a$ := image ($\l\; x,\; a * x$) S}
+
+\hspace{2 em}\textbf{def rcoset [has\_mul $\a$] (S : set $\a$) (a : $\a$)  : set $\a$ := image ($\l\; x,\; x * a$) S}
+\vspace{2 mm}
+
+Here we introduce another powerful feature of Lean's dependent type theory -- lambda expressions. The expression $\l\; x,\; a * x$ is a function, with the arguments to the left of the comma and the result to the right. In this case, it is a function which takes an element $x$ of the set $S$ and returns $a * x$. The image of this function is clearly the left coset of $S$ by $a$, as we require.
+
+We can then introduce some notation to mirror the informal notation $aS$, which is commonly used to denote the left coset of $S$ by $a$.
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{namespace coset\_notation}
+
+\hspace{4 em}\textbf{infix $*$ := lcoset}
+
+\hspace{4 em}\textbf{infix $*$ := rcoset}
+
+\hspace{2 em}\textbf{end coset\_notation}
+\vspace{2 mm}
+
+By overloading the notation $*$, we now enable ourselves to write $a * S$ and $S * a$ to denote the left coset and right coset respectively. Lean's type class inference is able to determine when $*$ means multiplication, and when it means a coset.
+
+In addition to several simple lemmas about cosets, we prove two main lemmas.
+
+\begin{lemma}
+Let $G$ be a group and $S$ a subgroup. Then the relation $a \sim b \iff aS = bS$ is an equivalence relation.
+\end{lemma}
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{def lcoset\_equiv (S : set $\a$) (a b : $\a$) := $a * S = b * S$}
+\vspace{2 mm}
+
+Equivalence relations are defined as expected in Lean. Given \textbf{{$\a$ : Sort u} {$\b$ : Sort v} (r : $\b \to \b \to$ Prop)}\footnote{\textbf{Sort u} is (barring some slight nuances) another way of saying \textbf{Type (u-1)}}, where \textbf{r} is a relation, we define:
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{def reflexive := $\forall$ x, r x x}
+
+\hspace{2 em}\textbf{def symmetric := $\forall$ {x y}, r x y $\to$ r y x}
+
+\hspace{2 em}\textbf{def transitive := $\forall$ {x y z}, r x y $\to$ r y z $\to$ r x z}
+
+\hspace{2 em}\textbf{def equivalence := reflexive r $\land$ symmetric r $\land$ transitive r}
+\vspace{2 mm}
+
+We also have a constructor \textbf{mk\_equivalence}, which takes proofs of \textbf{reflexive r}, \textbf{symmetric r}, and \textbf{transitive r}, and creates a proof that $r$ is an equivalence relation. With this in mind, we can provide a very simple proof:
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{lemma lcoset\_equiv\_rel (S : set $\a$) : equivalence (lcoset\_equiv S) :=}
+
+\hspace{4 em}\textbf{mk\_equivalence (lcoset\_equiv S) ($\l\; a$, rfl) ($\l\;a\;b$, eq.symm) ($\l\;a\;b\;c$, eq.trans)}
+\vspace{2 mm}
+
+The simplicity of these proofs relies on the fact that cosets are defined as the image of multiplication, which allows Lean to use lemmas about multiplication in the proofs.
+
+\begin{lemma}
+Let $G$ be a group and $S$ a subgroup of $G$. Then $S$ is a normal subgroup if and only if for all $g \in S$, $gS = Sg$.
+\end{lemma}
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{theorem normal\_iff\_eq\_cosets : is\_normal\_subgroup S $\leftrightarrow \forall g,\; g * S = S * g$}
+\vspace{2 mm}
+
+\todo[inline]{The proof of this is quite interesting, so I'd like to talk about it, but I'm not sure how to discuss the interesting parts of the proof without detailing the whole of the proof (which is pretty much impossible to explain properly in limited space, since it relies on a lot of tactics)}
+
 \section{Quotient Groups}
 
+Suppose we have a type $\a$ and an equivalence relation \textbf{r} on $\a$. Then we can consider the "quotient" $\a$ / \textbf{r}, the set of equivalence classes of $\a$ modulo \textbf{r}. Given a function $f : \a \to \b$, if we prove \textit{for all $a, b \in \a$, $a \sim b \implies f \; a = f\; b$} (in other words, that $f$ respects the equivalence relation), then $f$ "lifts" to a function $f' : \a / \textbf{r} \to \b$, defined on each equivalence class $[x]$ with $f'\; [x] = f\; x$.
+
+The Calculus of Inductive Constructions that Lean is based on has no in-built way to define quotients, so they are added using constants. Before we discuss these constants, however, we must introduce setoids.
+
+\subsection{Setoids}
+
+A setoid is simply a set with an equivalence relation on it. In Lean, a setoid is defined as
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{class setoid ($\a$ : Sort u) :=}
+
+\hspace{4 em}\textbf{(r : $\a \to \a \to$ Prop)}
+
+\hspace{4 em}\textbf{(iseqv : equivalence r)}
+\vspace{2 mm}
+
+\subsection{Quotients in Lean}
+
+A constant in Lean is simply the statement that a certain identifier has a certain type. This allows to construct new types. Effectively, it is the addition of certain axioms into Learn. 
+
+The following constants are built into Lean:
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{constant quotient \{$\a$ : Sort u\} (s : setoid $\a$) : Sort u}
+
+\vspace{4 mm}
+
+\hspace{2 em}\textbf{constant quotient.mk \{$\a$ : Sort u\} [s : setoid $\a$] (a : $\a$) : quotient s}
+
+\vspace{4 mm}
+
+\hspace{2 em}\textbf{constant lift \{$\a$ : Sort u\} \{$\b$ : Sort v\} [s : setoid $\a$] (f : $\a \to \b$)}
+
+\hspace{4 em}\textbf{: ($\forall$ a b, a $\sim$ b $\to$ f a = f b) $\to$ quotient s $\to \b$}
+
+\vspace{4 mm}
+
+\hspace{2 em}\textbf{constant ind \{$\a$ : Sort u\} [s : setoid $\a$] \{$\b$ : quotient s $\to$ Prop\} }
+
+\hspace{4 em}\textbf{: ($\forall$ a, $\b$ [a]) $\to \forall$ q, $\b$ q}
+
+\vspace{4 mm}
+
+\hspace{2 em}\textbf{constant sound \{$\a$ : Sort u\} [s : setoid $\a$] \{a b : $\a$\} : a $\sim$ b $\to$ [a] = [b]}
+\vspace{2 mm}
+
+\textbf{quotient} constructs a new type given any setoid \textbf{s}. The axioms following it (in particular, \textbf{sound}) make this new type exactly the quotient we would expect: the set of equivalence classes of the relation \textbf{setoid.r}.
+
+\textbf{quotient.mk} maps $\a$ to \textbf{quotient s}. Given a term \textbf{a : $\a$}, \textbf{quotient.mk a} is the term of type \textbf{quotient s} corresponding to the equivalence class of \textbf{a}.
+
+If we are given any function \textbf{f :} $\a \to \b$, and given a proof \textbf{h} that $f$ respects the quotient, the function \textbf{lift f h : quotient s $\to \b$} is the corresponding function on \textbf{quotient s}.
+
+\textbf{ind} is the statement that in order to prove a statement of the form
+
+\vspace{2 mm}
+\hspace{2 em}\textit{for all t in quotient s, p s}
+\vspace{2 mm}
+
+it is sufficient to prove
+
+\vspace{2 mm}
+\hspace{2 em}\textit{for all a in $\a$, p [a]}.
+\vspace{2 mm}
+
+Finally, \textbf{sound} is the axiom that ensures the quotient construction indeed acts how we expect it to -- that if $a \sim b$, then $[a] = [b]$. (The converse of this is encoded as a lemma called \textbf{quotient.exact}.)
+
+\subsection{Construction of Quotient Groups}
+
+To construct the quotient group in Lean given a particular normal subgroup, we must
+\begin{enumerate}
+    \item Define an appropriate equivalence relation on the group
+    \item Use Lean's quotient constructor to build a quotient type
+    \item Prove that this quotient type is a group
+\end{enumerate}
+
+We begin by defining an equivalence relation based on normal subgroups.
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{def norm\_equiv [group $\a$] (N : set $\a$) (a b : $\a$) := a $*$ b$^{-1}$ $\in$ N}
+\vspace{2 mm}
+
+It is not difficult to show that this is an equivalence relation -- in fact, it is fairly simple to show that this is in fact the same equivalence relation as the coset relation described in section 6.
+
+We can then define use this equivalence relation to define a setoid, and with that setoid we can give our definition of a quotient group.
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{def quotient\_group (G : group $\a$) (N : set $\a$) [h : is\_normal\_subgroup N]}
+
+\hspace{4 em}\textbf{:= quotient (quotient\_group\_setoid N)}
+\vspace{2 mm}
+
+We also define an easier notation:
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{notation G / N := quotient\_group G N}
+\vspace{2 mm}
+
+Finally, we prove
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{lemma quotient\_group\_is\_group \{$\a$\} [G : group $\a$] (N : set $\a$)}
+
+\hspace{4 em}\textbf{[hs : is\_normal\_subgroup N] : group ($\a$ / N)}
+\vspace{2 mm}
+
+which involves proving each of the seven sub-propositions listed at the end of section 2. These can all be proven fairly simply by lifting the proof from the base group.
+
 \section{First Isomorphism Theorem}
+
+\todo[inline]{This section will be written after this theorem is actually working}
+
+\section{Alternative Subgroup Construction}
+
+\todo[inline]{I'm thinking of discussing the alternative subgroup construction we discussed (where the subgroups were actual subgroups rather than simply the statement that a set is a subgroup) and discussing the pros/cons between that and the construction given. That may require spending too much time on something with little relevance, however.}
 
 \todo[inline]{Sets}
 

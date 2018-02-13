@@ -9,14 +9,16 @@ open set
 
 namespace quotient_group
 open is_subgroup coset_notation
-variable [group α]
 
-def norm_equiv (N : set α) (a b : α) := a * b⁻¹ ∈ N
+def norm_equiv [group α] (N : set α) (a b : α) := a * b⁻¹ ∈ N
 
 section norm_equiv
 open is_subgroup coset_notation
-variables [hg : group α] (N : set α) [hn : is_normal_subgroup N] (a : α)
+-- Check that all of these lemmas need all of these variables
+variables [group α] [hg : group α] (N : set α) [hn : is_normal_subgroup N] (a : α)
 include hn hg
+
+local notation a `∼` b := norm_equiv N a b
 
 lemma norm_equiv_rel : equivalence (norm_equiv N) :=
 ⟨ λ x, calc
@@ -31,13 +33,13 @@ lemma norm_equiv_rel : equivalence (norm_equiv N) :=
 
 lemma norm_equiv_rfl (a : α) : norm_equiv N a a := (norm_equiv_rel N).left a
 
-lemma norm_equiv_symm {a b} (h : norm_equiv N a b) : norm_equiv N b a := (norm_equiv_rel N).right.left h
+lemma norm_equiv_symm {a b} (h : a ∼ b) : b ∼ a := (norm_equiv_rel N).right.left h
 
-lemma norm_equiv_trans {a b c} (hab : norm_equiv N a b) (hbc : norm_equiv N b c) : norm_equiv N a c := 
+lemma norm_equiv_trans {a b c} (hab : a ∼ b) (hbc : b ∼ c) : a ∼ c := 
     (norm_equiv_rel N).right.right hab hbc
 
-lemma norm_equiv_mul {a₁ a₂ b₁ b₂ : α} (ha : norm_equiv N a₁ a₂) (hb : norm_equiv N b₁ b₂)
-    : norm_equiv N (a₁ * b₁) (a₂ * b₂) :=
+lemma norm_equiv_mul {a₁ a₂ b₁ b₂ : α} (ha : a₁ ∼ a₂) (hb : b₁ ∼ b₂)
+    : (a₁ * b₁) ∼ (a₂ * b₂) :=
     begin
     simp [norm_equiv] at *,
     have h : (a₁ * N) * a₂⁻¹ = N, {
@@ -52,7 +54,7 @@ lemma norm_equiv_mul {a₁ a₂ b₁ b₂ : α} (ha : norm_equiv N a₁ a₂) (h
         ...                     ∈ (a₁ * N) * a₂⁻¹           : mem_rcoset a₂⁻¹ (mem_lcoset a₁ hb)
     end
 
-lemma norm_equiv_inv {a₁ a₂ : α} (h : norm_equiv N a₁ a₂) : norm_equiv N a₁⁻¹ a₂⁻¹ :=
+lemma norm_equiv_inv {a₁ a₂ : α} (h : a₁ ∼ a₂) : a₁⁻¹ ∼ a₂⁻¹ :=
 begin
     apply norm_equiv_symm N,
     simp [norm_equiv] at *,
@@ -61,18 +63,18 @@ end
 
 end norm_equiv
 
-definition quotient_group_setoid {α} [group α] (N : set α) [is_normal_subgroup N] : setoid α := {
+definition quotient_group_setoid [group α] (N : set α) [is_normal_subgroup N] : setoid α := {
     r := norm_equiv N,
     iseqv := norm_equiv_rel N
 }
 
 attribute [instance] quotient_group_setoid
 
-def quotient_group {α} [group α] (N : set α) [h : is_normal_subgroup N] := quotient (quotient_group_setoid N)
+def quotient_group (α) [group α] (N : set α) [h : is_normal_subgroup N] := quotient (quotient_group_setoid N)
 
-notation G `/` N := quotient_group N
+notation G `/` N := quotient_group G N
 
-lemma quotient_group_is_group {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] : group (G / N) := {
+lemma quotient_group_is_group {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] : group (α / N) := {
     one := ⟦ 1 ⟧,
     mul := quotient.lift₂ (λ x y : α, ⟦x*y⟧) (λ x₁ x₂ y₁ y₂ h₁ h₂, quot.sound (norm_equiv_mul N h₁ h₂)),
     inv := quotient.lift  (λ x : α, ⟦x⁻¹⟧)   (λ x₁ x₂ h, quot.sound (norm_equiv_inv N h)),
@@ -83,9 +85,56 @@ lemma quotient_group_is_group {α} [G : group α] (N : set α) [hs : is_normal_s
     mul_left_inv := λ x, quotient.induction_on x (λ x, show ⟦ x⁻¹ * x ⟧ = ⟦ 1 ⟧, by rw mul_left_inv)
 }
 
--- instance quotient_group_mul {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] : has_mul (quotient (quotient_group_setoid N)) := sorry
+section
 
 attribute [instance] quotient_group_is_group
+
+
+def image [group α] [group β] ( f : α → β ) : set β := f '' univ
+lemma image_mem [group α] [group β] (f : α → β) (a : α) : f a ∈ image f := ⟨a, mem_univ a, rfl⟩
+
+lemma univ_image_in [group α] [group β] (f : α → β) [hf: is_hom f] : group (image f) :=  
+    subgroup_group (@is_hom.image_in _ _ _ _ _ hf univ _)
+    
+attribute [instance] univ_image_in
+
+structure group_isomorphism (β : Type v) (γ : Type w) [group β] [group γ]
+  extends equiv β γ :=
+(hom_fun : is_hom to_fun)
+
+infix ` ≃ₕ `:50 := group_isomorphism
+
+def ker_quot_lift [G : group α] [H : group β] {f : α → β} (hf : is_hom f) (q : α / hf.kernel) : β :=
+quot.lift_on q f (begin
+intros a b hs,
+simp [setoid.r, norm_equiv] at hs,
+simp [hf.hom_mul, hf.inv] at hs,
+rw ←inv_inv (f b),
+apply eq_inv_of_mul_eq_one hs
+end)
+
+@[simp] lemma mul_val [group α] [group β] ( f : α → β ) (a b : image f) [hf : is_hom f] : (a * b).val = a.val * b.val := by sorry
+
+def im_lift [G : group α] [H : group β] {f : α → β} (hf : is_hom f) (c : α) : image f := ⟨f c, image_mem f c⟩
+
+lemma is_hom_image [G : group α] [H : group β] {f : α → β} (hf : is_hom f) : is_hom (λ c, im_lift hf c : α → image f) :=
+    by refine {..};  intros; apply subtype.eq; simp [hf.hom_mul]
+
+noncomputable theorem first_isomorphism_theorem [G : group α] [H : group β] (f : α → β ) [h : is_hom f]
+    : α / h.kernel ≃ₕ image f := {
+        to_fun := ker_quot_lift (is_hom_image h)
+    }
+
+end
+
+end quotient_group
+
+-- After this point it just becomes a mess
+
+-- instance quotient_group_mul {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] : has_mul (quotient (quotient_group_setoid N)) := sorry
+
+
+/-
 
 lemma quot_mul_norm {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] {a b : α} 
     : @group.mul _ (quotient_group_is_group N) (@quotient.mk _ (quotient_group_setoid N) a) (@quotient.mk _ (quotient_group_setoid N) b) =
@@ -94,45 +143,20 @@ lemma quot_mul_norm {α} [G : group α] (N : set α) [hs : is_normal_subgroup N]
 
 
 
-end quotient_group
 
 open is_subgroup
 open quotient_group
 open function
 open is_hom
 
-section extend
-variables [group α] [group β]
-
-def image ( f : α → β ) := f '' univ
-lemma image_mem (f : α → β) (a : α) : f a ∈ image f := by sorry
-
-variables {N : set α} [hs : is_normal_subgroup N]
-include hs
-
-def q_em (a : α) := ⟦a⟧ 
-
-variables {f : α → β} (resp_f : ∀ a₁ a₂, norm_equiv N a₁ a₂ → f a₁ = f a₂)
-
-def extend : quotient_group N → β := quotient.lift f resp_f
-
-lemma extend_quot (a : α) : extend resp_f ⟦a⟧ = f a := rfl
-
-lemma extend_quot_comp : extend resp_f ∘ q_em = f := rfl
-
--- def extend_im : quotient_group N → image' f := λ x, quotient.lift_on x (λ x, ⟨f x, x, rfl⟩ : α → image' f)
-
-end extend
+def image [group α] [group β] ( f : α → β ) := f '' univ
+lemma image_mem [group α] [group β] (f : α → β) (a : α) : f a ∈ image f := by sorry
 
 section
 
 -- theorem fun_resp_ker [group α] [group β] (f : α → β) [hf : is_hom f] : ∀ a₁ a₂, norm_equiv (hf.kernel) a₁ a₂ → f a₁ = f a₂ := sorry
 
-structure group_isomorphism (β : Type v) (γ : Type w) [group β] [group γ]
-  extends equiv β γ :=
-(hom_fun : is_hom to_fun)
 
-infix ` ≃ₕ `:50 := group_isomorphism
 
 lemma image'_group [G : group α] [H : group β] (f : α → β) [h : is_hom f] : group (image f) := 
     @subgroup_group β H (image f) (@image_in α β G H f h univ univ_in)
@@ -174,7 +198,7 @@ lemma quot.rec_eq
    (a : α) : @quot.rec α r S f h (quot.mk r a) = f a := by refl
 
 noncomputable theorem first_isomorphism_theorem {α β} [G : group α] [H : group β] (f : α → β ) [h : is_hom f] 
-    : @group_isomorphism (quotient_group h.kernel) (image f) _ (@image'_group _ _ _ _ f h) := {
+    : @group_isomorphism (α / h.kernel) (image f) _ (@image'_group _ _ _ _ f h) := {
         to_fun := 
         begin 
                     intros, 
@@ -228,3 +252,6 @@ noncomputable theorem first_isomorphism_theorem {α β} [G : group α] [H : grou
             end))
         }
     }
+
+-/
+

@@ -8,7 +8,6 @@ import data.set.basic init.function algebra.group
 universes u v w
 variables {α : Type u} {β : Type v} {γ : Type w}
 
--- Structure or class?
 class is_hom [group α] [group β] (f : α → β) : Prop :=
     (hom_mul : ∀ a b, f (a * b) = f a * f b)
 
