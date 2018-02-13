@@ -171,37 +171,11 @@ inv_image (hwo.ordering)
 def measure_wf' {α} {β} [hwo : has_well_order β] (f : α → β) : well_founded (measure'  f) :=
 inv_image.wf f hwo.iwo.wf
 
-def measure_wo' {α} {β} [hwo : has_well_order β] (f : α → β) : is_well_order α (measure'  f) :=
-begin
-    split,
-    {
-        split,
-        {
-            split,
-            intros,
-            unfold measure',
-            unfold inv_image,
-            have := hwo.iwo.trichotomous,
-            have := this (f a) (f b),
-        },
-        {
-            sorry
-        }
-    },
-    {
-        exact inv_image.wf f hwo.iwo.wf,
-    }
-
-end
+#check eq
 
 def has_well_founded_of_has_wo {α : Sort u} {β} [hwo : has_well_order β] (f: α → β) : has_well_founded α :=
 {r := measure' f, wf := measure_wf' f}
 
-def has_well_ordered_of_has_wo {α} {β} [hwo : has_well_order β] (f: α → β) : has_well_order α :=
-{
-    ordering := measure' f,
-    iwo := measure_wo' f
-}
 
 instance has_well_order_nat : has_well_order ℕ :=
 {
@@ -209,7 +183,7 @@ instance has_well_order_nat : has_well_order ℕ :=
     iwo := by apply_instance
 } 
 
-instance ed_has_well_founded {α : Type} [ed: decidable_euclidean_domain α] : has_well_order α := has_well_founded_of_has_wo ed.valuation.val
+instance ed_has_well_founded {α : Type} [ed: decidable_euclidean_domain α] : has_well_founded α := has_well_founded_of_has_wo ed.valuation.val
 
 -- uses valuation' which was defined to have property f a ≤ f (a*b)
 -- def ed_has_well_founded_of_has_
@@ -404,12 +378,38 @@ end
 
 -- set_option trace.class_instances true
 
-def zero_lt_nonzero {α : Type} [decidable_euclidean_domain α] : ∀ a : α, has_well_founded.r (0:α) a :=
+def zero_lt_nonzero {α : Type} [ed:decidable_euclidean_domain α] : ∀ a : α, nat.le (ed.valuation.val (0:α)) (ed.valuation.val a) :=
 begin
     intro a,
-    -- how do I unfold this?
-    sorry
+    have := zero_mod a,
+    have := ed.valuation.property,
+    have := this 0 a,
+    cases decidable.em (a=0),
+    {
+        rw h,
+        have : (euclidean_domain.valuation α).val 0 = (euclidean_domain.valuation α).val 0, by refl,
+        exact nat.le_of_eq this,
+    },
+    {
+        cases this,
+            contradiction,
+        {
+            unfold has_well_founded.r at this_1,
+            unfold sizeof_measure at this_1,
+            unfold measure at this_1,
+            unfold sizeof at this_1,
+            unfold inv_image at this_1,
+            unfold has_sizeof.sizeof at this_1,
+            unfold nat.sizeof at this_1,
+            have hr := zero_mod a, dsimp [(%)] at hr,
+            rw [hr] at this_1,
+            exact nat.le_of_lt this_1,
+        }
+    }
 end
+
+#check nat.le
+#check nat.le_of_lt
 -- class has_well_founded (α : Sort u) : Type u :=
 -- (r : α → α → Prop) (wf : well_founded r)
 
