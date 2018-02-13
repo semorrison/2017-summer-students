@@ -107,6 +107,8 @@ lemma inv_ker {f : α → β} (hf : is_hom f) {a b : α} (h : f a = f b) : a * b
 
 lemma inv_ker_one {f : α → β} (hf : is_hom f) {a b : α} (h : f a = f b) : f (a * b⁻¹) = 1 := mem_ker_one hf $ inv_ker hf h
 
+lemma one_ker_inv {f : α → β} (hf : is_hom f) {a b : α} (h : f (a * b⁻¹) = 1) : f a = f b := sorry
+
 lemma image_in {f : α → β} (hf: is_hom f) (S : set α) [is_subgroup S] : is_subgroup (f '' S) := {
     is_subgroup .
     mul_mem := assume a₁ a₂ ⟨b₁, hb₁, eq₁⟩ ⟨b₂, hb₂, eq₂⟩,
