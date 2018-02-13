@@ -90,20 +90,11 @@ section
 attribute [instance] quotient_group_is_group
 
 
-def image [group α] [group β] ( f : α → β ) : set β := {x | ∃ y, f y = x}
-lemma image_mem [group α] [group β] (f : α → β) (a : α) : f a ∈ image f := by sorry
+def image [group α] [group β] ( f : α → β ) : set β := f '' univ
+lemma image_mem [group α] [group β] (f : α → β) (a : α) : f a ∈ image f := ⟨a, mem_univ a, rfl⟩
 
-instance [group α] [group β] ( f : α → β ) : has_mul (image f) := sorry
-instance [group α] [group β] ( f : α → β ) : has_one (image f) := sorry
-instance [group α] [group β] ( f : α → β ) : has_inv (image f) := sorry
-
-@[simp] lemma mul_val [group α] [group β] ( f : α → β ) (a b : image f) : (a * b).val = a.val * b.val := sorry
-@[simp] lemma one_val [group α] [group β] ( f : α → β ) : (1 : image f).val = 1 := sorry
-@[simp] lemma inv_val [group α] [group β] ( f : α → β ) (a : image f) : (a⁻¹).val = a.val⁻¹ := sorry
-
-lemma univ_image_in [group α] [group β] (f : α → β) [hf: is_hom f] : group (image f) := 
-    by refine {mul := (*), one := 1, inv := has_inv.inv, ..};
-        { intros, apply subtype.eq, simp [mul_assoc]}
+lemma univ_image_in [group α] [group β] (f : α → β) [hf: is_hom f] : group (image f) :=  
+    subgroup_group (@is_hom.image_in _ _ _ _ _ hf univ _)
     
 attribute [instance] univ_image_in
 
@@ -122,9 +113,16 @@ rw ←inv_inv (f b),
 apply eq_inv_of_mul_eq_one hs
 end)
 
+@[simp] lemma mul_val [group α] [group β] ( f : α → β ) (a b : image f) [hf : is_hom f] : (a * b).val = a.val * b.val := by sorry
+
+def im_lift [G : group α] [H : group β] {f : α → β} (hf : is_hom f) (c : α) : image f := ⟨f c, image_mem f c⟩
+
+lemma is_hom_image [G : group α] [H : group β] {f : α → β} (hf : is_hom f) : is_hom (λ c, im_lift hf c : α → image f) :=
+    by refine {..};  intros; apply subtype.eq; simp [hf.hom_mul]
+
 noncomputable theorem first_isomorphism_theorem [G : group α] [H : group β] (f : α → β ) [h : is_hom f]
     : α / h.kernel ≃ₕ image f := {
-        to_fun := ker_quot_lift h
+        to_fun := ker_quot_lift (is_hom_image h)
     }
 
 end
