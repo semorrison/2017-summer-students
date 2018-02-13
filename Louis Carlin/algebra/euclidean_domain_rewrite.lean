@@ -99,7 +99,7 @@ sorry
 
 
 instance ed_has_sizeof {α : Type} [ed:decidable_euclidean_domain α] : has_sizeof α := {
-    sizeof := λ x, ed.valuation.val x, -- note that out uses choice
+    sizeof := λ x, ed.valuation.val x,
 }
 
 def gcd {α : Type} [ed : decidable_euclidean_domain α] : α → α → α
@@ -122,16 +122,18 @@ else have has_well_founded.r (y % x) x, by {
 },
         gcd (y%x) x
 
+#check has_sizeof
 
+def measure' {α : Sort u} {β} [has_well_founded β] : (α → β) → α → α → Prop :=
+inv_image (has_well_founded.r)
 
--- instance ed_has_well_founded {α : Type} [ed: decidable_euclidean_domain α] : has_well_founded α := {
---     r := λ (x y : α), has_well_founded.r (ed.valuation.val x) (ed.valuation.val y),
---     wf := 
---         begin
---             split,
---             admit,
---         end
--- }
+def measure_wf' {α : Sort u} {β} [hwf : has_well_founded β] (f : α → β) : well_founded (measure' f) :=
+inv_image.wf f hwf.wf
+
+def has_well_founded_of_has_wf' {α : Sort u} {β} [has_well_founded β] (f: α → β) : has_well_founded α :=
+{r := measure' f, wf := measure_wf' f}
+
+instance ed_has_well_founded {α : Type} [ed: decidable_euclidean_domain α] : has_well_founded α := has_well_founded_of_has_wf' ed.valuation.val
 
 
 /- misc lemmas -/
@@ -301,13 +303,12 @@ begin
     },
     {
         intro n,
-        exact H1 _ _ (/- has_well_founded.wf (0:α) _ -/)
+        exact H1 _ _ (has_well_founded.r (0:α) _) (IH _ (sorry) _) n
         sorry
     }
 end
 --   by {induction k with k ih, exact H0,
 --       exact λn, H1 _ _ (succ_pos _) (IH _ (mod_lt _ (succ_pos _)) _)}
-      ) n
 
 
 -- @[elab_as_eliminator]
@@ -326,6 +327,11 @@ begin
     split,
 end
 
+#check nat.succ_pos
+def zero_lt_nonzero {α : Type} [decidable_euclidean_domain α] : ∀ a : α, has_well_founded.r 0 a :=
+begin
+intro,
+end
 -- class has_well_founded (α : Sort u) : Type u :=
 -- (r : α → α → Prop) (wf : well_founded r)
 
