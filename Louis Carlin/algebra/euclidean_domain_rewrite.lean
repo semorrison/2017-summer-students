@@ -211,6 +211,52 @@ begin
     simp at this, sorry -- wf contradiction
 end
 
+lemma valuation'_dvd_of_le {α : Type} [ed : decidable_euclidean_domain α] (a b : α) :
+    b ∣ a → a ≠ 0 → valuation'.val b ≤ valuation'.val a :=
+begin
+    intros b_dvd ha,
+    induction b_dvd with x hx, rw hx,
+    have := valuation'_property_2 b x,
+    cases this,
+        rw this, simp,
+    cases this,
+        rw this at hx,
+        simp at hx,
+        contradiction,
+    rw mul_comm,
+    exact this,
+end
+
+-- this is cooked (this proof is more suited to showing a%b = 0), we can proof the statement as is from valuation'_property
+lemma valuation'_dvd_of_le {α : Type} [ed : decidable_euclidean_domain α] (a b : α) :
+    b ∣ a → valuation'.val b ≤ valuation'.val a :=
+begin
+    intro b_dvd,
+    induction b_dvd with x hx,
+    have := valuation'.property a b,
+    cases decidable.em (b=0),
+    {
+        rw h at hx, simp at hx,
+        rw [h,hx],
+    },
+    {
+        cases this,
+        contradiction,
+        {
+            unfold has_well_founded.r at this, -- this is ugly; stop doing it
+            unfold sizeof_measure at this,
+            unfold sizeof at this,
+            unfold has_sizeof.sizeof at this,
+            unfold measure at this,
+            unfold inv_image at this,
+            unfold nat.sizeof at this,
+            have b_dvd_mod : b ∣ (a%b), from sorry, -- this follows from a = b * x = (a/b)*b + (a%b)
+            induction b_dvd_mod with y hy,
+        }
+    }
+    
+end
+
 @[simp] lemma mod_one {α : Type} [decidable_euclidean_domain α] (x : α) : x % 1 = 0 :=
 begin
     have := valuation'.property x 1,
