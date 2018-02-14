@@ -104,7 +104,8 @@ begin
             },
             {
                 simp [h,h_1,h_2],
-                have := well_founded.min_mem
+                have := well_founded.min_mem,
+                
             }
             
 
@@ -299,35 +300,6 @@ begin
 end
 
 
-@[simp] theorem gcd_next {α : Type} [decidable_euclidean_domain α] (x y : α) (h : x ≠ 0) : gcd x y = gcd (y % x) x :=
-begin
-    rw gcd,
-    simp [h],
-end
-
-
-
-#check no_zero_divisors
-
-@[simp] theorem gcd_one_left {α : Type} [decidable_euclidean_domain α] (n : α) : gcd 1 n = 1 := 
-begin
-rw [gcd],
-simp,
-end
-
-@[simp] theorem gcd_self {α : Type} [decidable_euclidean_domain α] (n : α) : gcd n n = n :=
-begin
-cases decidable.em (n=0),
-{
-    rw h,
-    simp,
-},
-{
-    rw [gcd_next n n h,mod_self n],
-    simp,
-}
-end
-
 @[simp] theorem gcd_zero_right {α : Type} [decidable_euclidean_domain α]  (n : α) : gcd n 0 = n :=
 begin
     cases decidable.em (n=0),
@@ -340,6 +312,32 @@ begin
         simp [h],
     }
 end
+
+@[simp] theorem gcd_one_left {α : Type} [decidable_euclidean_domain α] (n : α) : gcd 1 n = 1 := 
+begin
+rw [gcd],
+simp,
+end
+
+theorem gcd_next {α : Type} [decidable_euclidean_domain α] (x y : α) : gcd x y = gcd (y % x) x :=
+begin
+    cases decidable.em (x=0),
+    {
+        rw [h],
+        simp,
+    },
+    {
+        rw gcd,
+        simp [h],
+    }
+end
+
+
+@[simp] theorem gcd_self {α : Type} [decidable_euclidean_domain α] (n : α) : gcd n n = n :=
+by rw [gcd_next n n, mod_self n, gcd_zero_left]
+
+
+
 
 def zero_lt_nonzero {α : Type} [ed:decidable_euclidean_domain α] : ∀ a : α, a ≠ 0 → nat.lt (ed.valuation.val (0:α)) (ed.valuation.val a) :=
 begin
@@ -411,8 +409,38 @@ theorem gcd.induction {α : Type} [ed: decidable_euclidean_domain α]
     by {cases decidable.em (k=0), rw h, exact H0,
         exact λ n, H1 k n (zero_lt_nonzero k h) (IH (n%k) (mod_lt n (zero_lt_nonzero k h)) k)}) n
 
+-- def lcm (m n : ℕ) : ℕ := m * n / (gcd m n)
 
 @[reducible] def coprime {α : Type} [ed: decidable_euclidean_domain α]  (a b : α) : Prop := gcd a b = 1
+
+
+/- more gcd stuff (generalized mathlib/data/nat/gcd.lean) -/
+
+#check dvd_mul_of_dvd_left
+
+theorem gcd_dvd {α : Type} [ed: decidable_euclidean_domain α] (a b : α) : (gcd a b ∣ a) ∧ (gcd a b ∣ b) :=
+gcd.induction a b
+    (λ b, by simp)
+    (λ a b bpos,
+    begin
+        intro h_dvd,
+        cases decidable.em (a=0),
+        {
+            rw h, simp,
+        },
+        {
+            rw gcd_next,
+            cases h_dvd,
+            split,
+            exact h_dvd_right,
+            have := ed.witness,
+            have := this b a,
+            --dsimp [(%)] at h_dvd_left, dsimp [(%)],
+            conv {for b [2] {rw ←this}},
+            have h_dvd_right_a:= dvd_mul_of_dvd_right h_dvd_right (b/a),
+            exact dvd_add h_dvd_right_a h_dvd_left,
+        }
+    end )
 
 
 

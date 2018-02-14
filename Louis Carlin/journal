@@ -68,3 +68,8 @@ Map to a well-ordered type NOT a well-founded one.
 - You're running out of time, just do naturals for now and generalise later?
 - You can use well_founded.min for well ordered sets and then show that the result is less than or equal
 - don't need to show relation on \a is well ordered (it isn't); just show that f 0 \leq f a 
+
+Does the order gcd_zero_left, gcd_zero_right and other lemmas are defined matter?
+- simp problems?
+
+Why does "have := ed.witness a b" not work but "have := ed.witness, have := this a b" work?
