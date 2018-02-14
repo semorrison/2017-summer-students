@@ -5,14 +5,6 @@ import mitchell.group_theory.coset mitchell.group_theory.subgroup
 universes u v w
 variables {α : Type u} {β : Type v} {γ : Type w}
 
--- namespace classical
-
--- lemma some_spec2 {α : Type u} {p : α → Prop} {h : ∃a, p a} (q : α → Prop) (hpq : ∀a, p a → q a) :
---   q (some h) :=
--- hpq _ $ some_spec _
-
--- end classical
-
 open set
 
 namespace quotient_group
@@ -95,10 +87,6 @@ instance quotient_group_is_group {α} [G : group α] (N : set α) [hs : is_norma
 
 instance quotient_group_is_group₁ {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] : group (α / N) := quotient_group.quotient_group_is_group N
 
--- attribute [instance] quotient_group_is_group quotient_group_is_group₁
-
--- set_option pp.implicit true
-
 @[simp] lemma quot_mul {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] (a b : α)
     : ⟦ a ⟧ * ⟦ b ⟧ = ⟦ a * b ⟧ := rfl
 @[simp] lemma quot_inv {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] (a b : α)
@@ -136,38 +124,14 @@ def im_lift [G : group α] [H : group β] {f : α → β} (hf : is_hom f) (c : �
 lemma is_hom_image [G : group α] [H : group β] {f : α → β} (hf : is_hom f) : is_hom (λ c, im_lift hf c : α → image f) :=
     by refine {..};  intros; apply subtype.eq; simp [im_lift, hf.hom_mul]
 
--- set_option trace.class_instances true
-
--- lemma is_hom_qgroup_lift [group α] [group β] (N : set α) [hs : is_normal_subgroup N] {f : α → β} (hf : is_hom f) {h : ∀ x y : α, x * y⁻¹ ∈ N → f x = f y}
---     : @is_hom (λ q, quotient.lift_on q f h) :=
---     ⟨assume a b, quotient.induction_on₂ a b (assume a b, hf.hom_mul a b)⟩ 
-
--- ⟨assume b₁ b₂, quotient.induction_on₂ b₁ b₂ (begin
-
--- end),
---   assume a b, quotient.induction_on b $ assume b, hf.smul a b⟩
-
--- set_option pp.implicit true
-
--- lemma kernel_cosets {α β} [G : group α] [H : group β] (f : α → β ) [h : is_hom f] {a b} (hab : f a = f b) 
---     : @quotient.mk _ (quotient_group_setoid h.kernel) a = @quotient.mk _ (quotient_group_setoid h.kernel) b :=
--- begin
--- apply quot.sound,
--- unfold setoid.r,
--- unfold norm_equiv,
--- simp,
--- sorry -- easy
--- end
-
 lemma ker_equiv_im [G : group α] [H : group β] (f : α → β ) [h : is_hom f] : ∀ a b, (norm_equiv h.kernel) a b → f a = f b := begin
     intros a b hab,
     simp [norm_equiv] at hab,
     exact is_hom.one_ker_inv h hab
 end
 
-lemma ker_equiv_im_lift [G : group α] [H : group β] (f : α → β ) [h : is_hom f] : ∀ a b, (norm_equiv h.kernel) a b → (im_lift h) a = (im_lift h) b := sorry
-
--- set_option trace.class_instances true
+lemma ker_equiv_im_lift [G : group α] [H : group β] (f : α → β ) [h : is_hom f] 
+    : ∀ a b, (norm_equiv h.kernel) a b → (im_lift h) a = (im_lift h) b := by simp [im_lift]; exact ker_equiv_im f
 
 noncomputable theorem first_isomorphism_theorem [G : group α] [H : group β] (f : α → β ) [h : is_hom f]
     : α / h.kernel ≃ₕ image f := {
@@ -185,163 +149,37 @@ noncomputable theorem first_isomorphism_theorem [G : group α] [H : group β] (f
                 simp,
                 apply is_hom.inv_ker_one h hz,
             end,
-        right_inv := begin
-                        simp [function.right_inverse, function.left_inverse],
-                        intros x hx,
-                        apply subtype.eq,
-                        simp,
-                        induction hx,
-                        induction hx_h,
-                        induction hx_h_right,
-                        dsimp,
-                        let func := @classical.indefinite_description α (λ (a : α), f a = f hx_w) _,
-                        have p : @quotient.mk  _ (quotient_group_setoid _) func.val = @quotient.mk  _ (quotient_group_setoid _) (hx_w), {
-                          apply quotient.sound,
-                          dsimp [has_equiv.equiv, setoid.r],
-                          apply is_hom.inv_ker h func.property
-                        },
-                        simp [func] at p,
-                        simp [classical.some],
-                        rw p,
-                        simp [qgroup_lift],
-                        apply quot.lift_beta f (ker_equiv_im f),
-                      end,
-        hom_fun := ⟨λ x y, (@quotient.induction_on₂ _ _ (quotient_group_setoid _) (quotient_group_setoid _) _ x y (begin
-            intros,
-            rw [quot_mul],
-            simp [qgroup_lift, quot.lift_on, quotient.mk],
-            apply subtype.eq,
-            simp [h.hom_mul]
+        right_inv := 
+            begin
+                simp [function.right_inverse, function.left_inverse],
+                intros x hx,
+                apply subtype.eq,
+                simp,
+                induction hx,
+                induction hx_h,
+                induction hx_h_right,
+                dsimp,
+                let func := @classical.indefinite_description α (λ (a : α), f a = f hx_w) _,
+                have p : @quotient.mk  _ (quotient_group_setoid _) func.val = @quotient.mk  _ (quotient_group_setoid _) (hx_w), {
+                  apply quotient.sound,
+                  dsimp [has_equiv.equiv, setoid.r],
+                  apply is_hom.inv_ker h func.property
+                },
+                simp [func] at p,
+                simp [classical.some],
+                rw p,
+                simp [qgroup_lift],
+                apply quot.lift_beta f (ker_equiv_im f),
+            end,
+        hom_fun := ⟨λ x y, (@quotient.induction_on₂ _ _ (quotient_group_setoid _) (quotient_group_setoid _) _ x y (
+            begin
+                intros,
+                rw [quot_mul],
+                simp [qgroup_lift, quot.lift_on, quotient.mk],
+                apply subtype.eq,
+                simp [h.hom_mul]
             end))⟩
     }
-
 end
 
 end quotient_group
-
--- After this point it just becomes a mess
-
--- instance quotient_group_mul {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] : has_mul (quotient (quotient_group_setoid N)) := sorry
-
-
-/-
-
-lemma quot_mul_norm {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] {a b : α} 
-    : @group.mul _ (quotient_group_is_group N) (@quotient.mk _ (quotient_group_setoid N) a) (@quotient.mk _ (quotient_group_setoid N) b) =
-    (@quotient.mk _ (quotient_group_setoid N) (a * b))
-    := sorry
-
-
-
-
-open is_subgroup
-open quotient_group
-open function
-open is_hom
-
-def image [group α] [group β] ( f : α → β ) := f '' univ
-lemma image_mem [group α] [group β] (f : α → β) (a : α) : f a ∈ image f := by sorry
-
-section
-
--- theorem fun_resp_ker [group α] [group β] (f : α → β) [hf : is_hom f] : ∀ a₁ a₂, norm_equiv (hf.kernel) a₁ a₂ → f a₁ = f a₂ := sorry
-
-
-
-lemma image'_group [G : group α] [H : group β] (f : α → β) [h : is_hom f] : group (image f) := 
-    @subgroup_group β H (image f) (@image_in α β G H f h univ univ_in)
-
-attribute [instance] image'_group
-
-end
-
--- set_option trace.class_instances true
-
--- instance {α β} ( G : group α ) ( H : group β ) { f : α → β } ( h : is_hom f ) : group (f '' univ) := @is_subgroup.subgroup_group β H (f '' univ) (@image_in α β G H f h univ univ_in)
-
-#print subgroup_group
-
--- set_option pp.implicit true
--- protected eliminator eq.rec : Π {α : Sort u} {a : α} {C : α → Sort l}, C a → Π {a_1 : α}, a = a_1 → C a_1
-
-@[simp] lemma {u₁ u₂} parallel_transport_for_trivial_bundles {α : Sort u₁} {a b : α} {β : Sort u₂} (p : a = b) (x : β) : @eq.rec α a (λ a, β) x b p = x :=
-begin
-induction p,
-simp,
-end
-
-lemma kernel_cosets {α β} [G : group α] [H : group β] (f : α → β ) [h : is_hom f] {a b} (hab : f a = f b) 
-    : @quotient.mk _ (quotient_group_setoid h.kernel) a = @quotient.mk _ (quotient_group_setoid h.kernel) b :=
-begin
-apply quot.sound,
-unfold setoid.r,
-unfold norm_equiv,
-simp,
-sorry -- easy
-end
-
-variable {r : α → α → Prop}
-variable {S : quot r → Sort v}
-
-lemma quot.rec_eq
-   (f : Π a, S (quot.mk r a)) (h : ∀ (a b : α) (p : r a b), (eq.rec (f a) (quot.sound p) : S (quot.mk r b)) = f b)
-   (a : α) : @quot.rec α r S f h (quot.mk r a) = f a := by refl
-
-noncomputable theorem first_isomorphism_theorem {α β} [G : group α] [H : group β] (f : α → β ) [h : is_hom f] 
-    : @group_isomorphism (α / h.kernel) (image f) _ (@image'_group _ _ _ _ f h) := {
-        to_fun := 
-        begin 
-                    intros, 
-                    induction a,
-                    split, 
-                    exact image_mem f a, 
-                    simp, 
-                    induction a_p,
-                    rw [h.hom_mul, h.inv] at a_p,
-                    simp [eq_mul_inv_of_mul_eq a_p],
-                    exfalso,
-                    rw mem_empty_eq at a_p,
-                    assumption
-        end,
-        inv_fun :=
-        begin
-            intros,
-            induction a with b h,
-            exact (@quotient.mk _ (quotient_group_setoid _) (classical.some h)),
-        end,
-        left_inv := begin
-                        simp [left_inverse],
-                        intro x,
-                        induction x with y hy,
-                        simp,
-                        have hz := @classical.some_spec _ (λ z, f z = f y) ⟨y, rfl⟩,
-                        exact @kernel_cosets _ _ _ _ f h _ _ hz,
-                        simp,
-                    end,
-        right_inv := begin
-                        
-                        simp [function.right_inverse, left_inverse],
-                        intros x hx,
-                        apply subtype.eq,
-                        simp,
-                        induction hx,
-                        induction hx_h,
-                        induction hx_h_right,
-                        dsimp,
-                        have p : @quotient.mk  _ (quotient_group_setoid _) (@classical.some α (λ (a : α), f a = f hx_w) _) = @quotient.mk  _ (quotient_group_setoid _) (hx_w), {
-                          sorry, -- not too hard
-                        },
-                        rw p,
-                        erw quot.rec_eq,
-                      end,
-        hom_fun := {
-            hom_mul := λ x y, (@quotient.induction_on₂ _ _ (quotient_group_setoid _) (quotient_group_setoid _) _ x y (begin
-            intros,
-            erw [quot.rec_eq, quot.rec_eq],
-            sorry
-            end))
-        }
-    }
-
--/
-
