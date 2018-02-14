@@ -400,6 +400,7 @@ end
 
 #check nat.succ_pos
 
+@[elab_as_eliminator]
 theorem gcd.induction {α : Type} [ed: decidable_euclidean_domain α] 
                     {P : α → α → Prop}
                     (m n : α)
@@ -407,59 +408,11 @@ theorem gcd.induction {α : Type} [ed: decidable_euclidean_domain α]
                     (H1 : ∀ m n, ed.valuation.val 0 < ed.valuation.val m → P (n%m) m → P m n) :
                 P m n := 
 @well_founded.induction _ _ (has_well_founded.wf α) (λm, ∀n, P m n) m (λk IH,
-begin
-    cases decidable.em (k=0),
-    {
-        rw h,
-        exact H0,
-    },
-    {
-        intro n, simp at IH,
-        have := H1 k n,
-        have h1 := this (zero_lt_nonzero k h),
-        -- WTS: P (n % k) k
-        have IH1 := IH (n%k),
-        have := mod_lt n (zero_lt_nonzero k h),
-        have := IH1 this,
-        have := this k,
-        exact h1 this,
-    }
-end ) n
+    by {cases decidable.em (k=0), rw h, exact H0,
+        exact λ n, H1 k n (zero_lt_nonzero k h) (IH (n%k) (mod_lt n (zero_lt_nonzero k h)) k)}) n
 
 
---   by {induction k with k ih, exact H0,
---       exact λn, H1 _ _ (succ_pos _) (IH _ (mod_lt _ (succ_pos _)) _)}
+@[reducible] def coprime {α : Type} [ed: decidable_euclidean_domain α]  (a b : α) : Prop := gcd a b = 1
 
 
--- @[elab_as_eliminator]
--- theorem gcd.induction {P : ℕ → ℕ → Prop}
---                    (m n : ℕ)
---                    (H0 : ∀n, P 0 n)
---                    (H1 : ∀m n, 0 < m → P (n % m) m → P m n) :
---                  P m n :=
--- @induction _ _ lt_wf (λm, ∀n, P m n) m (λk IH,
---   by {induction k with k ih, exact H0,
---       exact λn, H1 _ _ (succ_pos _) (IH _ (mod_lt _ (succ_pos _)) _)}) n
 
--- set_option trace.class_instances true
-
-
-#check nat.le
-#check nat.le_of_lt
--- class has_well_founded (α : Sort u) : Type u :=
--- (r : α → α → Prop) (wf : well_founded r)
-
--- lemma recursion {C : α → Sort v} (a : α) (h : Π x, (Π y, y ≺ x → C y) → C x) : C a :=
--- acc.rec_on (apply hwf a) (λ x₁ ac₁ ih, h x₁ ih)
-
--- lemma induction {C : α → Prop} (a : α) (h : ∀ x, (∀ y, y ≺ x → C y) → C x) : C a :=
--- recursion a h
-
-
-/-
-@[algebra] class is_well_order (α : Type u) (r : α → α → Prop) extends is_strict_total_order' α r : Prop :=
-(wf : well_founded r)
-
-@[algebra] class is_strict_total_order' (α : Type u) (lt : α → α → Prop) extends is_trichotomous α lt, is_strict_order α lt : Prop.
-
--/
