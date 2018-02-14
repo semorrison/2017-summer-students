@@ -3,6 +3,7 @@
 -- convert to well founded instead of ℕ
 -- change to require only decidability for (x=0) (get rid of decidable_euclidean_domain entirely?)
 -- do I do well founded on the valuation or just the inputs? 
+-- Fix loads of unfolds
 
 import data.int.basic
 import tactic.ring
@@ -236,9 +237,12 @@ begin
         },
         {
             have := valuation'.property 0 b,
-            rw ←h2 at this_1,
+            have h3 : -euclidean_domain.quotient 0 b * b = b * -euclidean_domain.quotient 0 b , by ring,
+            rw [h3,←h2] at this_1,
             cases this,
-            rw this_2, exact mod_zero (0:α),
+            {
+                rw this_2, exact mod_zero (0:α),
+            },
             sorry -- contradiction between this_1 and this_2
         }
     }
@@ -396,7 +400,21 @@ begin
     }
 end
 
-#check nat.succ_pos
+
+lemma dvd_mod {α} [ed: decidable_euclidean_domain α] {a b c : α} : c ∣ a → c ∣ b → c ∣ a % b :=
+begin
+    intros dvd_a dvd_b,
+    have := ed.witness,
+    have := this a b,
+    have : euclidean_domain.remainder a b = a - euclidean_domain.quotient a b * b, from
+    calc 
+        a%b = euclidean_domain.quotient a b * b + a%b - euclidean_domain.quotient a b * b : by ring
+        ... = a - euclidean_domain.quotient a b * b : by {dsimp[(%)]; rw this},
+    dsimp [(%)], rw this,
+    sorry
+    -- have := dvd
+        
+end
 
 @[elab_as_eliminator]
 theorem gcd.induction {α : Type} [ed: decidable_euclidean_domain α] 
@@ -416,7 +434,6 @@ theorem gcd.induction {α : Type} [ed: decidable_euclidean_domain α]
 
 /- more gcd stuff (generalized mathlib/data/nat/gcd.lean) -/
 
-#check dvd_mul_of_dvd_left
 
 theorem gcd_dvd {α : Type} [ed: decidable_euclidean_domain α] (a b : α) : (gcd a b ∣ a) ∧ (gcd a b ∣ b) :=
 gcd.induction a b
@@ -442,5 +459,34 @@ gcd.induction a b
         }
     end )
 
+theorem gcd_dvd_left {α : Type} [ed: decidable_euclidean_domain α] (a b : α) :
+    gcd a b ∣ a := (gcd_dvd a b).left
+
+theorem gcd_dvd_right {α : Type} [ed: decidable_euclidean_domain α] (a b : α) :
+    gcd a b ∣ b := (gcd_dvd a b).right
+
+/- Proof that the gcd is the top of the division hierarchy -/
+theorem dvd_gcd {α : Type} [ed: decidable_euclidean_domain α] {a b c : α} : c ∣ a → c ∣ b → c ∣ gcd a b :=
+gcd.induction a b
+    (λ b,
+    begin
+        intros dvd_0 dvd_b,
+        simp, exact dvd_b
+    end)
+    (λ a b bpos,
+    begin
+        intros d dvd_a dvd_b,
+        rw gcd_next,
+        exact d (dvd_mod dvd_b dvd_a) dvd_a,
+    end)
 
 
+
+-- theorem mod_eq_zero_of_dvd {α : Type} [ed: decidable_euclidean_domain α] {a b : α} (H : a ∣ b) :
+--     b % a = 0 :=
+-- dvd.elim H (λ z H1, by {rw [H1], sorry})
+
+-- theorem gcd_comm (m n : ℕ) : gcd m n = gcd n m :=
+-- dvd_antisymm
+--   (dvd_gcd (gcd_dvd_right m n) (gcd_dvd_left m n))
+--   (dvd_gcd (gcd_dvd_right n m) (gcd_dvd_left n m))

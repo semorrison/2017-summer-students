@@ -73,3 +73,7 @@ Does the order gcd_zero_left, gcd_zero_right and other lemmas are defined matter
 - simp problems?
 
 Why does "have := ed.witness a b" not work but "have := ed.witness, have := this a b" work?
+
+Why is there no dvd tactic? (is there?)
+
+dvd_antisymm is not true in general in euclidean domains (eg \R)

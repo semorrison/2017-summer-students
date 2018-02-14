@@ -437,5 +437,3 @@ gcd.induction m n
   (λn, by rw gcd_zero_left; exact ⟨dvd_zero n, dvd_refl n⟩)
   (λm n npos, by rw ←gcd_rec; exact λ ⟨IH₁, IH₂⟩, ⟨IH₂, (dvd_mod_iff IH₂).1 IH₁⟩)
 -/
-
-/- rewrite -/
