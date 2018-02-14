@@ -111,10 +111,8 @@ section
 def image [group α] [group β] ( f : α → β ) : set β := f '' univ
 lemma image_mem [group α] [group β] (f : α → β) (a : α) : f a ∈ image f := ⟨a, mem_univ a, rfl⟩
 
-lemma univ_image_in [group α] [group β] (f : α → β) [hf: is_hom f] : group (image f) :=  
-    subgroup_group (@is_hom.image_in _ _ _ _ _ hf univ _)
-    
-attribute [instance] univ_image_in
+instance univ_image_in [group α] [group β] (f : α → β) [hf: is_hom f] : group (image f) :=  
+    is_subgroup.subgroup_group (@is_hom.image_in _ _ _ _ _ hf univ _)
 
 structure group_isomorphism (β : Type v) (γ : Type w) [group β] [group γ]
   extends equiv β γ :=
@@ -128,10 +126,12 @@ quot.lift_on q f $ assume a b (hab : a * b⁻¹ ∈ N),
   show f a = f b, by rw [←inv_inv (f b)]; exact eq_inv_of_mul_eq_one this
 
 @[simp] lemma mul_val [group α] [group β] ( f : α → β ) (a b : image f) [hf : is_hom f] : (a * b).val = a.val * b.val := by cases a; cases b; refl
-@[simp] lemma one_val [group α] [group β] ( f : α → β ) [hf : is_hom f] : (1 : image f).val = 1 := sorry
-@[simp] lemma inv_val [group α] [group β] ( f : α → β ) (a : image f) [hf : is_hom f] : (a⁻¹).val = a.val⁻¹ := sorry
+@[simp] lemma one_val [group α] [group β] ( f : α → β ) [hf : is_hom f] : (1 : image f).val = 1 := rfl
+@[simp] lemma inv_val [group α] [group β] ( f : α → β ) (a : image f) [hf : is_hom f] : (a⁻¹).val = a.val⁻¹ := by cases a; refl
 
 def im_lift [G : group α] [H : group β] {f : α → β} (hf : is_hom f) (c : α) : image f := ⟨f c, image_mem f c⟩
+
+@[simp] lemma im_lift_val [G : group α] [H : group β] {f : α → β} (hf : is_hom f) (c : α) : (im_lift hf c).val = f c := rfl
 
 lemma is_hom_image [G : group α] [H : group β] {f : α → β} (hf : is_hom f) : is_hom (λ c, im_lift hf c : α → image f) :=
     by refine {..};  intros; apply subtype.eq; simp [im_lift, hf.hom_mul]
@@ -165,7 +165,7 @@ lemma ker_equiv_im [G : group α] [H : group β] (f : α → β ) [h : is_hom f]
     exact is_hom.one_ker_inv h hab
 end
 
--- lemma ker_equiv_im_lift [G : group α] [H : group β] (f : α → β ) [h : is_hom f] : ∀ a b, (norm_equiv h.kernel) a b → (im_lift h) a = (im_lift h) b := sorry
+lemma ker_equiv_im_lift [G : group α] [H : group β] (f : α → β ) [h : is_hom f] : ∀ a b, (norm_equiv h.kernel) a b → (im_lift h) a = (im_lift h) b := sorry
 
 -- set_option trace.class_instances true
 
@@ -208,9 +208,10 @@ noncomputable theorem first_isomorphism_theorem [G : group α] [H : group β] (f
                       end,
         hom_fun := ⟨λ x y, (@quotient.induction_on₂ _ _ (quotient_group_setoid _) (quotient_group_setoid _) _ x y (begin
             intros,
-            simp [qgroup_lift, quot.lift_on],
+            rw [quot_mul],
+            simp [qgroup_lift, quot.lift_on, quotient.mk],
             apply subtype.eq,
-            sorry
+            simp [h.hom_mul]
             end))⟩
     }
 

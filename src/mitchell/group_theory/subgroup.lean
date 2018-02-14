@@ -32,7 +32,7 @@ attribute [simp] is_subgroup.one_mem
                  is_normal_subgroup.normal
 
 -- Subgroup is a group
-lemma subgroup_group [group α] {s : set α} (hs : is_subgroup s) : group s :=
+instance subgroup_group [group α] {s : set α} (hs : is_subgroup s) : group s :=
 {   mul := λ ⟨x, hx⟩ ⟨y, hy⟩, ⟨x * y, mul_mem hx hy⟩,
     mul_assoc := λ ⟨x, hx⟩ ⟨y, hy⟩ ⟨z, hz⟩, subtype.eq $ mul_assoc x y z,
     one := ⟨1, one_mem s⟩,
@@ -51,17 +51,16 @@ lemma mem_norm_comm [group α] {a b : α} {S : set α} [is_normal_subgroup S] (h
 def trivial (h : group α) : set α := {1}
 
 -- Difference between refine and split - Refine works for extensions
-lemma trivial_in [h : group α] : is_normal_subgroup (is_subgroup.trivial h) :=
+instance trivial_in [h : group α] : is_normal_subgroup (is_subgroup.trivial h) :=
     by refine {..}; simp {contextual := tt}
 
-lemma univ_in [group α] : is_subgroup (@univ α) :=
+instance univ_in [group α] : is_subgroup (@univ α) :=
     by split; simp
 
-attribute [instance] subgroup_group trivial_in univ_in
 
 def center (α : Type u) [group α] : set α := {z | ∀ g, g * z = z * g}
 
-lemma center_normal_in [group α] : is_normal_subgroup (center α) := {
+instance center_normal_in [group α] : is_normal_subgroup (center α) := {
     one_mem := by simp [center],
     mul_mem := begin
     intros a b ha hb g,
@@ -85,8 +84,6 @@ lemma center_normal_in [group α] : is_normal_subgroup (center α) := {
     end
 }
 
-attribute [instance] center_normal_in
-
 end is_subgroup
 
 
@@ -99,17 +96,19 @@ include G H
 @[simp]
 def kernel {f : α → β} (hf : is_hom f) : set α := preimage f (trivial H)
 
-lemma mem_ker_one {f : α → β} (hf : is_hom f) {x : α} (h : x ∈ hf.kernel) : f x = 1 := sorry
+lemma mem_ker_one {f : α → β} (hf : is_hom f) {x : α} (h : x ∈ hf.kernel) : f x = 1 := by simp [kernel] at h; simp [h]
 
-lemma ker_inv {f : α → β} (hf : is_hom f) {a b : α} (h : a * b⁻¹ ∈ hf.kernel) : f a = f b := sorry
+lemma one_ker_inv {f : α → β} (hf : is_hom f) {a b : α} (h : f (a * b⁻¹) = 1) : f a = f b := by rw ←inv_inv (f b); rw [hf.hom_mul, hf.inv] at h; exact eq_inv_of_mul_eq_one h
 
-lemma inv_ker {f : α → β} (hf : is_hom f) {a b : α} (h : f a = f b) : a * b⁻¹ ∈ hf.kernel := sorry
+lemma inv_ker_one {f : α → β} (hf : is_hom f) {a b : α} (h : f a = f b) : f (a * b⁻¹) = 1 :=
+    have f a * (f b)⁻¹ = 1, by rw h; apply mul_right_inv,
+    by rw [←hf.inv, ←hf.hom_mul] at this; exact this
 
-lemma inv_ker_one {f : α → β} (hf : is_hom f) {a b : α} (h : f a = f b) : f (a * b⁻¹) = 1 := mem_ker_one hf $ inv_ker hf h
+lemma ker_inv {f : α → β} (hf : is_hom f) {a b : α} (h : a * b⁻¹ ∈ hf.kernel) : f a = f b := one_ker_inv hf $ mem_ker_one hf h
 
-lemma one_ker_inv {f : α → β} (hf : is_hom f) {a b : α} (h : f (a * b⁻¹) = 1) : f a = f b := sorry
+lemma inv_ker {f : α → β} (hf : is_hom f) {a b : α} (h : f a = f b) : a * b⁻¹ ∈ hf.kernel := by simp [mem_set_of_eq]; exact inv_ker_one hf h
 
-lemma image_in {f : α → β} (hf: is_hom f) (S : set α) [is_subgroup S] : is_subgroup (f '' S) := {
+instance image_in {f : α → β} (hf: is_hom f) (S : set α) [is_subgroup S] : is_subgroup (f '' S) := {
     is_subgroup .
     mul_mem := assume a₁ a₂ ⟨b₁, hb₁, eq₁⟩ ⟨b₂, hb₂, eq₂⟩,
     ⟨b₁ * b₂, mul_mem hb₁ hb₂, by simp [eq₁, eq₂, hf.hom_mul]⟩,
@@ -118,16 +117,14 @@ lemma image_in {f : α → β} (hf: is_hom f) (S : set α) [is_subgroup S] : is_
     ⟨b⁻¹, inv_mem hb, by rw hf.inv; simp *⟩ 
 }
 
-lemma preimage_in {f : α → β} (hf : is_hom f) (S : set β) [is_subgroup S] : is_subgroup (f ⁻¹' S) :=
+instance preimage_in {f : α → β} (hf : is_hom f) (S : set β) [is_subgroup S] : is_subgroup (f ⁻¹' S) :=
     by refine {..}; simp [hf.hom_mul, hf.one, hf.inv] {contextual:=tt}
 
-lemma preimage_norm_in {f : α → β} (hf : is_hom f) (S : set β) [is_normal_subgroup S] : is_normal_subgroup (f ⁻¹' S) :=
+instance preimage_norm_in {f : α → β} (hf : is_hom f) (S : set β) [is_normal_subgroup S] : is_normal_subgroup (f ⁻¹' S) :=
     by refine {..}; simp [hf.hom_mul, hf.one, hf.inv] {contextual:=tt}
 
-lemma kernel_in {f : α → β} (hf: is_hom f) : is_normal_subgroup (hf.kernel) := 
-    preimage_norm_in hf (trivial H)
-
-attribute [instance] image_in preimage_in kernel_in
+instance kernel_in {f : α → β} (hf: is_hom f) : is_normal_subgroup (hf.kernel) := 
+    is_hom.preimage_norm_in hf (trivial H)
 
 lemma kernel_iff_equiv {f : α → β} (hf: is_hom f) (a b : α) : f b = f a ↔ a⁻¹ * b ∈ hf.kernel :=
 begin
