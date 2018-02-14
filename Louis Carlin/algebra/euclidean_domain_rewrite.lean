@@ -183,7 +183,8 @@ instance has_well_order_nat : has_well_order ℕ :=
     iwo := by apply_instance
 } 
 
-instance ed_has_well_founded {α : Type} [ed: decidable_euclidean_domain α] : has_well_founded α := has_well_founded_of_has_wo ed.valuation.val
+instance ed_has_well_founded {α : Type} [ed: decidable_euclidean_domain α] : has_well_founded α :=
+has_well_founded_of_has_wo ed.valuation.val
 
 -- uses valuation' which was defined to have property f a ≤ f (a*b)
 -- def ed_has_well_founded_of_has_
@@ -340,56 +341,12 @@ begin
     }
 end
 
--- theorem gcd.induction {α : Type} [decidable_euclidean_domain α] 
---                     {P : α → α → Prop}
---                     (m n : α)
---                     (H0 : ∀ x, P 0 x)
---                     (H1 : ∀ m n, has_well_founded.r 0 m → P (n%m) m → P m n) :
---                 P m n := 
--- @well_founded.induction _ _ (has_well_founded.wf α) (λm, ∀n, P m n) m (λk IH,
--- begin
---     cases decidable.em (k=0),
---     {
---         rw h,
---         exact H0,
---     },
---     {
---         intro n,
---         have hwf : has_well_founded α, by apply_instance,
---         have hzlt : hwf.r (0)
---         exact H1 _ _ (has_well_founded.r (0:α) _) (IH _ (sorry) _) n
---         sorry
---     }
--- end
---   by {induction k with k ih, exact H0,
---       exact λn, H1 _ _ (succ_pos _) (IH _ (mod_lt _ (succ_pos _)) _)}
-
-
--- @[elab_as_eliminator]
--- theorem gcd.induction {P : ℕ → ℕ → Prop}
---                    (m n : ℕ)
---                    (H0 : ∀n, P 0 n)
---                    (H1 : ∀m n, 0 < m → P (n % m) m → P m n) :
---                  P m n :=
--- @induction _ _ lt_wf (λm, ∀n, P m n) m (λk IH,
---   by {induction k with k ih, exact H0,
---       exact λn, H1 _ _ (succ_pos _) (IH _ (mod_lt _ (succ_pos _)) _)}) n
-#check nat.succ_pos
-
--- set_option trace.class_instances true
-
-def zero_lt_nonzero {α : Type} [ed:decidable_euclidean_domain α] : ∀ a : α, nat.le (ed.valuation.val (0:α)) (ed.valuation.val a) :=
+def zero_lt_nonzero {α : Type} [ed:decidable_euclidean_domain α] : ∀ a : α, a ≠ 0 → nat.lt (ed.valuation.val (0:α)) (ed.valuation.val a) :=
 begin
-    intro a,
+    intros a aneq,
     have := zero_mod a,
     have := ed.valuation.property,
     have := this 0 a,
-    cases decidable.em (a=0),
-    {
-        rw h,
-        have : (euclidean_domain.valuation α).val 0 = (euclidean_domain.valuation α).val 0, by refl,
-        exact nat.le_of_eq this,
-    },
     {
         cases this,
             contradiction,
@@ -403,10 +360,89 @@ begin
             unfold nat.sizeof at this_1,
             have hr := zero_mod a, dsimp [(%)] at hr,
             rw [hr] at this_1,
-            exact nat.le_of_lt this_1,
+            exact  this_1,
         }
     }
 end
+
+#check nat.mod_lt
+#check lt_irrefl
+
+lemma mod_lt {α : Type} [ed: decidable_euclidean_domain α]  :
+                     ∀ (x : α) {y : α}, ed.valuation.val y > ed.valuation.val 0 →  ed.valuation.val (x%y) < ed.valuation.val y :=
+begin
+    intros,
+    cases decidable.em (y=0),
+    {
+        rw h at a,
+        have := lt_irrefl ((euclidean_domain.valuation α).val 0),
+        contradiction,
+    },
+    {
+        have := ed.valuation.property,
+        have := this x y,
+        cases this,
+        {
+            contradiction
+        },
+        {
+            unfold has_well_founded.r at this_1,
+            unfold sizeof_measure at this_1,
+            unfold measure at this_1,
+            unfold sizeof at this_1,
+            unfold inv_image at this_1,
+            unfold has_sizeof.sizeof at this_1,
+            unfold nat.sizeof at this_1,
+            exact this_1,
+        }
+    }
+end
+
+#check nat.succ_pos
+
+theorem gcd.induction {α : Type} [ed: decidable_euclidean_domain α] 
+                    {P : α → α → Prop}
+                    (m n : α)
+                    (H0 : ∀ x, P 0 x)
+                    (H1 : ∀ m n, ed.valuation.val 0 < ed.valuation.val m → P (n%m) m → P m n) :
+                P m n := 
+@well_founded.induction _ _ (has_well_founded.wf α) (λm, ∀n, P m n) m (λk IH,
+begin
+    cases decidable.em (k=0),
+    {
+        rw h,
+        exact H0,
+    },
+    {
+        intro n, simp at IH,
+        have := H1 k n,
+        have h1 := this (zero_lt_nonzero k h),
+        -- WTS: P (n % k) k
+        have IH1 := IH (n%k),
+        have := mod_lt n (zero_lt_nonzero k h),
+        have := IH1 this,
+        have := this k,
+        exact h1 this,
+    }
+end ) n
+
+
+--   by {induction k with k ih, exact H0,
+--       exact λn, H1 _ _ (succ_pos _) (IH _ (mod_lt _ (succ_pos _)) _)}
+
+
+-- @[elab_as_eliminator]
+-- theorem gcd.induction {P : ℕ → ℕ → Prop}
+--                    (m n : ℕ)
+--                    (H0 : ∀n, P 0 n)
+--                    (H1 : ∀m n, 0 < m → P (n % m) m → P m n) :
+--                  P m n :=
+-- @induction _ _ lt_wf (λm, ∀n, P m n) m (λk IH,
+--   by {induction k with k ih, exact H0,
+--       exact λn, H1 _ _ (succ_pos _) (IH _ (mod_lt _ (succ_pos _)) _)}) n
+
+-- set_option trace.class_instances true
+
 
 #check nat.le
 #check nat.le_of_lt
