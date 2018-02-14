@@ -211,7 +211,7 @@ begin
     simp at this, sorry -- wf contradiction
 end
 
-lemma valuation'_dvd_of_le {α : Type} [ed : decidable_euclidean_domain α] (a b : α) :
+lemma valuation'_dvd_le {α : Type} [ed : decidable_euclidean_domain α] (a b : α) :
     b ∣ a → a ≠ 0 → valuation'.val b ≤ valuation'.val a :=
 begin
     intros b_dvd ha,
@@ -225,36 +225,6 @@ begin
         contradiction,
     rw mul_comm,
     exact this,
-end
-
--- this is cooked (this proof is more suited to showing a%b = 0), we can proof the statement as is from valuation'_property
-lemma valuation'_dvd_of_le {α : Type} [ed : decidable_euclidean_domain α] (a b : α) :
-    b ∣ a → valuation'.val b ≤ valuation'.val a :=
-begin
-    intro b_dvd,
-    induction b_dvd with x hx,
-    have := valuation'.property a b,
-    cases decidable.em (b=0),
-    {
-        rw h at hx, simp at hx,
-        rw [h,hx],
-    },
-    {
-        cases this,
-        contradiction,
-        {
-            unfold has_well_founded.r at this, -- this is ugly; stop doing it
-            unfold sizeof_measure at this,
-            unfold sizeof at this,
-            unfold has_sizeof.sizeof at this,
-            unfold measure at this,
-            unfold inv_image at this,
-            unfold nat.sizeof at this,
-            have b_dvd_mod : b ∣ (a%b), from sorry, -- this follows from a = b * x = (a/b)*b + (a%b)
-            induction b_dvd_mod with y hy,
-        }
-    }
-    
 end
 
 @[simp] lemma mod_one {α : Type} [decidable_euclidean_domain α] (x : α) : x % 1 = 0 :=
@@ -339,6 +309,46 @@ begin
     sorry,
 end
 
+-- This is a mess, get it in order
+lemma dvd_mod_zero {α : Type} [ed : decidable_euclidean_domain α] (a b : α) :
+    b ∣ a → a % b = 0 :=
+begin
+    intro b_dvd,
+    have := valuation'.property a b,
+    cases decidable.em (b=0),
+    {
+        induction b_dvd with x hx,
+        rw h at hx, simp at hx,
+        rw [h,hx],
+        sorry,
+    },
+    {
+        cases this,
+        contradiction,
+        {
+            cases decidable.em (a=0),
+
+            rw h_1,
+            exact zero_mod b,
+
+            unfold has_well_founded.r at this, -- this is ugly; stop doing it
+            unfold sizeof_measure at this,
+            unfold sizeof at this,
+            unfold has_sizeof.sizeof at this,
+            unfold measure at this,
+            unfold inv_image at this,
+            unfold nat.sizeof at this,
+            have b_dvd_mod : b ∣ (a%b), from sorry, -- this follows from a = b * x = (a/b)*b + (a%b)
+            cases decidable.em ((a%b)=0),
+                exact h_2,
+            have := valuation'_dvd_le _ _ b_dvd_mod h_2,
+            sorry -- contradiction
+        }
+    }
+    
+end
+
+
 
 
 /- gcd lemmas -/
@@ -386,9 +396,6 @@ end
 @[simp] theorem gcd_self {α : Type} [decidable_euclidean_domain α] (n : α) : gcd n n = n :=
 by rw [gcd_next n n, mod_self n, gcd_zero_left]
 
-
-
-
 def zero_lt_nonzero {α : Type} [ed:decidable_euclidean_domain α] : ∀ a : α, a ≠ 0 → nat.lt (ed.valuation.val (0:α)) (ed.valuation.val a) :=
 begin
     intros a aneq,
@@ -412,9 +419,6 @@ begin
         }
     }
 end
-
-#check nat.mod_lt
-#check lt_irrefl
 
 lemma mod_lt {α : Type} [ed: decidable_euclidean_domain α]  :
                      ∀ (x : α) {y : α}, ed.valuation.val y > ed.valuation.val 0 →  ed.valuation.val (x%y) < ed.valuation.val y :=
