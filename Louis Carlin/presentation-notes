@@ -1,0 +1,32 @@
+Quick explanation of lean
+- type theory (very basic)
+- proofs as types
+- tactics mode (context and goals)
+
+
+What I did
+euclidean domains 
+
+Explanation of pre-existing structures
+- wiki hierarchy: commutative rings > integral domains euclidean domains
+- lean hierarchy :
+
+integral domain with:
+- remainder : \a \to \a \to \a
+- mod : \a \to \a \to \a
+- witness a = (a/b)*b + (a%b)
+- valuation (where do I start?)
+
+euclidean algorithm
+- explain how it works on the board
+- initial implementation 
+    - takes proof as input and gives proofs as output
+- second implementation
+    - no proofs as input or output
+    - induction principle (explain well founded induction here)
+
+well-founded induction (do some on board?)
+- more general form of induction
+- explain what well founded means
+    - all elements are accessible in the relation (an element is accessible if all the elements less that it are accessible)
+- requires 
