@@ -122,7 +122,7 @@ Type theory allows the construction of further objects, given prior judgments. F
 \[
 4 * (5 + 7) : \textbf{nat}
 \]
-is a type judgment states that $4 * (5 + 7)^8$ is of type \textbf{nat}, which is true because 4, 5, and 7 are of type \textbf{nat}, while $*$ and $+$ are operations on natural numbers.\\
+is a type judgment states that $4 * (5 + 7)$ is of type \textbf{nat}, which is true because 4, 5, and 7 are of type \textbf{nat}, while $*$ and $+$ are operations on natural numbers.\\
 
 The simple type theory described above is limited in that the only types which exist are the types built into the language and those which can be constructed using $\to$ (i.e. functions from one type to another). Simple type systems generally have other simple constructions as well -- for example, a conjuction operator which gives types of the form $A \land B$.
 
@@ -304,11 +304,11 @@ Let G be a group, and N a normal subgroup. Then there is an equivalence relation
 \end{definition}
 
 \begin{definition}[Isomorphism]
-A homomorphism is called an isomorphism if it is bijective. Two groups are said to be isomorphic if there exists an isomorphism between them.
+A homomorphism is called an isomorphism if it has a two-sided inverse. Two groups are said to be isomorphic if there exists an isomorphism between them.
 \end{definition}
 
 \begin{theorem}[First Isomorphism Theorem]
-Let G and G' be groups, and let $\phi : G \to G'$ be a homomorphism. Let K be the kernel of $\phi$. Note that the image of $\phi$ forms a group. Then $G/K$ is isomorphic to the image of $\phi$.
+Let G and G' be groups, and let $\phi : G \to G'$ be a homomorphism. Let K be the kernel of $\phi$. Then $G/K$ is isomorphic to the image of $\phi$.
 \end{theorem}
 
 \section{Subgroups}
@@ -353,12 +353,7 @@ We can define the set \textbf{trivial}, which it is then easy to prove is a norm
 \hspace{4 em}\textbf{by refine \{..\}; simp}
 \vspace{2 mm}
 
-\textbf{refine} is a tactic (part of Lean's automation of theorem proving) which splits the goal of proving \textbf{is\_normal\_subgroup (trivial h)} into four goals: \textbf{mul\_mem}, \textbf{one\_mem}, \textbf{inv\_mem}, and \textbf{normal}. \textbf{simp} is a powerful tactic which is used for automatically simplifying statements -- in this case, it is sufficient to prove all four goals.\\
-
-
-\todo[inline]{Center example}
-
-\todo[inline]{Proof that subgroup is a group}
+\textbf{refine} is a tactic (part of Lean's automation of theorem proving) which splits the goal of proving \textbf{is\_normal\_subgroup (trivial h)} into four goals: \textbf{mul\_mem}, \textbf{one\_mem}, \textbf{inv\_mem}, and \textbf{normal}. \textbf{simp} is a powerful tactic which is used for automatically simplifying statements -- in this case, it is sufficient to prove all four goals.
 
 \section{Homomorphisms}
 
@@ -517,19 +512,19 @@ The following constants are built into Lean:
 
 \vspace{4 mm}
 
-\hspace{2 em}\textbf{constant lift \{$\a$ : Sort u\} \{$\b$ : Sort v\} [s : setoid $\a$] (f : $\a \to \b$)}
+\hspace{2 em}\textbf{constant quotient.lift \{$\a$ : Sort u\} \{$\b$ : Sort v\} [s : setoid $\a$] (f : $\a \to \b$)}
 
 \hspace{4 em}\textbf{: ($\forall$ a b, a $\sim$ b $\to$ f a = f b) $\to$ quotient s $\to \b$}
 
 \vspace{4 mm}
 
-\hspace{2 em}\textbf{constant ind \{$\a$ : Sort u\} [s : setoid $\a$] \{$\b$ : quotient s $\to$ Prop\} }
+\hspace{2 em}\textbf{constant quotient.ind \{$\a$ : Sort u\} [s : setoid $\a$] \{$\b$ : quotient s $\to$ Prop\} }
 
 \hspace{4 em}\textbf{: ($\forall$ a, $\b$ [a]) $\to \forall$ q, $\b$ q}
 
 \vspace{4 mm}
 
-\hspace{2 em}\textbf{constant sound \{$\a$ : Sort u\} [s : setoid $\a$] \{a b : $\a$\} : a $\sim$ b $\to$ [a] = [b]}
+\hspace{2 em}\textbf{constant quotient.sound \{$\a$ : Sort u\} [s : setoid $\a$] \{a b : $\a$\} : a $\sim$ b $\to$ [a] = [b]}
 \vspace{2 mm}
 
 \textbf{quotient} constructs a new type given any setoid \textbf{s}. The axioms following it (in particular, \textbf{sound}) make this new type exactly the quotient we would expect: the set of equivalence classes of the relation \textbf{setoid.r}.
@@ -595,13 +590,117 @@ which involves proving each of the seven sub-propositions listed at the end of s
 
 \section{First Isomorphism Theorem}
 
-\todo[inline]{This section will be written after this theorem is actually working}
+\subsection{Images and Isomorphisms}
 
-\section{Alternative Subgroup Construction}
+Before we can prove the first isomorphism theorem, we first need to define what we mean by the image of a homomorphism, and what we mean by an isomorphism.
 
-\todo[inline]{I'm thinking of discussing the alternative subgroup construction we discussed (where the subgroups were actual subgroups rather than simply the statement that a set is a subgroup) and discussing the pros/cons between that and the construction given. That may require spending too much time on something with little relevance, however.}
+\vspace{2 mm}
+\hspace{2 em}\textbf{def image [group $\a$] [group $\b$] (f : $\a \to \b$) : set $\b$ := image f univ}
+\vspace{2 mm}
 
-\todo[inline]{Sets}
+\textbf{univ} is simply the set of all terms of a particular type (in this case $\a$), so it is clear that this definition fits with our common understanding of the image of a homomorphism. Terms of the type \textbf{image f} have the form
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{b $\land$ h}
+\vspace{2 mm}
+
+where \textbf{b : $\b$} and \textbf{h : $\exists$ a, f a = b} (a proof that \textbf{b} is in the image of \textbf{f}).\\
+
+The definition of a group isomorphism is similarly simple; it is a function, its two-sided inverse, proofs that it is a two-sided inverse, and a proof that the original function is a homomorphism.
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{class group\_isomorphism ($\a$ : Type u) ($\b$ : Type v) [group $\a$] [group $\b$] :=}
+
+\hspace{4 em}\textbf{(to\_fun    : $\a \to \b$)}
+
+\hspace{4 em}\textbf{(inv\_fun    : $\b \to \a$)}
+
+\hspace{4 em}\textbf{(left\_inv  : left\_inverse inv\_fun to\_fun)}
+
+\hspace{4 em}\textbf{(right\_inv : right\_inverse inv\_fun to\_fun)}
+
+\hspace{4 em}\textbf{(hom\_fun : is\_hom to\_fun)}
+\vspace{2 mm}
+
+We also give ourselves a more convenient notation for this.
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{infix $\simeq_h$ := group\_isomorphism}
+\vspace{2 mm}
+
+\subsection{The Theorem}
+
+We are finally ready to give the type signature of the first isomorphism theorem.
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{noncomputable theorem first\_isomorphism\_theorem [G : group $\a$] [H : group $\b$]}
+
+\hspace{4 em}\textbf{(f : $\a \to \b$) [h : is\_hom f] : $\a$ / h.kernel $\simeq_h$ image f}
+\vspace{2 mm}
+
+The most interesting part of this type signature is the statement that it is noncomputable. As will be explained later, this is because the proof given in this report requires the axiom of choice!
+
+\subsection{to\_fun}
+
+In informal mathematics, the function $g : G / \ker f \to \im f$ used in this isomorphism is as follows: we can think of each element of $G / \ker f$ as corresponding to a particular subset of $G$. These subsets of $G$ are exactly the preimages of each element of $\im f$. Let $g$ map the element of $G / \ker f$ corresponding to the preimage of $b$ to $b$.
+
+To construct this in Lean for a function \textbf{f : $\a \to \b$}, we need a way to construct a function \textbf{f' : $\a$ / h.kernel $\to \b$} such that \textbf{f' [a] = f a} for all \textbf{a : $\a$}.
+
+Fortunately, \textbf{quotient.lift} does exactly this, as described above. Note that \textbf{quotient.lift} also requires us to give a proof that $a \sim b \implies f\; a = f\; b$. To save ourselves the necessity of proving this in the construction of the first isomorphism theorem, we create the function
+
+\vspace{2 mm}
+\hspace{1 em}\textbf{def qgroup\_lift [G : group $\a$] [H : group $\b$] \{N : set $\a$\} [hs : is\_normal\_subgroup N]}
+
+\hspace{3 em}\textbf{\{f : $\a \to \b$\} (hf : is\_hom f) (h : $\forall$ x $\in$ N, f x = 1) (q : $\a$ / N) : $\b$}
+
+\hspace{3 em}\textbf{:= quotient.lift f \_ q}
+\vspace{2 mm}
+
+where the underscore is a proof of $a \sim b \implies f\; a = f\; b$, given \textbf{h}.
+
+By doing this, we make it so that in the context of the first isomorphism theorem, we only need to prove \textbf{$\forall$ x $\in$ h.kernel, f x = 1}, which is very easy to do.\\
+
+We also need a way to take a function \textbf{f : A $\to$ B} and get a function \textbf{$\bar f$ : A $\to$ image f}. This can be done very simply. Recall that terms of type \textbf{image f} are most commonly expressed as $b \land h$, written in Lean as \textbf{$\langle$b, h$\rangle$}.
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{def im\_lift [G : group $\a$] [H : group $\b$] (f : $\a \to \b$) [hf : is\_hom f] (c : $\a$) : image f}
+
+\hspace{4 em}\textbf{:= $\langle$f c, image\_mem f c$\rangle$}
+\vspace{2 mm}
+
+To recap: \textbf{qgroup\_lift} takes a function with type $\a \to \b$ and gives a function with type \textbf{$\a$ / h.kernel $\to \b$}. \textbf{im\_lift} takes a function \textbf{f} with type $\a \to \b$ and returns a function with type \textbf{$\a \to$ image f}.
+
+To get our required function, which has type \textbf{$\a$ / h.kernel $\to$ image f}, we can write
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{to\_fun := qgroup\_lift (im\_lift f) \_}
+\vspace{2 mm}
+
+where the underscore is a proof of \textbf{$\forall$ x $\in$ h.kernel, f x = 1} (as required by \textbf{qgroup\_lift}).
+
+\subsection{inv\_fun}
+
+In informal mathematics, the function $g^{-1} : \im f \to G / \ker f$ which is the inverse to the function described in the previous section is as follows: for each $b \in \im f$, choose some $a \in G$ such that $f\; a = b$. Let $g^{-1} (b) = [a]$.
+
+This can be written very simply in Lean as 
+
+\vspace{2 mm}
+\hspace{2 em}\textbf{inv\_fun := $\l$ b, [classical.some b.property]}
+\vspace{2 mm}
+
+Recall from section 6 that this is a function which takes \textbf{b : image f} as an argument. \textbf{classical.some} does exactly what would be expected; given \textbf{b : image f}, it returns some \textbf{a} such that \textbf{f a = b}.\footnote{Recall that since \textbf{b} has type \textbf{image f}, it is of the form \textbf{$\langle$b', h$\rangle$}. We can refer to these using \textbf{b.val := b'} and \textbf{b.property := h}.}
+
+\textbf{classical.some} is a direct application of the axiom of choice as implemented in Lean. It is this use which causes this theorem to be noncomputable. It is possible that this proof could be written without applying the axiom of choice. It is also possible that the first isomorphism theorem requires the axiom of choice. I have not had time to determine which of these is the case.
+
+More specifically, the statement following statement is equivalent to the first isomorphism theorem as presented in this report: if $f : G \to G'$ is surjective, then $\bar f : G / \ker f \to G'$ is injective. This statement would certainly be possible to prove without the axiom of choice. However, it may be the case that in order to prove that these statements are equivalent, one requires the axiom of choice.
+
+\subsection{Proofs}
+
+The proofs of \textbf{left\_inv} and \textbf{right\_inv} are informally very simple; since the two functions are explicitly designed as inverses. The most complex part is proving a lemma that $f(a) = f(b) \iff [a] = [b]$, which in itself is not particularly difficult.
+
+The Lean proofs are mostly simplifying definitions and applying the above lemma.\\
+
+Similarly, the proof of \textbf{hom\_fun} simply requires showing that the property of being a homomorphism lifts. This was already proven in the proof that the quotient group is a group.
 
 \begin{thebibliography}{1}
 
