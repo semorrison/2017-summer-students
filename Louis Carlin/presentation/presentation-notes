@@ -44,10 +44,10 @@ extended euclidean algorithm
 
 Script:
 
-Hi, I'm Louis. I've been doing a summer project supervised by Scott in a theorem proving language called Lean. I've mostly been working on implementing and proving things about euclidean domains.
+Hi, I'm Louis. I've been doing a summer project supervised by Scott in a theorem proving language called Lean. Specifically I've been working on implementing and proving things about euclidean domains.
 
 Quick overview?
-
+  
 A euclidean domain is basically a ring with a bit of extra structure giving you the notion of a division algorithm. That is, an algorithm that for any a,b in your ring gives you q and r such that a = qb+r.
 
 Lean has a really nice type class system similar to haskell where you can define structures as extending other pre-existing structures. I've defined euclidean domains as an extension of integral domains which extend integral domains which are already defined in lean and extend rings.
@@ -69,7 +69,7 @@ One of the main motivations for the definition of a euclidean domain is that it 
 
 Well-founded induction induction is basically a more general form of induction than the one we do over the natural numbers. The definition lean uses of a well-founded relation is a relation where all elements are "accessible" (in lean we write "\forall x:\a, acc r x"). An element is accessible exactly when all elements "less than" it, as per the relation, are also accessible. 
 
-So for example, the relation between a and b, "a divides b and a \neq b" is well founded over the positive integers. This is because nothing divides 1 other than itself so it is vacuously accessible (since nothing is "less than" it) and if an element is divided by things, we can eventually reduce all its factors down to being only divided by primes, which are only divided by one, and thus accessible.
+So for example, the relation between a and b, "a divides b and a \neq b" is well founded over the positive integers. This is because nothing divides 1 other than itself so it is vacuously accessible (since nothing is "less than" it) and if an element is divided by things, we can eventually reduce all its factors down to being only divided by primes, which are only divided by one, and thus accessible. (Draw tree here).
 
 It's important to note that this definition is the only way of showing an element is accessible. As a consequence a well-founded relation cannot have cycles because if we had x < y and y < x then it would be impossible to show acc r x without acc r y and vice versa. For the same reason, we cannot have infinitely ascending chains ...<x-1<x0<x1<x2<...
 
