@@ -67,10 +67,25 @@ The downside with my definition is that we no longer have that two euclidean dom
 
 One of the main motivations for the definition of a euclidean domain is that it allows us to define a euclidean algorithm which we can use to find the greatest common divisor of two elements of a ring. Before I go into an explanation of the euclidean algorithm however I'm going to explain something called well-founded induction which is important in proving the properties of the gcd as well as showing the algorithm is actually well-defined and that it terminates.
 
-Well-founded induction induction is basically a more general form of induction than the one we do over the natural numbers. A well-founded relation is a relation where all elements are "accessible" (in lean we write "\forall x:\a, acc r x"). An element is accessible exactly when all elements "less than" it, as per the relation, are also accessible.
+Well-founded induction induction is basically a more general form of induction than the one we do over the natural numbers. The definition lean uses of a well-founded relation is a relation where all elements are "accessible" (in lean we write "\forall x:\a, acc r x"). An element is accessible exactly when all elements "less than" it, as per the relation, are also accessible. 
 
-So for example, the relation between a and b, "a divides b and a \neq b" is well founded over the positive integers. This is because nothing divides primes so they are vacuously accessible (since nothing is "less than" them) and if an element is divided by things, we can eventually reduce all its factors down to being only divided by primes and thus accessible.
+So for example, the relation between a and b, "a divides b and a \neq b" is well founded over the positive integers. This is because nothing divides 1 other than itself so it is vacuously accessible (since nothing is "less than" it) and if an element is divided by things, we can eventually reduce all its factors down to being only divided by primes, which are only divided by one, and thus accessible.
 
-Note that well-founded relations don't have to be transitive. For example the relation "a is less than b and the parity of a is different to the parity of b" is well-founded on the natural numbers and we have 1<2 and 2<3 but not 1<3.
+It's important to note that this definition is the only way of showing an element is accessible. As a consequence a well-founded relation cannot have cycles because if we had x < y and y < x then it would be impossible to show acc r x without acc r y and vice versa. For the same reason, we cannot have infinitely ascending chains ...<x-1<x0<x1<x2<...
 
+As a quick aside, well-founded relations don't have to be transitive. For example the relation "a is less than b and the parity of a is different to the parity of b" is well-founded on the natural numbers and we have 1<2 and 2<3 but not 1<3.
 
+Once we have a well founded relation on a type (or set if you want) X, the idea behind well-founded induction is that we can show that for all x:X, a property Px holds by showing that for any x if P y for all y less than x then P x. This works because for a particular x, we know there is a finite tree of relations.  (Draw tree here?) We will have P y true for each element y at the bottom since there is nothing less than it. Then we can build our way up the tree.
+
+Now you've got an understanding of well founded induction, I'll explain the euclidean algorithm. The basic definition of the euclidean algorithm is as follows:
+gcd(a,b) = if a = 0 then b else gcd(b%a,a)
+
+Note that we actually need one more assumption in the definition of euclidean domain for this to be computable which is that we can actually decide whether any b in our euclidean domain equals zero since lean does not assume equality is decidable by default.
+
+There are two parts to proving that this algorithm actually gives us the gcd as expected, both of which I implemented in lean using well-founded induction. The proofs in lean use a specific induction principle proven using well founded induction which says that if for all m, P 0 m and (forall m n, 0 < m implies P (n%m) m implies P m n) then for all a b, P a b.
+
+First we need the fact that the result divides a and b. So in this case P(a,b) is the claim that gcd(a,b) divides a and b. For the base case it follows from the definition that gcd(0,b) = b for all b, and thus gcd(0,b) divides 0 and b. 
+For inductive step we have that gcd (b%a,a) divides b%a and a. Again from the definition we can rewrite this as gcd (a,b) (since we have assumed 0 < a). Now all we need to show is that gcd(a,b) divides b since we already have that it divides a. Observe however that b = (b/a)a+(b%a). Since both of the components are divisible by gcd(a,b), so is b.
+
+The second thing we need is that the gcd(a,b) is actually at the top of the division hierarchy for a and b. That is, if x|a and x|b then x|gcd(a,b). For the base case we are trying to show that if x|0 and x|b, then x | gcd(0,b). Again this is obvious from the definition since gcd(0,b)=b.
+For the inductive step we have that if x|(b%a) and x|a then x|gcd(b%a,a). Then if x|a and x|b we have x|(b%a) using b%a = b-(b/a)a, so x|gcd(b%a,a). But gcd(b%a,a)=gcd(a,b), so x|gcd(a,b), completing the induction.
