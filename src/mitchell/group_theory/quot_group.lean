@@ -96,20 +96,20 @@ instance quotient_group_is_group₁ {α} [G : group α] (N : set α) [hs : is_no
 
 section
 
-def image [group α] [group β] ( f : α → β ) : set β := f '' univ
+def image [group α] [group β] (f : α → β) : set β := f '' univ
 lemma image_mem [group α] [group β] (f : α → β) (a : α) : f a ∈ image f := ⟨a, mem_univ a, rfl⟩
 
 instance univ_image_in [group α] [group β] (f : α → β) [hf: is_hom f] : group (image f) :=  
     is_subgroup.subgroup_group (@is_hom.image_in _ _ _ _ _ hf univ _)
 
-structure group_isomorphism (β : Type v) (γ : Type w) [group β] [group γ]
-  extends equiv β γ :=
+class group_isomorphism (α : Type u) (β : Type v) [group α] [group β]
+  extends equiv α β :=
 (hom_fun : is_hom to_fun)
 
-infix ` ≃ₕ `:50 := group_isomorphism
+infix `≃ₕ` :50 := group_isomorphism
 
-def qgroup_lift [G : group α] [H : group β] (N : set α) [hs : is_normal_subgroup N] {f : α → β} (hf : is_hom f) (h : ∀ x ∈ N, f x = 1) (q : α / N) : β :=
-quot.lift_on q f $ assume a b (hab : a * b⁻¹ ∈ N),
+def qgroup_lift [G : group α] [H : group β] {N : set α} [hs : is_normal_subgroup N] (f : α → β) [hf : is_hom f] (h : ∀ x ∈ N, f x = 1) (q : α / N) : β :=
+quotient.lift_on q f $ assume a b (hab : a * b⁻¹ ∈ N),
   have f a * (f b)⁻¹ = 1, by rw [←hf.inv, ←hf.hom_mul]; exact h _ hab,
   show f a = f b, by rw [←inv_inv (f b)]; exact eq_inv_of_mul_eq_one this
 
@@ -117,11 +117,11 @@ quot.lift_on q f $ assume a b (hab : a * b⁻¹ ∈ N),
 @[simp] lemma one_val [group α] [group β] ( f : α → β ) [hf : is_hom f] : (1 : image f).val = 1 := rfl
 @[simp] lemma inv_val [group α] [group β] ( f : α → β ) (a : image f) [hf : is_hom f] : (a⁻¹).val = a.val⁻¹ := by cases a; refl
 
-def im_lift [G : group α] [H : group β] {f : α → β} (hf : is_hom f) (c : α) : image f := ⟨f c, image_mem f c⟩
+def im_lift [G : group α] [H : group β] (f : α → β) [hf : is_hom f] (c : α) : image f := ⟨f c, image_mem f c⟩
 
-@[simp] lemma im_lift_val [G : group α] [H : group β] {f : α → β} (hf : is_hom f) (c : α) : (im_lift hf c).val = f c := rfl
+@[simp] lemma im_lift_val [G : group α] [H : group β] {f : α → β} (hf : is_hom f) (c : α) : (im_lift f c).val = f c := rfl
 
-lemma is_hom_image [G : group α] [H : group β] {f : α → β} (hf : is_hom f) : is_hom (λ c, im_lift hf c : α → image f) :=
+instance is_hom_image [G : group α] [H : group β] {f : α → β} (hf : is_hom f) : is_hom (λ c, im_lift f c : α → image f) :=
     by refine {..};  intros; apply subtype.eq; simp [im_lift, hf.hom_mul]
 
 lemma ker_equiv_im [G : group α] [H : group β] (f : α → β ) [h : is_hom f] : ∀ a b, (norm_equiv h.kernel) a b → f a = f b := begin
@@ -131,12 +131,12 @@ lemma ker_equiv_im [G : group α] [H : group β] (f : α → β ) [h : is_hom f]
 end
 
 lemma ker_equiv_im_lift [G : group α] [H : group β] (f : α → β ) [h : is_hom f] 
-    : ∀ a b, (norm_equiv h.kernel) a b → (im_lift h) a = (im_lift h) b := by simp [im_lift]; exact ker_equiv_im f
+    : ∀ a b, (norm_equiv h.kernel) a b → (im_lift f) a = (im_lift f) b := by simp [im_lift]; exact ker_equiv_im f
 
 noncomputable theorem first_isomorphism_theorem [G : group α] [H : group β] (f : α → β ) [h : is_hom f]
     : α / h.kernel ≃ₕ image f := {
-        to_fun := qgroup_lift h.kernel (is_hom_image h) (assume x hx, subtype.eq $ by simp [im_lift]; exact is_hom.mem_ker_one _ hx),
-        inv_fun := λ b, @quotient.mk _ (quotient_group_setoid _) (classical.some b.2),
+        to_fun := qgroup_lift (im_lift f) (assume x hx, subtype.eq $ by simp [im_lift]; exact is_hom.mem_ker_one _ hx),
+        inv_fun := λ b, @quotient.mk _ (quotient_group_setoid _) (classical.some b.property),
         left_inv := assume b', @quotient.induction_on _ (quotient_group_setoid _) _ b' $
             begin
                 assume b,
