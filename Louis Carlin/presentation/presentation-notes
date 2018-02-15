@@ -1,0 +1,76 @@
+Quick explanation of lean (have lean up?)
+- theorem prover (meta programming)
+    - type theory (very basic) (do I even know enough?)
+- proofs as types
+- lean encourages constructivism
+- tactics mode (context and goals)
+
+What I did
+euclidean domains
+- big motivation: can calculate the greatest common divisor
+
+Explanation of pre-existing structures
+- wiki hierarchy: commutative rings > integral domains euclidean domains
+- lean hierarchy : integral domain is a comm_ring with 
+- type class system (inference)
+
+euclidean_domain is an integral domain with:
+- remainder : \a \to \a \to \a
+- mod : \a \to \a \to \a
+- witness a = (a/b)*b + (a%b)
+- valuation
+    - existence vs explicit
+    - main problem is in showing equality (use isomorphism)
+
+well-founded induction (do some on board?)
+- more general form of induction
+- explain what well founded means
+    - all elements are accessible in the relation (an element is accessible if all the elements less that it are accessible)
+- requires 
+
+
+euclidean algorithm
+- explain how it works on the board
+- initial implementation 
+    - takes proof as input and gives proofs as output
+- second implementation
+    - no proofs as input or output
+    - induction principle (explain well founded induction here)
+
+extended euclidean algorithm
+- 
+
+
+
+Script:
+
+Hi, I'm Louis. I've been doing a summer project supervised by Scott in a theorem proving language called Lean. I've mostly been working on implementing and proving things about euclidean domains.
+
+Quick overview?
+
+A euclidean domain is basically a ring with a bit of extra structure giving you the notion of a division algorithm. That is, an algorithm that for any a,b in your ring gives you q and r such that a = qb+r.
+
+Lean has a really nice type class system similar to haskell where you can define structures as extending other pre-existing structures. I've defined euclidean domains as an extension of integral domains which extend integral domains which are already defined in lean and extend rings.
+
+Integral domains are rings with no zero divisors. That is, if we have two elements a,b of our ring such that a*b = 0 then either a=0 or b=0.
+
+Euclidean domains extend this by requiring five things:
+    -a "quotient" or "div" function which takes two elements a,b and gives us the q such that a=bq+r. (I'll write this as a/b)
+    -a "remainder" or "mod" function which for a and b gives the remainder r in the above equality (and which I'll write as a%b)
+    -the fact that these two functions actually satisfy the above equality
+    -a valuation function which takes an element a of the ring and maps it to \N. This should strictly be any well-ordered set (as this allows things like polynomial division for non-monic polynomials) but I haven't got round to generalising it yet.
+    -the fact that for any non-zero b the valuation of the remainder a%b is less than the valuation of b.
+
+One nuance in this definition is that I require an explicit valuation function rather than simply a proof that there exists one. The standard definition of a euclidean domain simply that the ring can be endowed with a valuation function with the desired properties. The problem with this is that since lean is constructive we have to use the axiom of choice to actually explicitly refer to a valuation function which we need later on in other proofs. This means they get marked as non-computable and basically was causing me a lot of problems. 
+
+The downside with my definition is that we no longer have that two euclidean domains on the same ring with the same remainder and quotient functions are equal and instead have to talk about them as isomorphic instead.
+
+One of the main motivations for the definition of a euclidean domain is that it allows us to define a euclidean algorithm which we can use to find the greatest common divisor of two elements of a ring. Before I go into an explanation of the euclidean algorithm however I'm going to explain something called well-founded induction which is important in proving the properties of the gcd as well as showing the algorithm is actually well-defined and that it terminates.
+
+Well-founded induction induction is basically a more general form of induction than the one we do over the natural numbers. A well-founded relation is a relation where all elements are "accessible" (in lean we write "\forall x:\a, acc r x"). An element is accessible exactly when all elements "less than" it, as per the relation, are also accessible.
+
+So for example, the relation between a and b, "a divides b and a \neq b" is well founded over the positive integers. This is because nothing divides primes so they are vacuously accessible (since nothing is "less than" them) and if an element is divided by things, we can eventually reduce all its factors down to being only divided by primes and thus accessible.
+
+Note that well-founded relations don't have to be transitive. For example the relation "a is less than b and the parity of a is different to the parity of b" is well-founded on the natural numbers and we have 1<2 and 2<3 but not 1<3.
+
+

@@ -3,6 +3,7 @@
 -- convert to well founded instead of ℕ
 -- change to require only decidability for (x=0) (get rid of decidable_euclidean_domain entirely?)
 -- do I do well founded on the valuation or just the inputs? 
+-- Fix loads of unfolds
 
 import data.int.basic
 import tactic.ring
@@ -104,7 +105,8 @@ begin
             },
             {
                 simp [h,h_1,h_2],
-                have := well_founded.min_mem
+                have := well_founded.min_mem,
+                
             }
             
 
@@ -171,37 +173,11 @@ inv_image (hwo.ordering)
 def measure_wf' {α} {β} [hwo : has_well_order β] (f : α → β) : well_founded (measure'  f) :=
 inv_image.wf f hwo.iwo.wf
 
-def measure_wo' {α} {β} [hwo : has_well_order β] (f : α → β) : is_well_order α (measure'  f) :=
-begin
-    split,
-    {
-        split,
-        {
-            split,
-            intros,
-            unfold measure',
-            unfold inv_image,
-            have := hwo.iwo.trichotomous,
-            have := this (f a) (f b),
-        },
-        {
-            sorry
-        }
-    },
-    {
-        exact inv_image.wf f hwo.iwo.wf,
-    }
-
-end
+#check eq
 
 def has_well_founded_of_has_wo {α : Sort u} {β} [hwo : has_well_order β] (f: α → β) : has_well_founded α :=
 {r := measure' f, wf := measure_wf' f}
 
-def has_well_ordered_of_has_wo {α} {β} [hwo : has_well_order β] (f: α → β) : has_well_order α :=
-{
-    ordering := measure' f,
-    iwo := measure_wo' f
-}
 
 instance has_well_order_nat : has_well_order ℕ :=
 {
@@ -209,7 +185,8 @@ instance has_well_order_nat : has_well_order ℕ :=
     iwo := by apply_instance
 } 
 
-instance ed_has_well_founded {α : Type} [ed: decidable_euclidean_domain α] : has_well_order α := has_well_founded_of_has_wo ed.valuation.val
+instance ed_has_well_founded {α : Type} [ed: decidable_euclidean_domain α] : has_well_founded α :=
+has_well_founded_of_has_wo ed.valuation.val
 
 -- uses valuation' which was defined to have property f a ≤ f (a*b)
 -- def ed_has_well_founded_of_has_
@@ -232,6 +209,22 @@ begin
     cases this, exact this,
     cases this, have := one_ne_zero, contradiction,
     simp at this, sorry -- wf contradiction
+end
+
+lemma valuation'_dvd_le {α : Type} [ed : decidable_euclidean_domain α] (a b : α) :
+    b ∣ a → a ≠ 0 → valuation'.val b ≤ valuation'.val a :=
+begin
+    intros b_dvd ha,
+    induction b_dvd with x hx, rw hx,
+    have := valuation'_property_2 b x,
+    cases this,
+        rw this, simp,
+    cases this,
+        rw this at hx,
+        simp at hx,
+        contradiction,
+    rw mul_comm,
+    exact this,
 end
 
 @[simp] lemma mod_one {α : Type} [decidable_euclidean_domain α] (x : α) : x % 1 = 0 :=
@@ -260,9 +253,12 @@ begin
         },
         {
             have := valuation'.property 0 b,
-            rw ←h2 at this_1,
+            have h3 : -euclidean_domain.quotient 0 b * b = b * -euclidean_domain.quotient 0 b , by ring,
+            rw [h3,←h2] at this_1,
             cases this,
-            rw this_2, exact mod_zero (0:α),
+            {
+                rw this_2, exact mod_zero (0:α),
+            },
             sorry -- contradiction between this_1 and this_2
         }
     }
@@ -313,6 +309,46 @@ begin
     sorry,
 end
 
+-- This is a mess, get it in order
+lemma dvd_mod_zero {α : Type} [ed : decidable_euclidean_domain α] (a b : α) :
+    b ∣ a → a % b = 0 :=
+begin
+    intro b_dvd,
+    have := valuation'.property a b,
+    cases decidable.em (b=0),
+    {
+        induction b_dvd with x hx,
+        rw h at hx, simp at hx,
+        rw [h,hx],
+        sorry,
+    },
+    {
+        cases this,
+        contradiction,
+        {
+            cases decidable.em (a=0),
+
+            rw h_1,
+            exact zero_mod b,
+
+            unfold has_well_founded.r at this, -- this is ugly; stop doing it
+            unfold sizeof_measure at this,
+            unfold sizeof at this,
+            unfold has_sizeof.sizeof at this,
+            unfold measure at this,
+            unfold inv_image at this,
+            unfold nat.sizeof at this,
+            have b_dvd_mod : b ∣ (a%b), from sorry, -- this follows from a = b * x = (a/b)*b + (a%b)
+            cases decidable.em ((a%b)=0),
+                exact h_2,
+            have := valuation'_dvd_le _ _ b_dvd_mod h_2,
+            sorry -- contradiction
+        }
+    }
+    
+end
+
+
 
 
 /- gcd lemmas -/
@@ -323,35 +359,6 @@ begin
     simp,
 end
 
-
-@[simp] theorem gcd_next {α : Type} [decidable_euclidean_domain α] (x y : α) (h : x ≠ 0) : gcd x y = gcd (y % x) x :=
-begin
-    rw gcd,
-    simp [h],
-end
-
-
-
-#check no_zero_divisors
-
-@[simp] theorem gcd_one_left {α : Type} [decidable_euclidean_domain α] (n : α) : gcd 1 n = 1 := 
-begin
-rw [gcd],
-simp,
-end
-
-@[simp] theorem gcd_self {α : Type} [decidable_euclidean_domain α] (n : α) : gcd n n = n :=
-begin
-cases decidable.em (n=0),
-{
-    rw h,
-    simp,
-},
-{
-    rw [gcd_next n n h,mod_self n],
-    simp,
-}
-end
 
 @[simp] theorem gcd_zero_right {α : Type} [decidable_euclidean_domain α]  (n : α) : gcd n 0 = n :=
 begin
@@ -366,64 +373,170 @@ begin
     }
 end
 
--- theorem gcd.induction {α : Type} [decidable_euclidean_domain α] 
---                     {P : α → α → Prop}
---                     (m n : α)
---                     (H0 : ∀ x, P 0 x)
---                     (H1 : ∀ m n, has_well_founded.r 0 m → P (n%m) m → P m n) :
---                 P m n := 
--- @well_founded.induction _ _ (has_well_founded.wf α) (λm, ∀n, P m n) m (λk IH,
--- begin
---     cases decidable.em (k=0),
---     {
---         rw h,
---         exact H0,
---     },
---     {
---         intro n,
---         have hwf : has_well_founded α, by apply_instance,
---         have hzlt : hwf.r (0)
---         exact H1 _ _ (has_well_founded.r (0:α) _) (IH _ (sorry) _) n
---         sorry
---     }
--- end
---   by {induction k with k ih, exact H0,
---       exact λn, H1 _ _ (succ_pos _) (IH _ (mod_lt _ (succ_pos _)) _)}
-
-
--- @[elab_as_eliminator]
--- theorem gcd.induction {P : ℕ → ℕ → Prop}
---                    (m n : ℕ)
---                    (H0 : ∀n, P 0 n)
---                    (H1 : ∀m n, 0 < m → P (n % m) m → P m n) :
---                  P m n :=
--- @induction _ _ lt_wf (λm, ∀n, P m n) m (λk IH,
---   by {induction k with k ih, exact H0,
---       exact λn, H1 _ _ (succ_pos _) (IH _ (mod_lt _ (succ_pos _)) _)}) n
-#check nat.succ_pos
-
--- set_option trace.class_instances true
-
-def zero_lt_nonzero {α : Type} [decidable_euclidean_domain α] : ∀ a : α, has_well_founded.r (0:α) a :=
+@[simp] theorem gcd_one_left {α : Type} [decidable_euclidean_domain α] (n : α) : gcd 1 n = 1 := 
 begin
-    intro a,
-    -- how do I unfold this?
-    sorry
+rw [gcd],
+simp,
 end
--- class has_well_founded (α : Sort u) : Type u :=
--- (r : α → α → Prop) (wf : well_founded r)
 
--- lemma recursion {C : α → Sort v} (a : α) (h : Π x, (Π y, y ≺ x → C y) → C x) : C a :=
--- acc.rec_on (apply hwf a) (λ x₁ ac₁ ih, h x₁ ih)
+theorem gcd_next {α : Type} [decidable_euclidean_domain α] (x y : α) : gcd x y = gcd (y % x) x :=
+begin
+    cases decidable.em (x=0),
+    {
+        rw [h],
+        simp,
+    },
+    {
+        rw gcd,
+        simp [h],
+    }
+end
 
--- lemma induction {C : α → Prop} (a : α) (h : ∀ x, (∀ y, y ≺ x → C y) → C x) : C a :=
--- recursion a h
+
+@[simp] theorem gcd_self {α : Type} [decidable_euclidean_domain α] (n : α) : gcd n n = n :=
+by rw [gcd_next n n, mod_self n, gcd_zero_left]
+
+def zero_lt_nonzero {α : Type} [ed:decidable_euclidean_domain α] : ∀ a : α, a ≠ 0 → nat.lt (ed.valuation.val (0:α)) (ed.valuation.val a) :=
+begin
+    intros a aneq,
+    have := zero_mod a,
+    have := ed.valuation.property,
+    have := this 0 a,
+    {
+        cases this,
+            contradiction,
+        {
+            unfold has_well_founded.r at this_1,
+            unfold sizeof_measure at this_1,
+            unfold measure at this_1,
+            unfold sizeof at this_1,
+            unfold inv_image at this_1,
+            unfold has_sizeof.sizeof at this_1,
+            unfold nat.sizeof at this_1,
+            have hr := zero_mod a, dsimp [(%)] at hr,
+            rw [hr] at this_1,
+            exact  this_1,
+        }
+    }
+end
+
+lemma mod_lt {α : Type} [ed: decidable_euclidean_domain α]  :
+                     ∀ (x : α) {y : α}, ed.valuation.val y > ed.valuation.val 0 →  ed.valuation.val (x%y) < ed.valuation.val y :=
+begin
+    intros,
+    cases decidable.em (y=0),
+    {
+        rw h at a,
+        have := lt_irrefl ((euclidean_domain.valuation α).val 0),
+        contradiction,
+    },
+    {
+        have := ed.valuation.property,
+        have := this x y,
+        cases this,
+        {
+            contradiction
+        },
+        {
+            unfold has_well_founded.r at this_1,
+            unfold sizeof_measure at this_1,
+            unfold measure at this_1,
+            unfold sizeof at this_1,
+            unfold inv_image at this_1,
+            unfold has_sizeof.sizeof at this_1,
+            unfold nat.sizeof at this_1,
+            exact this_1,
+        }
+    }
+end
 
 
-/-
-@[algebra] class is_well_order (α : Type u) (r : α → α → Prop) extends is_strict_total_order' α r : Prop :=
-(wf : well_founded r)
+lemma dvd_mod {α} [ed: decidable_euclidean_domain α] {a b c : α} : c ∣ a → c ∣ b → c ∣ a % b :=
+begin
+    intros dvd_a dvd_b,
+    have := ed.witness,
+    have := this a b,
+    have : euclidean_domain.remainder a b = a - euclidean_domain.quotient a b * b, from
+    calc 
+        a%b = euclidean_domain.quotient a b * b + a%b - euclidean_domain.quotient a b * b : by ring
+        ... = a - euclidean_domain.quotient a b * b : by {dsimp[(%)]; rw this},
+    dsimp [(%)], rw this,
+    sorry
+    -- have := dvd
+        
+end
 
-@[algebra] class is_strict_total_order' (α : Type u) (lt : α → α → Prop) extends is_trichotomous α lt, is_strict_order α lt : Prop.
+@[elab_as_eliminator]
+theorem gcd.induction {α : Type} [ed: decidable_euclidean_domain α] 
+                    {P : α → α → Prop}
+                    (m n : α)
+                    (H0 : ∀ x, P 0 x)
+                    (H1 : ∀ m n, ed.valuation.val 0 < ed.valuation.val m → P (n%m) m → P m n) :
+                P m n := 
+@well_founded.induction _ _ (has_well_founded.wf α) (λm, ∀n, P m n) m (λk IH,
+    by {cases decidable.em (k=0), rw h, exact H0,
+        exact λ n, H1 k n (zero_lt_nonzero k h) (IH (n%k) (mod_lt n (zero_lt_nonzero k h)) k)}) n
 
--/
+-- def lcm (m n : ℕ) : ℕ := m * n / (gcd m n)
+
+@[reducible] def coprime {α : Type} [ed: decidable_euclidean_domain α]  (a b : α) : Prop := gcd a b = 1
+
+
+/- more gcd stuff (generalized mathlib/data/nat/gcd.lean) -/
+
+
+theorem gcd_dvd {α : Type} [ed: decidable_euclidean_domain α] (a b : α) : (gcd a b ∣ a) ∧ (gcd a b ∣ b) :=
+gcd.induction a b
+    (λ b, by simp)
+    (λ a b bpos,
+    begin
+        intro h_dvd,
+        cases decidable.em (a=0),
+        {
+            rw h, simp,
+        },
+        {
+            rw gcd_next,
+            cases h_dvd,
+            split,
+            exact h_dvd_right,
+            have := ed.witness,
+            have := this b a,
+            --dsimp [(%)] at h_dvd_left, dsimp [(%)],
+            conv {for b [2] {rw ←this}},
+            have h_dvd_right_a:= dvd_mul_of_dvd_right h_dvd_right (b/a),
+            exact dvd_add h_dvd_right_a h_dvd_left,
+        }
+    end )
+
+theorem gcd_dvd_left {α : Type} [ed: decidable_euclidean_domain α] (a b : α) :
+    gcd a b ∣ a := (gcd_dvd a b).left
+
+theorem gcd_dvd_right {α : Type} [ed: decidable_euclidean_domain α] (a b : α) :
+    gcd a b ∣ b := (gcd_dvd a b).right
+
+/- Proof that the gcd is the top of the division hierarchy -/
+theorem dvd_gcd {α : Type} [ed: decidable_euclidean_domain α] {a b c : α} : c ∣ a → c ∣ b → c ∣ gcd a b :=
+gcd.induction a b
+    (λ b,
+    begin
+        intros dvd_0 dvd_b,
+        simp, exact dvd_b
+    end)
+    (λ a b bpos,
+    begin
+        intros d dvd_a dvd_b,
+        rw gcd_next,
+        exact d (dvd_mod dvd_b dvd_a) dvd_a,
+    end)
+
+
+
+-- theorem mod_eq_zero_of_dvd {α : Type} [ed: decidable_euclidean_domain α] {a b : α} (H : a ∣ b) :
+--     b % a = 0 :=
+-- dvd.elim H (λ z H1, by {rw [H1], sorry})
+
+-- theorem gcd_comm (m n : ℕ) : gcd m n = gcd n m :=
+-- dvd_antisymm
+--   (dvd_gcd (gcd_dvd_right m n) (gcd_dvd_left m n))
+--   (dvd_gcd (gcd_dvd_right n m) (gcd_dvd_left n m))
