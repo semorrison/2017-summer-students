@@ -23,8 +23,13 @@ begin
 end
 
 
+structure Well_Ordered_Type := 
+(β : Type)
+(lt : β → β → Prop)
+(w : is_well_order β lt)   -- TODO can β be made implicit in the defintion of is_well_order in mathlib?
 
 definition euclidean_valuation {α} [has_zero α] (r : α → α → α) := { f : α → ℕ // ∀ a b, b = 0 ∨ has_well_founded.r (f(r a b)) (f b)}
+definition euclidean_valuation' {α} [has_zero α] (r : α → α → α) := Σ W : Well_Ordered_Type, { f : α → W.β // ∀ a b, b = 0 ∨ @has_well_founded.r _ sorry (f(r a b)) (f b)}
 
 class euclidean_domain (α : Type) extends integral_domain α :=
 ( quotient : α → α → α )
@@ -50,6 +55,28 @@ instance euclidean_domain_has_mod {α : Type} [euclidean_domain α] : has_mod α
     mod := euclidean_domain.remainder
 }
 
+instance ed_has_sizeof {α : Type} [ed:decidable_euclidean_domain α] : has_sizeof α := {
+    sizeof := λ x, ed.valuation.val x,
+}
+
+definition blah  {α : Type} [ed:decidable_euclidean_domain α] (x y : α) (w : x ≠ 0) : has_well_founded.r (y % x) x := 
+begin
+cases ed.valuation.property y x,
+                { contradiction },
+                { exact h }
+end
+
+def gcd {α : Type} [ed : decidable_euclidean_domain α] : α → α → α
+| x y := if x_zero : x = 0 then y
+         else have h : has_well_founded.r (y % x) x := blah x y x_zero,
+              gcd (y%x) x
+
+
+noncomputable def foo : nat := 
+begin
+    have : nonempty ℕ := by apply_instance,
+    exact 5
+end
 
 
 /- 
@@ -75,14 +102,20 @@ noncomputable def valuation' {α : Type} [ed : decidable_euclidean_domain α] : 
         right,
         simp [h],
         cases decidable.em (euclidean_domain.remainder a b = 0),
-        simp [h_1],
-        sorry,
-        sorry,
+        {
+            simp [h_1],
+            sorry
+        },
+        {
+            simp [h_1],
+            sorry,
+        }
     end,
 }
 
+
 lemma valuation'_property_2 {α : Type} [ed : decidable_euclidean_domain α] :
-    ∀ a b : α, a = 0 ∨ b = 0 ∨ nat.le (valuation'.val a) (valuation'.val (b*a)) :=
+    ∀ a b : α, a = 0 ∨ b = 0 ∨ (valuation'.val a) ≤ (valuation'.val (b*a)) :=
 begin
     intros,
     cases decidable.em (a=0),
@@ -125,29 +158,7 @@ end
 
 #check no_zero_divisors
 
-instance ed_has_sizeof {α : Type} [ed:decidable_euclidean_domain α] : has_sizeof α := {
-    sizeof := λ x, ed.valuation.val x,
-}
 
-def gcd {α : Type} [ed : decidable_euclidean_domain α] : α → α → α
-| x y := if x_zero : x = 0 then y
-else have has_well_founded.r (y % x) x, by {
-    unfold has_well_founded.r,
-    unfold sizeof_measure,
-    unfold sizeof,
-    unfold has_sizeof.sizeof,
-    unfold measure,
-    unfold inv_image,
-    have := ed.valuation.property y x,
-    cases this,
-    {
-        contradiction,
-    },
-    {
-        exact this,
-    }
-},
-        gcd (y%x) x
 
 #check has_sizeof
 
@@ -205,10 +216,21 @@ lemma valuation'_lt_one {α : Type} [ed : decidable_euclidean_domain α] (x : α
 has_well_founded.r (valuation'.val x) (valuation'.val (1:α)) → x = 0 :=
 begin
     intro,
-    have := valuation'_property_2 x 1,
-    cases this, exact this,
+    have := valuation'_property_2 1 x,
+    
     cases this, have := one_ne_zero, contradiction,
-    simp at this, sorry -- wf contradiction
+    cases this, exact this,
+    simp at this,
+
+    unfold has_well_founded.r at a, -- this is ugly; stop doing it
+    unfold sizeof_measure at a,
+    unfold sizeof at a,
+    unfold has_sizeof.sizeof at a,
+    unfold measure at a,
+    unfold inv_image at a,
+    unfold nat.sizeof at a,
+    have := not_le_of_lt a,
+    contradiction,
 end
 
 lemma valuation'_dvd_le {α : Type} [ed : decidable_euclidean_domain α] (a b : α) :
@@ -233,6 +255,7 @@ begin
     cases this, have := one_ne_zero, contradiction,
     exact valuation'_lt_one (x % 1) this,
 end 
+
 
 @[simp] lemma zero_mod  {α : Type} [ed : decidable_euclidean_domain α] (b : α) : 0 % b = 0 :=
 begin
@@ -259,7 +282,15 @@ begin
             {
                 rw this_2, exact mod_zero (0:α),
             },
-            sorry -- contradiction between this_1 and this_2
+                unfold has_well_founded.r at this_2, -- this is ugly; stop doing it
+                unfold sizeof_measure at this_2,
+                unfold sizeof at this_2,
+                unfold has_sizeof.sizeof at this_2,
+                unfold measure at this_2,
+                unfold inv_image at this_2,
+                unfold nat.sizeof at this_2,
+                have := not_le_of_lt this_2,
+                contradiction,
         }
     }
 end
@@ -290,10 +321,18 @@ begin
     have := valuation'_property_2 x m,
     cases this, rw this_1, exact mod_zero (0:α),
     cases this_1, rw [x_mul, this_1], simp,
-    rw ←x_mul at this_1,
+    rw mul_comm at x_mul, rw ←x_mul at this_1,
     have h1 := valuation'.property x x,
     cases h1, rw h1, exact mod_zero (0:α),
-    sorry -- contradiction between this_1 and h1
+    unfold has_well_founded.r at h1, -- this is ugly; stop doing it
+    unfold sizeof_measure at h1,
+    unfold sizeof at h1,
+    unfold has_sizeof.sizeof at h1,
+    unfold measure at h1,
+    unfold inv_image at h1,
+    unfold nat.sizeof at h1,
+    have := not_le_of_lt h1,
+    contradiction,
 end 
 
 
@@ -304,10 +343,14 @@ begin
     have xx := mod_self x, dsimp [(%)] at xx,
     rw xx at this, simp at this,
     have h1 : 1 * x = x, from one_mul x, -- use cases on x = 0
-    have : (euclidean_domain.quotient x x) * x = 1 * x, from sorry,
-    -- have := right_cancel this,
-    sorry,
+    cases decidable.em (x=0),
+        left, exact h,
+    right,
+    conv at this {for x [4] {rw ←h1}},
+    have := eq_of_mul_eq_mul_right h this,
+    exact this,
 end
+
 
 -- This is a mess, get it in order
 lemma dvd_mod_zero {α : Type} [ed : decidable_euclidean_domain α] (a b : α) :
@@ -320,7 +363,7 @@ begin
         induction b_dvd with x hx,
         rw h at hx, simp at hx,
         rw [h,hx],
-        sorry,
+        simp,
     },
     {
         cases this,
@@ -341,8 +384,8 @@ begin
             have b_dvd_mod : b ∣ (a%b), from sorry, -- this follows from a = b * x = (a/b)*b + (a%b)
             cases decidable.em ((a%b)=0),
                 exact h_2,
-            have := valuation'_dvd_le _ _ b_dvd_mod h_2,
-            sorry -- contradiction
+            have := not_lt_of_le ( valuation'_dvd_le _ _ b_dvd_mod h_2),
+            contradiction,
         }
     }
     
@@ -400,23 +443,12 @@ def zero_lt_nonzero {α : Type} [ed:decidable_euclidean_domain α] : ∀ a : α,
 begin
     intros a aneq,
     have := zero_mod a,
-    have := ed.valuation.property,
-    have := this 0 a,
+    cases ed.valuation.property 0 a,
+    { contradiction },
     {
-        cases this,
-            contradiction,
-        {
-            unfold has_well_founded.r at this_1,
-            unfold sizeof_measure at this_1,
-            unfold measure at this_1,
-            unfold sizeof at this_1,
-            unfold inv_image at this_1,
-            unfold has_sizeof.sizeof at this_1,
-            unfold nat.sizeof at this_1,
-            have hr := zero_mod a, dsimp [(%)] at hr,
-            rw [hr] at this_1,
-            exact  this_1,
-        }
+        have hr := zero_mod a, dsimp [(%)] at hr,
+        rw [hr] at h,
+        exact  h,
     }
 end
 
@@ -431,22 +463,9 @@ begin
         contradiction,
     },
     {
-        have := ed.valuation.property,
-        have := this x y,
-        cases this,
-        {
-            contradiction
-        },
-        {
-            unfold has_well_founded.r at this_1,
-            unfold sizeof_measure at this_1,
-            unfold measure at this_1,
-            unfold sizeof at this_1,
-            unfold inv_image at this_1,
-            unfold has_sizeof.sizeof at this_1,
-            unfold nat.sizeof at this_1,
-            exact this_1,
-        }
+        cases ed.valuation.property x y with h h',
+        { contradiction },
+        { exact h' }
     }
 end
 
@@ -461,6 +480,7 @@ begin
         a%b = euclidean_domain.quotient a b * b + a%b - euclidean_domain.quotient a b * b : by ring
         ... = a - euclidean_domain.quotient a b * b : by {dsimp[(%)]; rw this},
     dsimp [(%)], rw this,
+    
     sorry
     -- have := dvd
         

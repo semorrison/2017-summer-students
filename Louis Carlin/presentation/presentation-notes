@@ -44,7 +44,7 @@ extended euclidean algorithm
 
 Script:
 
-Hi, I'm Louis. I've been doing a summer project supervised by Scott in a theorem proving language called Lean. Specifically I've been working on implementing and proving things about euclidean domains.
+Hi, I'm Louis. I've been doing a summer project supervised by Scott in a theorem proving language called Lean. Specifically I've been working on implementing and proving things about euclidean domains. I'm going to mostly talk about well-founded relations and the principle of well founded induction though because they both came up a lot in what I was doing.
 
 Quick overview?
   
@@ -55,7 +55,7 @@ Lean has a really nice type class system similar to haskell where you can define
 Integral domains are rings with no zero divisors. That is, if we have two elements a,b of our ring such that a*b = 0 then either a=0 or b=0.
 
 Euclidean domains extend this by requiring five things:
-    -a "quotient" or "div" function which takes two elements a,b and gives us the q such that a=bq+r. (I'll write this as a/b)
+    -a "quotient" or "div" function which takes two elements a,b and gives us the q such that a=qb+r. (I'll write this as a/b)
     -a "remainder" or "mod" function which for a and b gives the remainder r in the above equality (and which I'll write as a%b)
     -the fact that these two functions actually satisfy the above equality
     -a valuation function which takes an element a of the ring and maps it to \N. This should strictly be any well-ordered set (as this allows things like polynomial division for non-monic polynomials) but I haven't got round to generalising it yet.
@@ -75,14 +75,16 @@ It's important to note that this definition is the only way of showing an elemen
 
 As a quick aside, well-founded relations don't have to be transitive. For example the relation "a is less than b and the parity of a is different to the parity of b" is well-founded on the natural numbers and we have 1<2 and 2<3 but not 1<3.
 
-Once we have a well founded relation on a type (or set if you want) X, the idea behind well-founded induction is that we can show that for all x:X, a property Px holds by showing that for any x if P y for all y less than x then P x. This works because for a particular x, we know there is a finite tree of relations.  (Draw tree here?) We will have P y true for each element y at the bottom since there is nothing less than it. Then we can build our way up the tree.
+Once we have a well founded relation on a type (or set if you want) X, the idea behind well-founded induction is that we can show that for all a:\a, a property Pa holds by showing that for any a if P b for all b less than a then P a. This works because for a particular x, we know there is a finite tree of relations.  (Draw tree here?) We will have P y true for each element y at the bottom since there is nothing less than it. Then we can build our way up the tree.
 
 Now you've got an understanding of well founded induction, I'll explain the euclidean algorithm. The basic definition of the euclidean algorithm is as follows:
 gcd(a,b) = if a = 0 then b else gcd(b%a,a)
 
 Note that we actually need one more assumption in the definition of euclidean domain for this to be computable which is that we can actually decide whether any b in our euclidean domain equals zero since lean does not assume equality is decidable by default.
 
-There are two parts to proving that this algorithm actually gives us the gcd as expected, both of which I implemented in lean using well-founded induction. The proofs in lean use a specific induction principle proven using well founded induction which says that if for all m, P 0 m and (forall m n, 0 < m implies P (n%m) m implies P m n) then for all a b, P a b.
+There are three parts to proving that this algorithm actually gives us the gcd as expected, both of which I implemented in lean using well-founded induction. 
+
+The proofs in lean of the other two things use a specific induction principle proven using well founded induction which says that if for all b, P 0 m and (forall m n, 0 < m implies P (n%m) m implies P m n) then for all a b, P a b. Explain why this works.
 
 First we need the fact that the result divides a and b. So in this case P(a,b) is the claim that gcd(a,b) divides a and b. For the base case it follows from the definition that gcd(0,b) = b for all b, and thus gcd(0,b) divides 0 and b. 
 For inductive step we have that gcd (b%a,a) divides b%a and a. Again from the definition we can rewrite this as gcd (a,b) (since we have assumed 0 < a). Now all we need to show is that gcd(a,b) divides b since we already have that it divides a. Observe however that b = (b/a)a+(b%a). Since both of the components are divisible by gcd(a,b), so is b.
