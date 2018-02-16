@@ -1,27 +1,20 @@
 --TODO
--- write induction principle :(
 -- convert to well founded instead of ℕ
 -- change to require only decidability for (x=0) (get rid of decidable_euclidean_domain entirely?)
 -- do I do well founded on the valuation or just the inputs? 
 -- Fix loads of unfolds
 
+-- Clean up:
+-- indentation style?
+-- is it better to get rid of haves wherever possible or do they make things more readable?
+
 import data.int.basic
 import tactic.ring
-import init.meta.well_founded_tactics
+--import init.meta.well_founded_tactics
 
 universes u v
 
--- set_option trace.class_instances true
-example : is_well_order ℕ nat.lt := by apply_instance
-
-
-def lt_wf : well_founded nat.lt :=
-begin
-    have : is_well_order ℕ nat.lt, by apply_instance,
-    induction this,
-    exact this_wf, -- why can't lean work this out itself?
-end
-
+/- very basic stuff (what to include in first PR) -/
 
 structure Well_Ordered_Type := 
 (β : Type)
@@ -59,7 +52,7 @@ instance ed_has_sizeof {α : Type} [ed:decidable_euclidean_domain α] : has_size
     sizeof := λ x, ed.valuation.val x,
 }
 
-definition blah  {α : Type} [ed:decidable_euclidean_domain α] (x y : α) (w : x ≠ 0) : has_well_founded.r (y % x) x := 
+definition gcd_decreasing  {α : Type} [ed:decidable_euclidean_domain α] (x y : α) (w : x ≠ 0) : has_well_founded.r (y % x) x := 
 begin
 cases ed.valuation.property y x,
                 { contradiction },
@@ -68,16 +61,17 @@ end
 
 def gcd {α : Type} [ed : decidable_euclidean_domain α] : α → α → α
 | x y := if x_zero : x = 0 then y
-         else have h : has_well_founded.r (y % x) x := blah x y x_zero,
+         else have h : has_well_founded.r (y % x) x := gcd_decreasing x y x_zero,
               gcd (y%x) x
 
+/- end basic stuff -/
 
-noncomputable def foo : nat := 
+def lt_wf : well_founded nat.lt :=
 begin
-    have : nonempty ℕ := by apply_instance,
-    exact 5
+    have : is_well_order ℕ nat.lt, by apply_instance,
+    induction this,
+    exact this_wf, -- why can't lean work this out itself?
 end
-
 
 /- 
 Wikipedia suggests defining a valuation with the property "For all nonzero a and b in α, f(a) ≤ f(ab)".
@@ -154,24 +148,6 @@ begin
     }
 end
 
-#check well_founded.not_lt_min
-
-#check no_zero_divisors
-
-
-
-#check has_sizeof
-
--- def measure' {α : Sort u} {β} [has_well_founded β] : (α → β) → α → α → Prop :=
--- inv_image (has_well_founded.r)
-
--- def measure_wf' {α : Sort u} {β} [hwf : has_well_founded β] (f : α → β) : well_founded (measure' f) :=
--- inv_image.wf f hwf.wf
-
--- def has_well_founded_of_has_wf {α : Sort u} {β} [has_well_founded β] (f: α → β) : has_well_founded α :=
--- {r := measure' f, wf := measure_wf' f}
-
--- instance ed_has_well_founded {α : Type} [ed: decidable_euclidean_domain α] : has_well_founded α := has_well_founded_of_has_wf ed.valuation.val
 
 class has_well_order (β : Type) :=
 (ordering : β → β → Prop)
@@ -183,8 +159,6 @@ inv_image (hwo.ordering)
 
 def measure_wf' {α} {β} [hwo : has_well_order β] (f : α → β) : well_founded (measure'  f) :=
 inv_image.wf f hwo.iwo.wf
-
-#check eq
 
 def has_well_founded_of_has_wo {α : Sort u} {β} [hwo : has_well_order β] (f: α → β) : has_well_founded α :=
 {r := measure' f, wf := measure_wf' f}
@@ -199,38 +173,35 @@ instance has_well_order_nat : has_well_order ℕ :=
 instance ed_has_well_founded {α : Type} [ed: decidable_euclidean_domain α] : has_well_founded α :=
 has_well_founded_of_has_wo ed.valuation.val
 
--- uses valuation' which was defined to have property f a ≤ f (a*b)
--- def ed_has_well_founded_of_has_
 
 /- misc lemmas -/
 
 @[simp] lemma mod_zero {α : Type} [ed : euclidean_domain α] (a : α)  : a % 0 = a :=
 begin
-    have := ed.witness,
-    have := this a 0,
+    have := euclidean_domain.witness a 0,
     simp at this,
     exact this,
 end
 
-lemma valuation'_lt_one {α : Type} [ed : decidable_euclidean_domain α] (x : α) : 
+lemma valuation'_lt_one {α : Type} [decidable_euclidean_domain α] (x : α) : 
 has_well_founded.r (valuation'.val x) (valuation'.val (1:α)) → x = 0 :=
 begin
-    intro,
-    have := valuation'_property_2 1 x,
-    
-    cases this, have := one_ne_zero, contradiction,
-    cases this, exact this,
-    simp at this,
-
-    unfold has_well_founded.r at a, -- this is ugly; stop doing it
-    unfold sizeof_measure at a,
-    unfold sizeof at a,
-    unfold has_sizeof.sizeof at a,
-    unfold measure at a,
-    unfold inv_image at a,
-    unfold nat.sizeof at a,
-    have := not_le_of_lt a,
-    contradiction,
+    intro x_lt,
+    cases valuation'_property_2 1 x,
+        {have := one_ne_zero, contradiction,},
+        {cases h, 
+            {exact h,},
+            { simp at h,
+            unfold has_well_founded.r at x_lt, -- this is ugly; stop doing it
+            unfold sizeof_measure at x_lt,
+            unfold sizeof at x_lt,
+            unfold has_sizeof.sizeof at x_lt,
+            unfold measure at x_lt,
+            unfold inv_image at x_lt,
+            unfold nat.sizeof at x_lt,
+            have := not_le_of_lt x_lt,
+            contradiction}
+        }
 end
 
 lemma valuation'_dvd_le {α : Type} [ed : decidable_euclidean_domain α] (a b : α) :
@@ -238,15 +209,14 @@ lemma valuation'_dvd_le {α : Type} [ed : decidable_euclidean_domain α] (a b : 
 begin
     intros b_dvd ha,
     induction b_dvd with x hx, rw hx,
-    have := valuation'_property_2 b x,
-    cases this,
-        rw this, simp,
-    cases this,
-        rw this at hx,
-        simp at hx,
-        contradiction,
-    rw mul_comm,
-    exact this,
+    cases valuation'_property_2 b x,
+        {rw h, simp},
+        {cases h,
+            {rw h at hx,
+            simp at hx,
+            contradiction},
+            {rw mul_comm,
+            exact h}}
 end
 
 @[simp] lemma mod_one {α : Type} [decidable_euclidean_domain α] (x : α) : x % 1 = 0 :=
@@ -259,96 +229,89 @@ end
 
 @[simp] lemma zero_mod  {α : Type} [ed : decidable_euclidean_domain α] (b : α) : 0 % b = 0 :=
 begin
-    have := ed.witness,
-    have h1:= this 0 b,
+    have h1 := euclidean_domain.witness 0 b,
     have h2 : euclidean_domain.remainder 0 b = b * (-euclidean_domain.quotient 0 b ), from sorry,
-    have := valuation'_property_2 b (-euclidean_domain.quotient 0 b),
-    cases this,
+    cases valuation'_property_2 b (-euclidean_domain.quotient 0 b),
     {
-        rw this_1, exact mod_zero (0:α)
+        rw h, exact mod_zero (0:α)
     },
     {
-        cases this_1, 
+        cases h, 
         {
-            simp at this_1, rw this_1 at h1, simp at h1,
-            dsimp [(%)], 
+            simp at h, rw h at h1, simp at h1,
             exact h1
         },
         {
-            have := valuation'.property 0 b,
             have h3 : -euclidean_domain.quotient 0 b * b = b * -euclidean_domain.quotient 0 b , by ring,
-            rw [h3,←h2] at this_1,
-            cases this,
+            rw [h3,←h2] at h,
+            cases valuation'.property 0 b,
             {
-                rw this_2, exact mod_zero (0:α),
+                rw h_1, exact mod_zero (0:α),
             },
-                unfold has_well_founded.r at this_2, -- this is ugly; stop doing it
-                unfold sizeof_measure at this_2,
-                unfold sizeof at this_2,
-                unfold has_sizeof.sizeof at this_2,
-                unfold measure at this_2,
-                unfold inv_image at this_2,
-                unfold nat.sizeof at this_2,
-                have := not_le_of_lt this_2,
+                unfold has_well_founded.r at h_1, -- lemma this unfold?
+                unfold sizeof_measure at h_1,
+                unfold sizeof at h_1,
+                unfold has_sizeof.sizeof at h_1,
+                unfold measure at h_1,
+                unfold inv_image at h_1,
+                unfold nat.sizeof at h_1,
+                have := not_le_of_lt h_1,
                 contradiction,
         }
     }
 end
 
-@[simp] lemma zero_div' {α : Type} [ed : decidable_euclidean_domain α] (b : α) : b = 0 ∨ 0 / b = 0 :=
+@[simp] lemma zero_div' {α : Type} [decidable_euclidean_domain α] (b : α) : b = 0 ∨ 0 / b = 0 :=
 begin
-    have := ed.witness,
-    have := this 0 b,
     have h1 := zero_mod b, dsimp [(%)] at h1,
-    rw h1 at this,
-    simp at this,
+    have h2 := euclidean_domain.witness 0 b,
+    rw h1 at h2,
+    simp at h2,
     dsimp [(/)],
     cases decidable.em (b=0),
-    left, exact h,
-    right,
-    have := eq_zero_or_eq_zero_of_mul_eq_zero this,
-    cases this,
-    exact this_1,
-    contradiction,
+        {left, exact h},
+        {right,
+        cases eq_zero_or_eq_zero_of_mul_eq_zero h2,
+            {exact h_1},
+            {contradiction}}
 end
 
 @[simp] lemma mod_self {α : Type} [ed : decidable_euclidean_domain α] (x : α) : x % x = 0 :=
 begin
-    have wit := ed.witness,
-    have := wit x x,
+    have := euclidean_domain.witness  x x,
     have divides : x ∣ x % x, from sorry,
     induction divides with m x_mul,
-    have := valuation'_property_2 x m,
-    cases this, rw this_1, exact mod_zero (0:α),
-    cases this_1, rw [x_mul, this_1], simp,
-    rw mul_comm at x_mul, rw ←x_mul at this_1,
-    have h1 := valuation'.property x x,
-    cases h1, rw h1, exact mod_zero (0:α),
-    unfold has_well_founded.r at h1, -- this is ugly; stop doing it
-    unfold sizeof_measure at h1,
-    unfold sizeof at h1,
-    unfold has_sizeof.sizeof at h1,
-    unfold measure at h1,
-    unfold inv_image at h1,
-    unfold nat.sizeof at h1,
-    have := not_le_of_lt h1,
-    contradiction,
+    cases valuation'_property_2 x m, rw h, 
+        {exact mod_zero (0:α)},
+        {cases h, 
+            {rw [x_mul, h], simp},
+            {rw mul_comm at x_mul, rw ←x_mul at h,
+            cases  valuation'.property x x, 
+                {rw h_1, exact mod_zero (0:α)},
+                {unfold has_well_founded.r at h_1, -- this is ugly; stop doing it
+                unfold sizeof_measure at h_1,
+                unfold sizeof at h_1,
+                unfold has_sizeof.sizeof at h_1,
+                unfold measure at h_1,
+                unfold inv_image at h_1,
+                unfold nat.sizeof at h_1,
+                have := not_le_of_lt h_1,
+                contradiction}}}
 end 
 
 
 lemma div_self' {α : Type} [ed : decidable_euclidean_domain α] (x : α) : x = 0 ∨ x / x = (1:α) :=
 begin
-    have wit := ed.witness,
-    have := wit x x,
-    have xx := mod_self x, dsimp [(%)] at xx,
-    rw xx at this, simp at this,
+    have wit_xx := euclidean_domain.witness x x,
+    have xx := mod_self x, 
+    dsimp [(%)] at xx,
+    rw xx at wit_xx, simp at wit_xx,
     have h1 : 1 * x = x, from one_mul x, -- use cases on x = 0
     cases decidable.em (x=0),
-        left, exact h,
-    right,
-    conv at this {for x [4] {rw ←h1}},
-    have := eq_of_mul_eq_mul_right h this,
-    exact this,
+        {left, exact h},
+        {right,
+        conv at wit_xx {for x [4] {rw ←h1}},
+        exact eq_of_mul_eq_mul_right h wit_xx}
 end
 
 
@@ -418,8 +381,8 @@ end
 
 @[simp] theorem gcd_one_left {α : Type} [decidable_euclidean_domain α] (n : α) : gcd 1 n = 1 := 
 begin
-rw [gcd],
-simp,
+    rw [gcd],
+    simp,
 end
 
 theorem gcd_next {α : Type} [decidable_euclidean_domain α] (x y : α) : gcd x y = gcd (y % x) x :=
@@ -473,17 +436,12 @@ end
 lemma dvd_mod {α} [ed: decidable_euclidean_domain α] {a b c : α} : c ∣ a → c ∣ b → c ∣ a % b :=
 begin
     intros dvd_a dvd_b,
-    have := ed.witness,
-    have := this a b,
     have : euclidean_domain.remainder a b = a - euclidean_domain.quotient a b * b, from
     calc 
         a%b = euclidean_domain.quotient a b * b + a%b - euclidean_domain.quotient a b * b : by ring
-        ... = a - euclidean_domain.quotient a b * b : by {dsimp[(%)]; rw this},
+        ... = a - euclidean_domain.quotient a b * b : by {dsimp[(%)]; rw (euclidean_domain.witness a b)},
     dsimp [(%)], rw this,
-    
-    sorry
-    -- have := dvd
-        
+    exact dvd_sub dvd_a (dvd_mul_of_dvd_right dvd_b (a/b)),
 end
 
 @[elab_as_eliminator]
@@ -519,13 +477,10 @@ gcd.induction a b
             rw gcd_next,
             cases h_dvd,
             split,
-            exact h_dvd_right,
-            have := ed.witness,
-            have := this b a,
-            --dsimp [(%)] at h_dvd_left, dsimp [(%)],
-            conv {for b [2] {rw ←this}},
-            have h_dvd_right_a:= dvd_mul_of_dvd_right h_dvd_right (b/a),
-            exact dvd_add h_dvd_right_a h_dvd_left,
+                {exact h_dvd_right},
+                {conv {for b [2] {rw ←(euclidean_domain.witness b a)}},
+                have h_dvd_right_a:= dvd_mul_of_dvd_right h_dvd_right (b/a),
+                exact dvd_add h_dvd_right_a h_dvd_left}
         }
     end )
 
