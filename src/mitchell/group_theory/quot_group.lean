@@ -133,7 +133,7 @@ end
 lemma ker_equiv_im_lift [G : group α] [H : group β] (f : α → β ) [h : is_hom f] 
     : ∀ a b, (norm_equiv h.kernel) a b → (im_lift f) a = (im_lift f) b := by simp [im_lift]; exact ker_equiv_im f
 
-noncomputable theorem first_isomorphism_theorem [G : group α] [H : group β] (f : α → β ) [h : is_hom f]
+noncomputable theorem first_isomorphism_theorem [group α] [group β] (f : α → β ) [h : is_hom f]
     : α / h.kernel ≃ₕ image f := {
         to_fun := qgroup_lift (im_lift f) (assume x hx, subtype.eq $ by simp [im_lift]; exact is_hom.mem_ker_one _ hx),
         inv_fun := λ b, @quotient.mk _ (quotient_group_setoid _) (classical.some b.property),

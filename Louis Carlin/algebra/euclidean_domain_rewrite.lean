@@ -23,8 +23,13 @@ begin
 end
 
 
+structure Well_Ordered_Type := 
+(β : Type)
+(lt : β → β → Prop)
+(w : is_well_order β lt)   -- TODO can β be made implicit in the defintion of is_well_order in mathlib?
 
 definition euclidean_valuation {α} [has_zero α] (r : α → α → α) := { f : α → ℕ // ∀ a b, b = 0 ∨ has_well_founded.r (f(r a b)) (f b)}
+definition euclidean_valuation' {α} [has_zero α] (r : α → α → α) := Σ W : Well_Ordered_Type, { f : α → W.β // ∀ a b, b = 0 ∨ @has_well_founded.r _ sorry (f(r a b)) (f b)}
 
 class euclidean_domain (α : Type) extends integral_domain α :=
 ( quotient : α → α → α )
@@ -49,6 +54,23 @@ instance euclidean_domain_has_div {α : Type} [euclidean_domain α] : has_div α
 instance euclidean_domain_has_mod {α : Type} [euclidean_domain α] : has_mod α := {
     mod := euclidean_domain.remainder
 }
+
+instance ed_has_sizeof {α : Type} [ed:decidable_euclidean_domain α] : has_sizeof α := {
+    sizeof := λ x, ed.valuation.val x,
+}
+
+definition blah  {α : Type} [ed:decidable_euclidean_domain α] (x y : α) (w : x ≠ 0) : has_well_founded.r (y % x) x := 
+begin
+cases ed.valuation.property y x,
+                { contradiction },
+                { exact h }
+end
+
+def gcd {α : Type} [ed : decidable_euclidean_domain α] : α → α → α
+| x y := if x_zero : x = 0 then y
+         else have h : has_well_founded.r (y % x) x := blah x y x_zero,
+              gcd (y%x) x
+
 
 noncomputable def foo : nat := 
 begin
@@ -93,7 +115,7 @@ noncomputable def valuation' {α : Type} [ed : decidable_euclidean_domain α] : 
 
 
 lemma valuation'_property_2 {α : Type} [ed : decidable_euclidean_domain α] :
-    ∀ a b : α, a = 0 ∨ b = 0 ∨ nat.le (valuation'.val a) (valuation'.val (b*a)) :=
+    ∀ a b : α, a = 0 ∨ b = 0 ∨ (valuation'.val a) ≤ (valuation'.val (b*a)) :=
 begin
     intros,
     cases decidable.em (a=0),
@@ -136,29 +158,7 @@ end
 
 #check no_zero_divisors
 
-instance ed_has_sizeof {α : Type} [ed:decidable_euclidean_domain α] : has_sizeof α := {
-    sizeof := λ x, ed.valuation.val x,
-}
 
-def gcd {α : Type} [ed : decidable_euclidean_domain α] : α → α → α
-| x y := if x_zero : x = 0 then y
-else have has_well_founded.r (y % x) x, by {
-    unfold has_well_founded.r,
-    unfold sizeof_measure,
-    unfold sizeof,
-    unfold has_sizeof.sizeof,
-    unfold measure,
-    unfold inv_image,
-    have := ed.valuation.property y x,
-    cases this,
-    {
-        contradiction,
-    },
-    {
-        exact this,
-    }
-},
-        gcd (y%x) x
 
 #check has_sizeof
 
@@ -443,23 +443,12 @@ def zero_lt_nonzero {α : Type} [ed:decidable_euclidean_domain α] : ∀ a : α,
 begin
     intros a aneq,
     have := zero_mod a,
-    have := ed.valuation.property,
-    have := this 0 a,
+    cases ed.valuation.property 0 a,
+    { contradiction },
     {
-        cases this,
-            contradiction,
-        {
-            unfold has_well_founded.r at this_1,
-            unfold sizeof_measure at this_1,
-            unfold measure at this_1,
-            unfold sizeof at this_1,
-            unfold inv_image at this_1,
-            unfold has_sizeof.sizeof at this_1,
-            unfold nat.sizeof at this_1,
-            have hr := zero_mod a, dsimp [(%)] at hr,
-            rw [hr] at this_1,
-            exact  this_1,
-        }
+        have hr := zero_mod a, dsimp [(%)] at hr,
+        rw [hr] at h,
+        exact  h,
     }
 end
 
@@ -474,22 +463,9 @@ begin
         contradiction,
     },
     {
-        have := ed.valuation.property,
-        have := this x y,
-        cases this,
-        {
-            contradiction
-        },
-        {
-            unfold has_well_founded.r at this_1,
-            unfold sizeof_measure at this_1,
-            unfold measure at this_1,
-            unfold sizeof at this_1,
-            unfold inv_image at this_1,
-            unfold has_sizeof.sizeof at this_1,
-            unfold nat.sizeof at this_1,
-            exact this_1,
-        }
+        cases ed.valuation.property x y with h h',
+        { contradiction },
+        { exact h' }
     }
 end
 
