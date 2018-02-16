@@ -63,7 +63,7 @@ end
 
 end norm_equiv
 
-definition quotient_group_setoid [group α] (N : set α) [is_normal_subgroup N] : setoid α := {
+def quotient_group_setoid [group α] (N : set α) [is_normal_subgroup N] : setoid α := {
     r := norm_equiv N,
     iseqv := norm_equiv_rel N
 }

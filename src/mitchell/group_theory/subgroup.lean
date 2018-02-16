@@ -48,10 +48,10 @@ lemma mem_norm_comm [group α] {a b : α} {S : set α} [is_normal_subgroup S] (h
 
 -- Examples of subgroups
 @[simp]
-def trivial (h : group α) : set α := {1}
+def trivial (α) [group α] : set α := {1}
 
 -- Difference between refine and split - Refine works for extensions
-instance trivial_in [h : group α] : is_normal_subgroup (is_subgroup.trivial h) :=
+instance trivial_in [group α] : is_normal_subgroup (trivial α) :=
     by refine {..}; simp {contextual := tt}
 
 instance univ_in [group α] : is_subgroup (@univ α) :=
@@ -94,7 +94,7 @@ variables [G : group α] [H : group β]
 include G H
 
 @[simp]
-def kernel {f : α → β} (hf : is_hom f) : set α := preimage f (trivial H)
+def kernel {f : α → β} (hf : is_hom f) : set α := preimage f (trivial β)
 
 lemma mem_ker_one {f : α → β} (hf : is_hom f) {x : α} (h : x ∈ hf.kernel) : f x = 1 := by simp [kernel] at h; simp [h]
 
@@ -124,7 +124,7 @@ instance preimage_norm_in {f : α → β} (hf : is_hom f) (S : set β) [is_norma
     by refine {..}; simp [hf.hom_mul, hf.one, hf.inv] {contextual:=tt}
 
 instance kernel_in {f : α → β} (hf: is_hom f) : is_normal_subgroup (hf.kernel) := 
-    is_hom.preimage_norm_in hf (trivial H)
+    is_hom.preimage_norm_in hf (trivial β)
 
 lemma kernel_iff_equiv {f : α → β} (hf: is_hom f) (a b : α) : f b = f a ↔ a⁻¹ * b ∈ hf.kernel :=
 begin
@@ -137,7 +137,7 @@ begin
 end
 
 lemma inj_iff_trivial_kernel {f : α → β} (hf: is_hom f) : 
-    function.injective f ↔ hf.kernel = trivial G :=
+    function.injective f ↔ hf.kernel = trivial α :=
 begin
     split,
     {
