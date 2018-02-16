@@ -94,11 +94,7 @@ variables [G : group α] [H : group β]
 include G H
 
 @[simp]
-<<<<<<< HEAD
 def kernel {f : α → β} (hf : is_hom f) : set α := preimage f (trivial β)
-=======
-def kernel {f : α → β} (hf : is_hom f) : set α := preimage f (trivial H) -- TODO make f explicit, hf a type class.
->>>>>>> fc7af33724833e633f706f0fff46a66992d74184
 
 lemma mem_ker_one {f : α → β} (hf : is_hom f) {x : α} (h : x ∈ hf.kernel) : f x = 1 := by simp [kernel] at h; simp [h]
 
