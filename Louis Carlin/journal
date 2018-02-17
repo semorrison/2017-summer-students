@@ -77,3 +77,6 @@ Why does "have := ed.witness a b" not work but "have := ed.witness, have := this
 Why is there no dvd tactic? (is there?)
 
 dvd_antisymm is not true in general in euclidean domains (eg \R)
+
+Problem: the valuation we define to satisfy wikipedia's EF2 is a valuation for some division algorithm,
+but can we show it is one for the division algorithm we are given?
