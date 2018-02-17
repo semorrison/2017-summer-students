@@ -14,15 +14,17 @@ import tactic.ring
 
 universes u v
 
-/- very basic stuff (what to include in first PR) -/
+--definition euclidean_valuation' {α} [has_zero α] (r : α → α → α) := Σ W : Well_Ordered_Type, { f : α → W.β // ∀ a b, b = 0 ∨ @has_well_founded.r _ sorry (f(r a b)) (f b)}
+-- probably easier to just use a structure at this point
 
 structure Well_Ordered_Type := 
 (β : Type)
 (lt : β → β → Prop)
 (w : is_well_order β lt)   -- TODO can β be made implicit in the defintion of is_well_order in mathlib?
 
+/- very basic stuff (what to include in first PR) -/
+
 definition euclidean_valuation {α} [has_zero α] (r : α → α → α) := { f : α → ℕ // ∀ a b, b = 0 ∨ has_well_founded.r (f(r a b)) (f b)}
-definition euclidean_valuation' {α} [has_zero α] (r : α → α → α) := Σ W : Well_Ordered_Type, { f : α → W.β // ∀ a b, b = 0 ∨ @has_well_founded.r _ sorry (f(r a b)) (f b)}
 
 class euclidean_domain (α : Type) extends integral_domain α :=
 ( quotient : α → α → α )
@@ -66,50 +68,30 @@ def gcd {α : Type} [ed : decidable_euclidean_domain α] : α → α → α
 
 /- end basic stuff -/
 
-def lt_wf : well_founded nat.lt :=
+def lt_wf : well_founded (<) :=
 begin
-    have : is_well_order ℕ nat.lt, by apply_instance,
+    have : is_well_order ℕ (<), by apply_instance,
     induction this,
     exact this_wf, -- why can't lean work this out itself?
 end
 
-/- 
-Wikipedia suggests defining a valuation with the property "For all nonzero a and b in α, f(a) ≤ f(ab)".
--/
-noncomputable def valuation' {α : Type} [ed : decidable_euclidean_domain α] : euclidean_valuation (ed.remainder) := 
-{ -- you could maybe get around this requiring decidable_euclidean_domain by using em since this is already non-computable
-    val := λ a, if a = 0 then 0 else well_founded.min lt_wf {n : nat | ∃ x, x ≠ 0 ∧ n = ed.valuation.val (x*a)} 
+lemma set_nonempty {α : Type} [ed : decidable_euclidean_domain α] :
+        ∀ a, {n : ℕ | ∃ (x : α), x ≠ 0 ∧ n = (euclidean_domain.valuation α).val (x * a)} ≠ ∅ :=
     begin
+        intro a,
         have fin :ed.valuation.val (1*a) ∈ {n : nat | ∃ x, x ≠ 0 ∧ n = ed.valuation.val (x*a)},
-        simp,
         existsi (1:α),
         split,
         exact one_ne_zero,
         simp,
         exact set.ne_empty_of_mem fin,
-    end,
-    property :=
-    begin
-        intros,
-        cases decidable.em (b=0),
-        left, exact h,
-        right,
-        simp [h],
-        cases decidable.em (euclidean_domain.remainder a b = 0),
-        {
-            simp [h_1],
-            sorry
-        },
-        {
-            simp [h_1],
-            sorry,
-        }
-    end,
-}
+    end
 
+noncomputable def valuation'_val  {α : Type} [ed : decidable_euclidean_domain α] :=
+λ a, well_founded.min lt_wf {n : nat | ∃ x, x ≠ 0 ∧ n = ed.valuation.val (x*a)}  (set_nonempty a)
 
 lemma valuation'_property_2 {α : Type} [ed : decidable_euclidean_domain α] :
-    ∀ a b : α, a = 0 ∨ b = 0 ∨ (valuation'.val a) ≤ (valuation'.val (b*a)) :=
+    ∀ a b : α, a = 0 ∨ b = 0 ∨ (valuation'_val a) ≤ (valuation'_val (b*a)) :=
 begin
     intros,
     cases decidable.em (a=0),
@@ -124,7 +106,7 @@ begin
         },
         {
             right, right,
-            rw [valuation'],
+            rw [valuation'_val],
             cases decidable.em (b*a=0),
             {
                 have := eq_zero_or_eq_zero_of_mul_eq_zero h_2,
@@ -132,21 +114,60 @@ begin
             },
             {
                 simp [h,h_1,h_2],
-                have := well_founded.min_mem,
+                let S_ba := {n : ℕ | ∃ (x : α), ¬x = 0 ∧ n = (euclidean_domain.valuation α).val (x * (b * a))},
+                have min_in := well_founded.min_mem lt_wf S_ba (set_nonempty (b*a)),
+                dsimp [S_ba] at min_in, unfold set_of at min_in,
+                induction min_in with c hc,
+                cases hc, rw ←mul_assoc at hc_right,
                 
+                
+                have cb_in : ((euclidean_domain.valuation α).val (c*b*a)) ∈ {n : ℕ | ∃ (x : α), ¬x = 0 ∧ n = (euclidean_domain.valuation α).val (x * a)}, 
+                    by {
+                        unfold set_of, dsimp [(∈)], unfold set.mem, -- there's a lemma
+                        existsi (c*b),
+                        split,
+                        cases decidable.em (c*b=0),
+                            {
+                                cases eq_zero_or_eq_zero_of_mul_eq_zero h_3,
+                                    contradiction,
+                                    contradiction,
+                            },
+                            {
+                                exact h_3
+                            },
+                        refl,
+                    },
+
+                let S_a := {n : ℕ | ∃ (x : α), ¬x = 0 ∧ n = (euclidean_domain.valuation α).val (x * a)},
+                have leq:= le_of_not_lt (well_founded.not_lt_min lt_wf S_a (set_nonempty a) cb_in),
+                unfold set_of, rw hc_right,
+                exact leq,
             }
-            
-
-
-            -- have := valuation'.property a b,
-            -- cases this,
-            --     contradiction,
-            --     {
-
-            --     }
         }
     }
 end
+
+/- 
+Wikipedia suggests defining a valuation with the property "For all nonzero a and b in α, f(a) ≤ f(ab)".
+-/
+noncomputable def valuation' {α : Type} [ed : decidable_euclidean_domain α] : euclidean_valuation (ed.remainder) := 
+{ -- you could maybe get around this requiring decidable_euclidean_domain by using em since this is already non-computable
+    val := valuation'_val,
+    property :=
+    begin
+        intros,
+        cases decidable.em (b=0),
+            {left, exact h},
+            {
+                right,
+                let S_b :=  {n : ℕ | ∃ (x : α), x ≠ 0 ∧ n = (euclidean_domain.valuation α).val (x * b)},
+                have min_in := well_founded.min_mem lt_wf S_b (set_nonempty b),
+                dsimp [S_b] at min_in, unfold set_of at min_in,
+                induction min_in with c hc,
+                cases hc,
+            }
+    end,
+}
 
 
 class has_well_order (β : Type) :=
@@ -166,7 +187,7 @@ def has_well_founded_of_has_wo {α : Sort u} {β} [hwo : has_well_order β] (f: 
 
 instance has_well_order_nat : has_well_order ℕ :=
 {
-    ordering := nat.lt,
+    ordering := (<), --nat.lt,
     iwo := by apply_instance
 } 
 
@@ -402,7 +423,7 @@ end
 @[simp] theorem gcd_self {α : Type} [decidable_euclidean_domain α] (n : α) : gcd n n = n :=
 by rw [gcd_next n n, mod_self n, gcd_zero_left]
 
-def zero_lt_nonzero {α : Type} [ed:decidable_euclidean_domain α] : ∀ a : α, a ≠ 0 → nat.lt (ed.valuation.val (0:α)) (ed.valuation.val a) :=
+def zero_lt_nonzero {α : Type} [ed:decidable_euclidean_domain α] : ∀ a : α, a ≠ 0 → (ed.valuation.val (0:α)) < (ed.valuation.val a) :=
 begin
     intros a aneq,
     have := zero_mod a,
