@@ -39,7 +39,7 @@ lemma mem_norm_comm {a b : G} {S : set G} [normal_subgroup S] (hab : a * b ∈ S
 
 -- Examples of subgroups
 @[simp]
-def trivial (G) [group G] : set G := {1}
+def trivial (G : Type u) [group G] : set G := {1}
 
 instance trivial_in [group G] : normal_subgroup (trivial G) :=
     by refine {..}; simp {contextual := tt}
