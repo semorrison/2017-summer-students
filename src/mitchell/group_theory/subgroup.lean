@@ -23,7 +23,7 @@ attribute [simp] subgroup.one_mem
                  normal_subgroup.normal
 
 -- Subgroup is a group
-instance subgroup_group (S : set G) [subgroup S] : group S :=
+instance (S : set G) [subgroup S] : group S :=
 {   mul := λ ⟨x, hx⟩ ⟨y, hy⟩, ⟨x * y, mul_mem hx hy⟩,
     mul_assoc := λ ⟨x, hx⟩ ⟨y, hy⟩ ⟨z, hz⟩, subtype.eq $ mul_assoc x y z,
     one := ⟨1, one_mem S⟩,
