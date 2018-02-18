@@ -13,7 +13,7 @@ import tactic.ring
 --import init.meta.well_founded_tactics
 
 universes u v
-
+#check classical.some
 --definition euclidean_valuation' {α} [has_zero α] (r : α → α → α) := Σ W : Well_Ordered_Type, { f : α → W.β // ∀ a b, b = 0 ∨ @has_well_founded.r _ sorry (f(r a b)) (f b)}
 -- probably easier to just use a structure at this point
 

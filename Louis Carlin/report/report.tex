@@ -113,12 +113,52 @@ A proposition \ct{p : Prop} is the type of proofs of \ct{p}.
 So when we say \ct{h : p}, we mean that \ct{h} is a proof of \ct{p}.
 For example \ct{h : 5 > 3} is a proof that 5 is greater than 3.
 To prove \ct{p}, it suffices to show we have something of type \ct{p} and thus if our proofs type-check correctly then they are valid\footnote{This is assuming there are no bugs in the Lean checker. The \href{https://github.com/leodemoura/lean/blob/master/doc/faq.md}{Lean FAQ} gives more details about the soundness of the kernel.}.
+
+Under this paradigm of propositions as types, a proof that \ct{p : Prop} implies \ct{q : Prop} is the same as function that takes a proof of \ct{p} and gives a proof of \ct{q}.
+This means that a proof of \ct{p $\implies$ q} is something of type \ct{p $\to$ q}, and thus we can write \ct{p $\to$ q} in place of \ct{p $\implies$ q}.
 One other thing to note is that under the principle of ``proof irrelevance'' Lean treats all proofs of a proposition \ct{p} as definitionally equal, so any two proofs of \ct{p} are in effect the same.
 
 \subsection{Lean Syntax} 
 
+The most important notation to understand in Lean is function definition.
+The following example is the ``if then else'' function as it appears in Lean.
+The function takes a decidable proposition \ct{c} as input as well as return values \ct{t e : $\a$}.
+If \ct{c} is true then it returns \ct{t}, otherwise it returns \ct{e}.
+\begin{lstlisting}
+def ite (c : Prop) [h : decidable c] {α : Sort u} (t e : α) : α 
+:= decidable.rec_on h (λ hnc, e) (λ hc, t)
+\end{lstlisting}
+The \ct{def} keyword indicates the start of a definition and is followed by the name of the function \ct{ite}.
+The parentheses \ct{(c : Prop)} indicate that the function takes a proposition \ct{c : Prop} as an explicit argument.
+The square brackets indicate to Lean that what is between them is an input that Lean should be able to find for itself with its type class resolution system.
+In this case \ct{decidable c} is an inductive type which either holds a proof that \ct{c} is true or that it isn't.
+\begin{lstlisting}
+class inductive decidable (p : Prop)
+| is_false (h : ¬p) : decidable
+| is_true  (h : p) : decidable
+
+\end{lstlisting}
+If Lean can't find an instance \ct{h : decidable c} for a given input \ct{c} then it will give an error message telling you type class resolution has failed.
+
+Going back to the definition of \ct{ite}, the curly brackets \ct{\{$\a$ : Sort u\}} indicate that the argument inside them is implicit, which is to say it can be figured out from later arguments.
+In this case $\a$ is the type of the final two arguments \ct{t e : $\a$}, so Lean is able to work out what you mean from the types of \ct{t} and \ct{e}.
+The type after the colon is the return type of the function (in this case \ct{$\a$} since \ct{ite} will return \ct{t} or \ct{e}).
+Finally, the part after the \ct{:=} is the definition of the function. 
+In this case it makes use of a recursion principle \ct{rec\_on} which Lean defines automatically for inductive types.
+The notation \ct{$\lambda$ hc, t} is how we write a function which takes an argument \ct{hc} and returns the value \ct{t}.
+While normally we might have to write, \ct{$\lambda$ hc : c, t : $\a$}, Lean has enough information in this case to figure out these types itself so we can omit them.
+
+
 %tactics mode (probably don't bother talking about monads)
 \subsection{Tactics}
+Writing out long proofs consisting entirely of anonymous $\lambda$ functions is tedious and finicky.
+Lean does define some syntactic sugar to make proofs read more like traditional mathematical proofs.
+For example, we can write \ct{assume hp : p,} instead of \ct{$\lambda$ hp : p}, and \ct{lemma} and \ct{theorem} are synonyms for \ct{def}.
+However, the real strength of Lean in proving things is in tactics mode.
+
+A tactic is basically an algorithm which automates repetitive tasks in proving things.
+We tell Lean to enter tactics mode with a \ct{begin end} block.
+Once in tactics mode Lean gives us a printout of the current context, which is what we know at that point in the proof. The turnstile symbol $\vdash$ indicates what we are trying to show.
 
 %constructivism
 \subsection{Constructivism}
