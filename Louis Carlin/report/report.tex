@@ -1,5 +1,19 @@
-%\setlength{\parindent}{0pt}
+%Lean preamble
 \documentclass{article}
+\usepackage[utf8x]{inputenc}
+\usepackage{amssymb}
+
+\usepackage{color}
+\definecolor{keywordcolor}{rgb}{0.7, 0.1, 0.1}   % red
+\definecolor{commentcolor}{rgb}{0.4, 0.4, 0.4}   % grey
+\definecolor{symbolcolor}{rgb}{0.0, 0.1, 0.6}    % blue
+\definecolor{sortcolor}{rgb}{0.1, 0.5, 0.1}      % green
+
+\usepackage{listings}
+\def\lstlanguagefiles{lstlean.tex}
+\lstset{language=lean}
+
+%My preamble
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsthm}
@@ -10,11 +24,31 @@
 \DeclareMathOperator{\nulls}{null}
 \DeclareMathOperator{\spanf}{span}
 
+%Black-board
 \newcommand{\Z}{\ensuremath{\mathbb{Z}}}
 \newcommand{\C}{\ensuremath{\mathbb{C}}}
 \newcommand{\R}{\ensuremath{\mathbb{R}}}
 \newcommand{\F}{\ensuremath{\mathbb{F}}}
 \newcommand{\N}{\ensuremath{\mathbb{N}}}
+
+%Greek
+\renewcommand{\a}{\alpha}
+\newcommand{\z}{\zeta}
+\renewcommand{\b}{\beta}
+\newcommand{\g}{\gamma}
+\newcommand{\e}{\varepsilon}
+\renewcommand{\d}{\delta}
+\renewcommand{\r}{\rho}
+\renewcommand{\l}{\lambda}
+\newcommand{\w}{\omega}
+\newcommand{\n}{\eta}
+\newcommand{\f}{\varphi}
+\newcommand{\s}{\sigma}
+\renewcommand{\t}{\tau}
+\newcommand{\tr}{\tilde \rho}
+
+
+\newcommand{\ct}{\texttt}
 \newcommand{\norm}[1]{\left\lVert#1\right\rVert}
 \newcommand*\mean[1]{\bar{#1}}
 
@@ -39,28 +73,86 @@
 
 \begin{document}
 \maketitle
-Collaboration and Citations:
-\begin{itemize}
-    \item
-\end{itemize}
 \newpage 
 
 %TODO
 %Do I call rings/EDs with the mathematical letters or lean letters?
+%Citation system?
 
-\section{A quick explanation of Lean}
+\section{An overview of Lean}
 
 %how to tie type theory in?
-\subsection{An overview of dependent type theory}
+\subsection{An quick look at type theory}
+Lean is based on type-theoretic system, rather than the set theory traditionally used by most mathematicians. 
+Initially, working with type theory is not too different to working with sets. 
+We write $x:\a$ to mean ``$x$ is something of type $\a$'' rather than $x \in \a$ to mean ``$x$ is an element of $\a$''. 
+We can also reason about many of the sets we are familiar with such as $\N$ or $\Z$ as types.
+
+However, in type theory objects belong to a single type and are always identified as being of that type.
+It is not possible to talk about an object $x$ in Lean without giving it a type.
+Nor is it really possible to talk about something as being an object of more than one type.
+So for example $5:\N$ and $5:\Z$ are distinct objects.
+Luckily lean has a fairly versatile coercion system which allows us to convert between objects of different types, although it can be somewhat clunky at times.
+
+We can build types out of other types, so for example $\a \to \beta$ is the type of functions from $\a$ to $\beta$. 
+Lean's axiomatic system also extends simple type theory by implementing Types themselves as objects, meaning they themselves must have types.
+So, for example \ct{$\N:$ Type} and \ct{Type : Type 1}.
+In fact, in general \ct{Type $u$ : Type $(u+1)$}. 
+This infinite type hierarchy is Lean's way of avoiding the contradictions brought about by ``the type of all types''.
+%TODO this explanation is a bit weak
+
+%Lean also allows for the creation of dependent types, which are essentially paremeterized types.
+%So, for example a list of things of type $\a$ is of type \ct{list $\a$}.
+
+The main advantage of type theory is that it is much easier to model computationally.
+%TODO say more
+
+\subsection{Propositions as types}
+Lean also treats propositions as types. 
+A proposition \ct{p : Prop} is the type of proofs of \ct{p}.
+So when we say \ct{h : p}, we mean that \ct{h} is a proof of \ct{p}.
+For example \ct{h : 5 > 3} is a proof that 5 is greater than 3.
+To prove \ct{p}, it suffices to show we have something of type \ct{p} and thus if our proofs type-check correctly then they are valid\footnote{This is assuming there are no bugs in the Lean checker. The \href{https://github.com/leodemoura/lean/blob/master/doc/faq.md}{Lean FAQ} gives more details about the soundness of the kernel.}.
+One other thing to note is that under the principle of ``proof irrelevance'' Lean treats all proofs of a proposition \ct{p} as definitionally equal, so any two proofs of \ct{p} are in effect the same.
+
+\subsection{Lean Syntax} 
 
 %tactics mode (probably don't bother talking about monads)
 \subsection{Tactics}
 
 %constructivism
+\subsection{Constructivism}
+%Constructive mathematicians do indeed reject LEM. But this does not mean they accept its negation!
+Lean encourages a constructive approach to mathematics. 
+This means that proofs usually give an explicit instance of the thing you are trying to prove and techniques like proof by contradiction are discouraged.
+Lean does allow for the non-constructive axiom of choice, stating it as follows\footnote{Lean goes on to prove the more traditional set-theoretic statement of the axiom of choice using this axiom}: 
+\begin{lstlisting}
+/- the axiom -/
+axiom choice {α : Sort u} : nonempty α → α
+\end{lstlisting}
+However, it must be imported from a file `classical.lean' in Lean's library, and proofs or functions which rely upon it must be marked as non-computable.
+
+The law of the excluded middle follows from the axiom of choice in Lean's axiomatic system\footnote{see \url{https://en.wikipedia.org/wiki/Diaconescu\%27s\_theorem}} and is defined amongst other non-constructive principles as a theorem in `classical.lean'. 
+
+While trying to avoid using the axiom of choice and law of the excluded middle was initially unintuitive to me it has the substantial advantage that anything you write in Lean without them is computable.
+So for example my implementation of the Euclidean Algorithm is not just an abstract proof that such an algorithm exists, but can actually be executed in arbitrary Euclidean Domains.
 
 \section{Euclidean domains}
-% definitional nuances?
+What is a Euclidean Domain?
 
+\subsection{Pre-existing structures in Lean}
+A commutative ring is defined in lean as...
+
+An Integral Domain extends this definition by...
+
+\subsection{Defining Euclidean Domains in Lean}
+I defined Euclidean Domains as...
+
+%explicit vs non-explicit valuation (exists, trunc, inhabited)
+
+%valuation being to natural numbers vs well-ordered set
+
+%Do I talk about EF2 here?
 
 \section{The Euclidean Algorithm}
 %some history?
@@ -71,6 +163,8 @@ An element $d \in R$ is a greatest common divisor of $a$ and $b$ if $d \divides 
 We common write $\gcd(a,b)$ to denote a particular greatest common divisor of $a$ and $b$.
 However it is important to note that greatest common divisors are not necessarily unique. In fact they are never unique in our definition of a Euclidean domain): if $d$ is a gcd of a $a$ and $b$ in a ring, then so is its additive inverse $-d$.
 
+\subsection{Well-foundedness}
+
 \subsection{The First implementation}
 % proofs were inside the function which made things extremly hard to debug
 
@@ -78,7 +172,6 @@ However it is important to note that greatest common divisors are not necessaril
 %much simpler
 %had to define an induction principle
 %talk about
-
 
 
 \end{document}
