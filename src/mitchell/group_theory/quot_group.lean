@@ -8,15 +8,12 @@ variables {α : Type u} {β : Type v} {γ : Type w}
 open set
 
 namespace quotient_group
-open is_subgroup coset_notation
+open subgroup coset_notation
 
 def norm_equiv [group α] (N : set α) (a b : α) := a * b⁻¹ ∈ N
 
 section norm_equiv
-open is_subgroup coset_notation
--- Check that all of these lemmas need all of these variables
-variables [group α] [hg : group α] (N : set α) [hn : is_normal_subgroup N] (a : α)
-include hn hg
+variables [group α] [group α] (N : set α) [normal_subgroup N]
 
 local notation a `∼` b := norm_equiv N a b
 
@@ -63,18 +60,18 @@ end
 
 end norm_equiv
 
-def quotient_group_setoid [group α] (N : set α) [is_normal_subgroup N] : setoid α := {
+def quotient_group_setoid [group α] (N : set α) [normal_subgroup N] : setoid α := {
     r := norm_equiv N,
     iseqv := norm_equiv_rel N
 }
 
 attribute [instance] quotient_group_setoid
 
-def quotient_group (α) [group α] (N : set α) [h : is_normal_subgroup N] := quotient (quotient_group_setoid N)
+def quotient_group (α) [group α] (N : set α) [h : normal_subgroup N] := quotient (quotient_group_setoid N)
 
 notation G `/` N := quotient_group G N
 
-instance quotient_group_is_group {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] : group (quotient (quotient_group_setoid N)) := {
+instance quotient_group_is_group {α} [G : group α] (N : set α) [hs : normal_subgroup N] : group (quotient (quotient_group_setoid N)) := {
     one := ⟦ 1 ⟧,
     mul := quotient.lift₂ (λ x y : α, ⟦x*y⟧) (λ x₁ x₂ y₁ y₂ h₁ h₂, quot.sound (norm_equiv_mul N h₁ h₂)),
     inv := quotient.lift  (λ x : α, ⟦x⁻¹⟧)   (λ x₁ x₂ h, quot.sound (norm_equiv_inv N h)),
@@ -85,13 +82,13 @@ instance quotient_group_is_group {α} [G : group α] (N : set α) [hs : is_norma
     mul_left_inv := λ x, quotient.induction_on x (λ x, show ⟦ x⁻¹ * x ⟧ = ⟦ 1 ⟧, by rw mul_left_inv)
 }
 
-instance quotient_group_is_group₁ {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] : group (α / N) := quotient_group.quotient_group_is_group N
+instance quotient_group_is_group₁ {α} [G : group α] (N : set α) [hs : normal_subgroup N] : group (α / N) := quotient_group.quotient_group_is_group N
 
-@[simp] lemma quot_mul {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] (a b : α)
+@[simp] lemma quot_mul {α} [G : group α] (N : set α) [hs : normal_subgroup N] (a b : α)
     : ⟦ a ⟧ * ⟦ b ⟧ = ⟦ a * b ⟧ := rfl
-@[simp] lemma quot_inv {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] (a b : α)
+@[simp] lemma quot_inv {α} [G : group α] (N : set α) [hs : normal_subgroup N] (a b : α)
     : ⟦ a ⟧⁻¹ = ⟦ a⁻¹ ⟧ := rfl
-@[simp] lemma quot_one {α} [G : group α] (N : set α) [hs : is_normal_subgroup N] (a b : α)
+@[simp] lemma quot_one {α} [G : group α] (N : set α) [hs : normal_subgroup N] (a b : α)
     : 1 = ⟦ (1:α) ⟧ := rfl
 
 section
@@ -100,7 +97,7 @@ def image [group α] [group β] (f : α → β) : set β := f '' univ
 lemma image_mem [group α] [group β] (f : α → β) (a : α) : f a ∈ image f := ⟨a, mem_univ a, rfl⟩
 
 instance univ_image_in [group α] [group β] (f : α → β) [hf: is_hom f] : group (image f) :=  
-    is_subgroup.subgroup_group (@is_hom.image_in _ _ _ _ _ hf univ _)
+    subgroup.subgroup_group (@is_hom.image_in _ _ _ _ _ hf univ _)
 
 class group_isomorphism (α : Type u) (β : Type v) [group α] [group β]
   extends equiv α β :=
@@ -108,7 +105,7 @@ class group_isomorphism (α : Type u) (β : Type v) [group α] [group β]
 
 infix `≃ₕ` :50 := group_isomorphism
 
-def qgroup_lift [G : group α] [H : group β] {N : set α} [hs : is_normal_subgroup N] (f : α → β) [hf : is_hom f] (h : ∀ x ∈ N, f x = 1) (q : α / N) : β :=
+def qgroup_lift [G : group α] [H : group β] {N : set α} [hs : normal_subgroup N] (f : α → β) [hf : is_hom f] (h : ∀ x ∈ N, f x = 1) (q : α / N) : β :=
 quotient.lift_on q f $ assume a b (hab : a * b⁻¹ ∈ N),
   have f a * (f b)⁻¹ = 1, by rw [←hf.inv, ←hf.hom_mul]; exact h _ hab,
   show f a = f b, by rw [←inv_inv (f b)]; exact eq_inv_of_mul_eq_one this
