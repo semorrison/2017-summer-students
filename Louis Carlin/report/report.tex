@@ -1,0 +1,84 @@
+%\setlength{\parindent}{0pt}
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{amsopn}
+\usepackage{MnSymbol}
+
+\DeclareMathOperator{\range}{range}
+\DeclareMathOperator{\nulls}{null}
+\DeclareMathOperator{\spanf}{span}
+
+\newcommand{\Z}{\ensuremath{\mathbb{Z}}}
+\newcommand{\C}{\ensuremath{\mathbb{C}}}
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+\newcommand{\F}{\ensuremath{\mathbb{F}}}
+\newcommand{\N}{\ensuremath{\mathbb{N}}}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\newcommand*\mean[1]{\bar{#1}}
+
+\usepackage[activate={true,nocompatibility},final,tracking=true,kerning=true,spacing=true,factor=1100,stretch=10,shrink=10]{microtype}
+
+\newtheorem{lemma}{Lemma}
+\newtheorem{prop}{Proposition}
+\newtheorem*{prop*}{Proposition}
+\newtheorem*{cor*}{Corollary}
+\newcommand{\ud}{\, \mathrm{d}}
+
+\author{Louis Carlin}
+\title{Euclidean Domains in Lean}
+
+\usepackage[pdftex]{hyperref}
+\hypersetup{colorlinks,%
+	    filecolor=black,%
+	    citecolor=black,%
+	    linkcolor=black}
+
+
+
+\begin{document}
+\maketitle
+Collaboration and Citations:
+\begin{itemize}
+    \item
+\end{itemize}
+\newpage 
+
+%TODO
+%Do I call rings/EDs with the mathematical letters or lean letters?
+
+\section{A quick explanation of Lean}
+
+%how to tie type theory in?
+\subsection{An overview of dependent type theory}
+
+%tactics mode (probably don't bother talking about monads)
+\subsection{Tactics}
+
+%constructivism
+
+\section{Euclidean domains}
+% definitional nuances?
+
+
+\section{The Euclidean Algorithm}
+%some history?
+
+The Euclidean Algorithm is one of the main motivations of the definition of Euclidean Domains. 
+It takes any two elements $a,b$ of a Euclidean Domain $R$ and gives a ``greatest common divisor'' of $a$ and $b$. 
+An element $d \in R$ is a greatest common divisor of $a$ and $b$ if $d \divides a$, $d \divides b$ and $\forall x \in R, x \divides a \and x \divides b \implies x \divides d$.
+We common write $\gcd(a,b)$ to denote a particular greatest common divisor of $a$ and $b$.
+However it is important to note that greatest common divisors are not necessarily unique. In fact they are never unique in our definition of a Euclidean domain): if $d$ is a gcd of a $a$ and $b$ in a ring, then so is its additive inverse $-d$.
+
+\subsection{The First implementation}
+% proofs were inside the function which made things extremly hard to debug
+
+\subsection{The Second implementation}
+%much simpler
+%had to define an induction principle
+%talk about
+
+
+
+\end{document}
