@@ -3,7 +3,7 @@ import mitchell.group_theory.homomorphism
 
 open set
 
-universes u v w
+universes u v
 variables {G : Type u} {H : Type v}
 
 class subgroup [group G] (S : set G) : Prop := 
@@ -23,7 +23,7 @@ attribute [simp] subgroup.one_mem
                  normal_subgroup.normal
 
 -- Subgroup is a group
-instance subgroup_group (S : set G) [subgroup S] : group S :=
+instance (S : set G) [subgroup S] : group S :=
 {   mul := λ ⟨x, hx⟩ ⟨y, hy⟩, ⟨x * y, mul_mem hx hy⟩,
     mul_assoc := λ ⟨x, hx⟩ ⟨y, hy⟩ ⟨z, hz⟩, subtype.eq $ mul_assoc x y z,
     one := ⟨1, one_mem S⟩,
@@ -39,17 +39,17 @@ lemma mem_norm_comm {a b : G} {S : set G} [normal_subgroup S] (hab : a * b ∈ S
 
 -- Examples of subgroups
 @[simp]
-def trivial (G) [group G] : set G := {1}
+def trivial (G : Type u) [group G] : set G := {1}
 
-instance trivial_in [group G] : normal_subgroup (trivial G) :=
+instance trivial_in : normal_subgroup (trivial G) :=
     by refine {..}; simp {contextual := tt}
 
-instance univ_in [group G] : subgroup (@univ G) :=
+instance univ_in : subgroup (@univ G) :=
     by split; simp
 
 def center (G : Type u) [group G] : set G := {z | ∀ g, g * z = z * g}
 
-instance center_normal_in [group G] : normal_subgroup (center G) := {
+instance center_normal_in : normal_subgroup (center G) := {
     one_mem := by simp [center],
     mul_mem := begin
     intros a b ha hb g,

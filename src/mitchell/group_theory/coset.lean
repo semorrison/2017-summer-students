@@ -135,16 +135,24 @@ lemma mem_mem_lcoset {a x : G} (hx : x ∈ S) (hax : a * x ∈ S) : a ∈ S :=
     rw [lcoset_assoc, lcoset_mem_lcoset S hax]
     end
 
-theorem normal_iff_eq_cosets : normal_subgroup S ↔ ∀ g, g * S = S * g :=
+theorem normal_of_eq_cosets [normal_subgroup S] : ∀ g, g * S = S * g :=
 begin
-split, tactic.swap,
-    {
-    intros hg,
+    intros g,
+    apply eq_of_subset_of_subset,
+    all_goals { simp [lcoset, rcoset, image], intros a n ha hn },
+    existsi g * n * g⁻¹, tactic.swap, existsi g⁻¹ * n * (g⁻¹)⁻¹,
+    all_goals {split, apply normal_subgroup.normal, assumption },
+    { rw inv_inv g, rw [←mul_assoc, ←mul_assoc], simp, assumption },
+    { simp, assumption }
+end
+
+theorem eq_cosets_of_normal (h : ∀ g, g * S = S * g) : normal_subgroup S:=
+begin
     split,
     {
         intros n hn g,
         have hl : g * n ∈ g * S, from mem_lcoset g hn,
-        rw hg at hl,
+        rw h at hl,
         simp [rcoset] at hl,
         cases hl with x hx,
         cases hx with hxl hxr,
@@ -155,16 +163,10 @@ split, tactic.swap,
         },
         rw this,
         exact hxl
-    }},
-    {
-        intros h g,
-        apply eq_of_subset_of_subset,
-        all_goals { simp [lcoset, rcoset, image], intros a n ha hn },
-        existsi g * n * g⁻¹, tactic.swap, existsi g⁻¹ * n * (g⁻¹)⁻¹,
-        all_goals {split, apply h.normal, assumption },
-        { rw inv_inv g, rw [←mul_assoc, ←mul_assoc], simp, assumption },
-        { simp, assumption }
     }
 end
+
+theorem normal_iff_eq_cosets : normal_subgroup S ↔ ∀ g, g * S = S * g :=
+    ⟨@normal_of_eq_cosets _ _ S _, eq_cosets_of_normal S⟩
 
 end coset_subgroup
