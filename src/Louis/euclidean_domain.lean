@@ -2,18 +2,10 @@ import data.int.basic
 import tactic.ring
 
 universes u v
-#check classical.some
---definition euclidean_valuation' {α} [has_zero α] (r : α → α → α) := Σ W : Well_Ordered_Type, { f : α → W.β // ∀ a b, b = 0 ∨ @has_well_founded.r _ sorry (f(r a b)) (f b)}
--- probably easier to just use a structure at this point
-
-structure Well_Ordered_Type := 
-(β : Type)
-(lt : β → β → Prop)
-(w : is_well_order β lt)   -- TODO can β be made implicit in the defintion of is_well_order in mathlib?
 
 /- very basic stuff (what to include in first PR) -/
 
-definition euclidean_valuation {α} [has_zero α] (r : α → α → α) := { f : α → ℕ // ∀ a b, b = 0 ∨ has_well_founded.r (f(r a b)) (f b)}
+definition euclidean_valuation {α} [has_zero α] (r : α → α → α) := { f : α → ℕ // ∀ a b, b = 0 ∨  (f(r a b)) < (f b)}
 
 class euclidean_domain (α : Type) extends integral_domain α :=
 ( quotient : α → α → α )
@@ -63,31 +55,6 @@ begin
     induction this,
     exact this_wf, -- why can't lean work this out itself?
 end
-
-
-class has_well_order (β : Type) :=
-(ordering : β → β → Prop)
-(iwo : is_well_order β ordering)
-
-
-def measure' {α} {β} [hwo : has_well_order β] : (α → β) → α → α → Prop :=
-inv_image (hwo.ordering)
-
-def measure_wf' {α} {β} [hwo : has_well_order β] (f : α → β) : well_founded (measure'  f) :=
-inv_image.wf f hwo.iwo.wf
-
-def has_well_founded_of_has_wo {α : Sort u} {β} [hwo : has_well_order β] (f: α → β) : has_well_founded α :=
-{r := measure' f, wf := measure_wf' f}
-
-
-instance has_well_order_nat : has_well_order ℕ :=
-{
-    ordering := (<), --nat.lt,
-    iwo := by apply_instance
-} 
-
-instance ed_has_well_founded {α : Type} [ed: decidable_euclidean_domain α] : has_well_founded α :=
-has_well_founded_of_has_wo ed.valuation.val
 
 
 /- misc lemmas -/

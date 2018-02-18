@@ -12,89 +12,40 @@ import Louis.euclidean_domain
 -- is it better to get rid of haves wherever possible or do they make things more readable?
 
 
+--definition euclidean_valuation' {α} [has_zero α] (r : α → α → α) := Σ W : Well_Ordered_Type, { f : α → W.β // ∀ a b, b = 0 ∨ @has_well_founded.r _ sorry (f(r a b)) (f b)}
+-- probably easier to just use a structure at this point
 
 
--- @[simp] theorem gcd_zero_right {α : Type} [decidable_euclidean_domain α]  (n : α) : gcd n 0 = n :=
--- begin
---     cases decidable.em (n=0),
---     {
---         rw h,
---         simp,
---     },
---     {
---         rw gcd,
---         simp [h],
---     }
--- end
-
--- @[simp] theorem gcd_one_left {α : Type} [decidable_euclidean_domain α] (n : α) : gcd 1 n = 1 := 
--- begin
---     rw [gcd],
---     simp,
--- end
-
--- lemma zero_mod {α : Type} [ed:decidable_euclidean_domain α] (a : α) : 0 % a = 0 :=
--- begin
-
---     sorry
--- end
+-- class has_well_order (β : Type) :=
+-- (ordering : β → β → Prop)
+-- (iwo : is_well_order β ordering)
 
 
--- theorem gcd_next {α : Type} [decidable_euclidean_domain α] (x y : α) : gcd x y = gcd (y % x) x :=
--- begin
---     cases decidable.em (x=0),
---     {
---         rw [h],
---         simp,
---         rw gcd,
---         cases decidable.em (y=0),
---             {
---                 simp [h_1],
---             },
---             {
---                 simp [h_1],
---                 rw [zero_mod y], -- uses zero_mod
---                 simp,
---             }
---     },
---     {
---         rw gcd,
---         simp [h],
---     }
--- end
+-- def measure' {α} {β} [hwo : has_well_order β] : (α → β) → α → α → Prop :=
+-- inv_image (hwo.ordering)
+
+-- def measure_wf' {α} {β} [hwo : has_well_order β] (f : α → β) : well_founded (measure'  f) :=
+-- inv_image.wf f hwo.iwo.wf
+
+-- def has_well_founded_of_has_wo {α : Sort u} {β} [hwo : has_well_order β] (f: α → β) : has_well_founded α :=
+-- {r := measure' f, wf := measure_wf' f}
 
 
--- @[simp] theorem gcd_self {α : Type} [decidable_euclidean_domain α] (n : α) : gcd n n = n :=
--- by rw [gcd_next n n, mod_self n, gcd_zero_left]
+-- instance has_well_order_nat : has_well_order ℕ :=
+-- {
+--     ordering := (<), --nat.lt,
+--     iwo := by apply_instance
+-- } 
 
-
--- lemma zero_lt_nonzero {α : Type} [ed:decidable_euclidean_domain α] : ∀ a : α, a ≠ 0 → (ed.valuation.val (0:α)) < (ed.valuation.val a) :=
--- begin
---     intros a aneq,
---     cases ed.valuation.property 0 a,
---     { contradiction },
---     {
---         have hr := zero_mod a, dsimp [(%)] at hr, -- uses zero_mod
---         rw [hr] at h,
---         exact  h,
---     }
--- end
+-- instance ed_has_well_founded {α : Type} [ed: decidable_euclidean_domain α] : has_well_founded α :=
+-- has_well_founded_of_has_wo ed.valuation.val
 
 
 
-
--- theorem mod_eq_zero_of_dvd {α : Type} [ed: decidable_euclidean_domain α] {a b : α} (H : a ∣ b) :
---     b % a = 0 :=
--- dvd.elim H (λ z H1, by {rw [H1], sorry})
-
---  theorem gcd_comm {α : Type} [ed: decidable_euclidean_domain α] (a b : α) : gcd a b = gcd b a :=
--- begin
---     have := gcd.induction a b
---     begin
---         intro x,
---     end
-
--- end
+structure Well_Ordered_Type := 
+(β : Type)
+(lt : β → β → Prop)
+(w : is_well_order β lt)   -- TODO can β be made implicit in the defintion of is_well_order in mathlib?
 
 /-
  This is a counterexample to the claim that ∀ a, 0 % a = 0 in EDs.
@@ -141,18 +92,19 @@ instance weird_int_euclidean_domain : euclidean_domain ℤ :=
                     {
                         have one_neq : (1:int) ≠ -1, from dec_trivial, 
                         simp [h_2, one_neq],
-                        
-                        unfold has_well_founded.r,
-                        unfold sizeof_measure,
-                        unfold sizeof,
-                        unfold measure,
-                        unfold inv_image,
-                        sorry --unfold has_sizeof.size, -- this doesn't work, some weird type class stuff is going on here (lean doesn't know what sizeof is because we're defining it here). The basic idea holds though
-                        --unfold nat.sizeof,
+                        exact dec_trivial, -- is this the way you're meant to do this? (surely there's just a tactic)
                     },
                     {
                         simp [h_2,h],
-                        sorry -- follows from cases on b=-1 here
+                        cases decidable.em (b=-1),
+                            {
+                                simp [h_3],
+                                exact dec_trivial,
+                            },
+                            {
+                                simp [h_3],
+                                exact dec_trivial,
+                            }
                     }
                     
                 },
@@ -162,14 +114,14 @@ instance weird_int_euclidean_domain : euclidean_domain ℤ :=
                     {
                         have one_neq : (1:ℤ) ≠ -1, from dec_trivial,
                         simp [h_2, one_neq],
-                        sorry -- same sizeof issue, but it would follow from here
+                        exact dec_trivial,
                     },
                     {
                         simp [h],
                         cases decidable.em (b=-1),
                         {
                             simp [h_3],
-                            sorry -- follows again
+                            exact dec_trivial,
                         },
                         {
                             simp [h_3],
@@ -179,10 +131,11 @@ instance weird_int_euclidean_domain : euclidean_domain ℤ :=
                                 cases h_4,
                                 {
                                     rw [h_4],
-                                    sorry -- follows from here
+                                    exact dec_trivial,
                                 },
                                 {
                                     rw [h_4],
+                                    simp,
                                     sorry -- follows from here since the only things -1 is not less than are itself and 0 and b+1 can't be 0 since b≠-1
                                 }
                             },

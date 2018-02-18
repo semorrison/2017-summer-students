@@ -79,4 +79,6 @@ Why is there no dvd tactic? (is there?)
 dvd_antisymm is not true in general in euclidean domains (eg \R)
 
 Problem: the valuation we define to satisfy wikipedia's EF2 is a valuation for some division algorithm,
-but can we show it is one for the division algorithm we are given?
+but can we show it is one for the division algorithm we are given? (no)
+
+In general we don't have 0 % a = 0 (and a bunch of things which are equivalent to this)

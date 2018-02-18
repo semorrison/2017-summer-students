@@ -290,3 +290,86 @@ begin
     }
     
 end
+
+
+-- @[simp] theorem gcd_zero_right {α : Type} [decidable_euclidean_domain α]  (n : α) : gcd n 0 = n :=
+-- begin
+--     cases decidable.em (n=0),
+--     {
+--         rw h,
+--         simp,
+--     },
+--     {
+--         rw gcd,
+--         simp [h],
+--     }
+-- end
+
+-- @[simp] theorem gcd_one_left {α : Type} [decidable_euclidean_domain α] (n : α) : gcd 1 n = 1 := 
+-- begin
+--     rw [gcd],
+--     simp,
+-- end
+
+-- lemma zero_mod {α : Type} [ed:decidable_euclidean_domain α] (a : α) : 0 % a = 0 :=
+-- begin
+
+--     sorry
+-- end
+
+
+-- theorem gcd_next {α : Type} [decidable_euclidean_domain α] (x y : α) : gcd x y = gcd (y % x) x :=
+-- begin
+--     cases decidable.em (x=0),
+--     {
+--         rw [h],
+--         simp,
+--         rw gcd,
+--         cases decidable.em (y=0),
+--             {
+--                 simp [h_1],
+--             },
+--             {
+--                 simp [h_1],
+--                 rw [zero_mod y], -- uses zero_mod
+--                 simp,
+--             }
+--     },
+--     {
+--         rw gcd,
+--         simp [h],
+--     }
+-- end
+
+
+-- @[simp] theorem gcd_self {α : Type} [decidable_euclidean_domain α] (n : α) : gcd n n = n :=
+-- by rw [gcd_next n n, mod_self n, gcd_zero_left]
+
+
+-- lemma zero_lt_nonzero {α : Type} [ed:decidable_euclidean_domain α] : ∀ a : α, a ≠ 0 → (ed.valuation.val (0:α)) < (ed.valuation.val a) :=
+-- begin
+--     intros a aneq,
+--     cases ed.valuation.property 0 a,
+--     { contradiction },
+--     {
+--         have hr := zero_mod a, dsimp [(%)] at hr, -- uses zero_mod
+--         rw [hr] at h,
+--         exact  h,
+--     }
+-- end
+
+
+
+
+-- theorem mod_eq_zero_of_dvd {α : Type} [ed: decidable_euclidean_domain α] {a b : α} (H : a ∣ b) :
+--     b % a = 0 :=
+-- dvd.elim H (λ z H1, by {rw [H1], sorry})
+
+--  theorem gcd_comm {α : Type} [ed: decidable_euclidean_domain α] (a b : α) : gcd a b = gcd b a :=
+-- begin
+--     have := gcd.induction a b
+--     begin
+--         intro x,
+--     end
+
+-- end
