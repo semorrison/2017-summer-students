@@ -94,7 +94,7 @@ end quot_group
 class group_isomorphism (G : Type u) (H : Type v) [group G] [group H] extends equiv G H :=
     (hom_fun : group_hom to_fun)
 
-infix `≃ₕ` :50 := group_isomorphism
+infix `≅` :50 := group_isomorphism
 
 section
 open group_hom
@@ -105,8 +105,6 @@ lemma image_mem (f : G → H) (a : G) : f a ∈ image f := ⟨a, mem_univ a, rfl
 
 instance univ_image_in (f : G → H) [group_hom f] : group (image f) :=  
     @subgroup.group _ _ (image f) (@group_hom.image_in _ _ _ _ f _ univ subgroup.univ_in)
-
-
 
 def qgroup_lift {N : set G} [normal_subgroup N] (f : G → H) [group_hom f] (h : ∀ x ∈ N, f x = 1) (q : G / N) : H :=
 quotient.lift_on q f $ assume a b (hab : a * b⁻¹ ∈ N),
@@ -134,7 +132,7 @@ lemma ker_equiv_im_lift (f : G → H ) [group_hom f]
     : ∀ a b, (norm_equiv (kernel f)) a b → (im_lift f) a = (im_lift f) b := by simp [im_lift]; exact ker_equiv_im f
 
 noncomputable theorem first_isomorphism_theorem (f : G → H) [group_hom f]
-    : G / kernel f ≃ₕ image f := {
+    : G / kernel f ≅ image f := {
         to_fun := qgroup_lift (im_lift f) (assume x hx, subtype.eq $ by simp [im_lift]; exact mem_ker_one hx),
         inv_fun := λ b, ⟦classical.some b.property⟧,
         left_inv := assume b', quotient.induction_on b' $

@@ -3,7 +3,7 @@ import mitchell.group_theory.homomorphism
 
 open set
 
-universes u v w
+universes u v
 variables {G : Type u} {H : Type v}
 
 class subgroup [group G] (S : set G) : Prop := 
@@ -41,15 +41,15 @@ lemma mem_norm_comm {a b : G} {S : set G} [normal_subgroup S] (hab : a * b ∈ S
 @[simp]
 def trivial (G : Type u) [group G] : set G := {1}
 
-instance trivial_in [group G] : normal_subgroup (trivial G) :=
+instance trivial_in : normal_subgroup (trivial G) :=
     by refine {..}; simp {contextual := tt}
 
-instance univ_in [group G] : subgroup (@univ G) :=
+instance univ_in : subgroup (@univ G) :=
     by split; simp
 
 def center (G : Type u) [group G] : set G := {z | ∀ g, g * z = z * g}
 
-instance center_normal_in [group G] : normal_subgroup (center G) := {
+instance center_normal_in : normal_subgroup (center G) := {
     one_mem := by simp [center],
     mul_mem := begin
     intros a b ha hb g,
