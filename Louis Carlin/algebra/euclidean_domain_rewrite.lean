@@ -40,7 +40,12 @@ import Louis.euclidean_domain
 -- instance ed_has_well_founded {α : Type} [ed: decidable_euclidean_domain α] : has_well_founded α :=
 -- has_well_founded_of_has_wo ed.valuation.val
 
-
+-- def lt_wf : well_founded (<) :=
+-- begin
+--     have : is_well_order ℕ (<), by apply_instance,
+--     induction this,
+--     exact this_wf, -- why can't lean work this out itself?
+-- end
 
 structure Well_Ordered_Type := 
 (β : Type)

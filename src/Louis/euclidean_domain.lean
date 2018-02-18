@@ -1,10 +1,6 @@
 import data.int.basic
 import tactic.ring
 
-universes u v
-
-/- very basic stuff (what to include in first PR) -/
-
 definition euclidean_valuation {α} [has_zero α] (r : α → α → α) := { f : α → ℕ // ∀ a b, b = 0 ∨  (f(r a b)) < (f b)}
 
 class euclidean_domain (α : Type) extends integral_domain α :=
@@ -16,12 +12,8 @@ class euclidean_domain (α : Type) extends integral_domain α :=
 class decidable_euclidean_domain (α : Type) extends euclidean_domain α:=
 (decidable_eq_zero : ∀ a : α, decidable (a = 0))
 
-
 instance decidable_eq_zero {α : Type} [ed : decidable_euclidean_domain α] (a : α) : decidable (a = 0) :=
-begin
-    have := ed.decidable_eq_zero,
-    exact this a,
-end
+ decidable_euclidean_domain.decidable_eq_zero a
 
 instance euclidean_domain_has_div {α : Type} [euclidean_domain α] : has_div α := {
     div := euclidean_domain.quotient
@@ -31,11 +23,11 @@ instance euclidean_domain_has_mod {α : Type} [euclidean_domain α] : has_mod α
     mod := euclidean_domain.remainder
 }
 
-instance ed_has_sizeof {α : Type} [ed:decidable_euclidean_domain α] : has_sizeof α := {
+instance ed_has_sizeof {α : Type} [ed:euclidean_domain α] : has_sizeof α := {
     sizeof := λ x, ed.valuation.val x,
 }
 
-definition gcd_decreasing  {α : Type} [ed:decidable_euclidean_domain α] (x y : α) (w : x ≠ 0) : has_well_founded.r (y % x) x := 
+definition gcd_decreasing  {α : Type} [ed:euclidean_domain α] (x y : α) (w : x ≠ 0) : has_well_founded.r (y % x) x := 
 begin
 cases ed.valuation.property y x,
                 { contradiction },
@@ -46,16 +38,6 @@ def gcd {α : Type} [ed : decidable_euclidean_domain α] : α → α → α
 | x y := if x_zero : x = 0 then y
          else have h : has_well_founded.r (y % x) x := gcd_decreasing x y x_zero,
               gcd (y%x) x
-
-/- end basic stuff -/
-
-def lt_wf : well_founded (<) :=
-begin
-    have : is_well_order ℕ (<), by apply_instance,
-    induction this,
-    exact this_wf, -- why can't lean work this out itself?
-end
-
 
 /- misc lemmas -/
 
@@ -121,13 +103,9 @@ theorem gcd.induction {α : Type} [ed: decidable_euclidean_domain α]
     by {cases decidable.em (k=0), rw h, exact H0,
         exact λ n, H1 k n (h) (IH (n%k) (neq_zero_lt_mod_lt n k h) k)}) n
 
--- def lcm (m n : ℕ) : ℕ := m * n / (gcd m n)
-
 @[reducible] def coprime {α : Type} [ed: decidable_euclidean_domain α]  (a b : α) : Prop := gcd a b = 1
 
-
 /- more gcd stuff (generalized mathlib/data/nat/gcd.lean) -/
-
 
 theorem gcd_dvd {α : Type} [ed: decidable_euclidean_domain α] (a b : α) : (gcd a b ∣ a) ∧ (gcd a b ∣ b) :=
 gcd.induction a b
@@ -144,9 +122,11 @@ gcd.induction a b
             cases h_dvd,
             split,
                 {exact h_dvd_right},
-                {conv {for b [2] {rw ←(euclidean_domain.witness b a)}},
-                have h_dvd_right_a:= dvd_mul_of_dvd_right h_dvd_right (b/a),
-                exact dvd_add h_dvd_right_a h_dvd_left}
+                {
+                    conv {for b [2] {rw ←(euclidean_domain.witness b a)}},
+                    have h_dvd_right_a:= dvd_mul_of_dvd_right h_dvd_right (b/a),
+                    exact dvd_add h_dvd_right_a h_dvd_left
+                }
         }
     end )
 
@@ -156,7 +136,6 @@ theorem gcd_dvd_left {α : Type} [ed: decidable_euclidean_domain α] (a b : α) 
 theorem gcd_dvd_right {α : Type} [ed: decidable_euclidean_domain α] (a b : α) :
     gcd a b ∣ b := (gcd_dvd a b).right
 
-/- Proof that the gcd is the top of the division hierarchy -/
 theorem dvd_gcd {α : Type} [ed: decidable_euclidean_domain α] {a b c : α} : c ∣ a → c ∣ b → c ∣ gcd a b :=
 gcd.induction a b
     (λ b,
