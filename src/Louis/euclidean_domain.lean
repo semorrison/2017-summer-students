@@ -111,7 +111,6 @@ structure common_divisor {α : Type} [R: comm_ring α] (a b : α) :=
 
 
 structure greatest_common_divisor {α : Type} [R: comm_ring α] (a b : α) extends common_divisor a b :=
-
 (greatest : ∀ d : common_divisor a b, d.value ∣ value)
 
 

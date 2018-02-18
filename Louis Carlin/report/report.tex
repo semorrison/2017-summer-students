@@ -82,7 +82,7 @@
 \section{An overview of Lean}
 
 %how to tie type theory in?
-\subsection{An quick look at type theory}
+\subsection{A quick look at type theory}
 Lean is based on type-theoretic system, rather than the set theory traditionally used by most mathematicians. 
 Initially, working with type theory is not too different to working with sets. 
 We write $x:\a$ to mean ``$x$ is something of type $\a$'' rather than $x \in \a$ to mean ``$x$ is an element of $\a$''. 
@@ -151,14 +151,19 @@ While normally we might have to write, \ct{$\lambda$ hc : c, t : $\a$}, Lean has
 
 %tactics mode (probably don't bother talking about monads)
 \subsection{Tactics}
-Writing out long proofs consisting entirely of anonymous $\lambda$ functions is tedious and finicky.
+Writing out long proofs consisting entirely of anonymous $\lambda$ functions is time-consuming and finicky.
 Lean does define some syntactic sugar to make proofs read more like traditional mathematical proofs.
 For example, we can write \ct{assume hp : p,} instead of \ct{$\lambda$ hp : p}, and \ct{lemma} and \ct{theorem} are synonyms for \ct{def}.
 However, the real strength of Lean in proving things is in tactics mode.
 
 A tactic is basically an algorithm which automates repetitive tasks in proving things.
 We tell Lean to enter tactics mode with a \ct{begin end} block.
-Once in tactics mode Lean gives us a printout of the current context, which is what we know at that point in the proof. The turnstile symbol $\vdash$ indicates what we are trying to show.
+Once in tactics mode Lean gives us a printout of the current context, which is what we know at that point in the proof. 
+The turnstile symbol $\vdash$ indicates what we are trying to show.
+
+Picture here!!!
+
+
 
 %constructivism
 \subsection{Constructivism}
@@ -203,14 +208,52 @@ An element $d \in R$ is a greatest common divisor of $a$ and $b$ if $d \divides 
 We common write $\gcd(a,b)$ to denote a particular greatest common divisor of $a$ and $b$.
 However it is important to note that greatest common divisors are not necessarily unique. In fact they are never unique in our definition of a Euclidean domain): if $d$ is a gcd of a $a$ and $b$ in a ring, then so is its additive inverse $-d$.
 
+\subsection{The basic concept}
+
+\subsection{The Extended Euclidean Algorithm}
+
 \subsection{Well-foundedness}
+%talk mostly about how things actually worked in Lean (factorial + something which doesn't work)
 
 \subsection{The First implementation}
-% proofs were inside the function which made things extremly hard to debug
+In defining the Euclidean Algorithm in Lean it was important to not only have it return the gcd as expected, but also to have a proof that what it returned \textit{was} the gcd. 
+My first implementation of the Euclidean Algorithm satisfied this requirement by taking proofs as part of its input and returning a value paired with the fact that that value was actually a gcd. 
+This is how I defined the input and output types:
+\begin{lstlisting}
+structure common_divisor {α : Type} [R: comm_ring α] (a b : α) :=
+(value : α)
+(divides_a : value ∣ a) 
+(divides_b : value ∣ b)
+
+structure greatest_common_divisor {α : Type} [R: comm_ring α] (a b : α) extends common_divisor a b :=
+(greatest : ∀ d : common_divisor a b, d.value ∣ value)
+
+/- this is the return type -/
+structure bezout_identity {α : Type} [R: comm_ring α] (a b : α):= 
+(x y : α) -- coefficients
+(gcd : greatest_common_divisor a b)
+(bezout : gcd.value = a * x + b * y)
+
+/- this is the input type -/
+structure eea_input {α : Type} (a b : α) [euclidean_domain α] := 
+(rp rc xp xc yp yc: α)
+(bezout_prev : rp = a * xp + b * yp)
+(bezout_curr : rc = a * xc + b * yc)
+(divides : ∀ x : α, x∣rp ∧ x∣rc → x∣a ∧ x∣b)
+(greatest_divisor : ∀ d : common_divisor a b, d.value ∣ rp ∧ d.value ∣ rc)
+\end{lstlisting}
+
+This approach wasn't particularly good. The actual statement of the algorithm ended up being almost two pages long because I had to write the proof transforming the proofs I took as input to the proofs I needed to give as output. This meant that when I ran into issues (primarily trying to use non-computable valuations to show it was well-founded recursion) it was difficult to work out exactly where the problems were. It would also have been much less intuitive to have to work with the structure \ct{bezout\_identity} I defined than to be simply given a gcd and only given the proofs of its properties if you asked for them.
 
 \subsection{The Second implementation}
+My second implementation was much simpler. I modelled it off the gcd function for natural numbers which already existed in Lean's mathlib library. The function is defined as follows:
+\begin{lstlisting}
+
+\end{lstlisting}
+
 %much simpler
 %had to define an induction principle
+%more modular
 %talk about
 
 

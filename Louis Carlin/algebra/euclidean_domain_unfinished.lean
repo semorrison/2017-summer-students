@@ -302,7 +302,7 @@ instance eea_input_has_sizeof {α : Type} (a b : α) [euclidean_domain α] : has
 /- Euclidean algorithm stuff -/
 
 
-def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_euclidean_domain α]  {a b : α } : eea_input a b → bezout_identity a b
+noncomputable def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_euclidean_domain α]  {a b : α } : eea_input a b → bezout_identity a b
 | input := begin
     cases h0 : input,
     exact (if h : rc = 0 then 
@@ -372,29 +372,29 @@ def extended_euclidean_algorithm_internal {α : Type}  [ed : decidable_euclidean
             exact and.intro this_right this,
         end⟩ 
         in 
-        -- have has_well_founded.r next_input input, {
-        --     unfold has_well_founded.r,
-        --     unfold sizeof_measure,
-        --     unfold sizeof,
-        --     unfold has_sizeof.sizeof,
-        --     unfold measure,
-        --     unfold inv_image,
-        --     let ov_val : α → ℕ := ed.valuation.out.val,
-        --     --have  : ov_val = optimal_valuation.val, by {dsimp [ov_val], refl},
-        --     have := ed.valuation.out.property rp rc,
-        --     cases this,
-        --     {
-        --         exact absurd this h,
-        --     },
-        --     {   
-        --         dsimp [(%)],
-        --         have rci : input.rc = rc, by {
-        --             exact congr_arg eea_input.rc h0
-        --         },
-        --         rw rci,
-        --         exact this,
-        --     },
-        --},
+        have has_well_founded.r next_input input, {
+            unfold has_well_founded.r,
+            unfold sizeof_measure,
+            unfold sizeof,
+            unfold has_sizeof.sizeof,
+            unfold measure,
+            unfold inv_image,
+            let ov_val : α → ℕ := ed.valuation.out.val,
+            have  : ov_val = optimal_valuation.val, by {dsimp [ov_val], refl},
+            have := ed.valuation.out.property rp rc,
+            cases this,
+            {
+                exact absurd this h,
+            },
+            {   
+                --dsimp [(%)],
+                have rci : input.rc = rc, by {
+                    exact congr_arg eea_input.rc h0,
+                },
+                rw rci,
+                exact this,
+            },
+        },
         extended_euclidean_algorithm_internal next_input)
 end
 
@@ -413,27 +413,3 @@ extended_euclidean_algorithm_internal ⟨ a, b, 1, 0, 0, 1,
          intro,
          exact and.intro d.divides_a d.divides_b,
      end ⟩ 
-
-theorem induction {α} [decidable_euclidean_domain α]
-                {P : α → α → Prop}
-                (m n : α)
-                (H0 : ∀n, P 0 n)
-                (H1 : ∀m n, /- has_well_founded.r 0 m -/ m ≠ 0 → P (n % m) m → P m n) :
-            P m n := sorry
-
-/-
-@[elab_as_eliminator]
-theorem gcd.induction {P : ℕ → ℕ → Prop}
-                   (m n : ℕ)
-                   (H0 : ∀n, P 0 n)
-                   (H1 : ∀m n, 0 < m → P (n % m) m → P m n) :
-                 P m n :=
-@induction _ _ lt_wf (λm, ∀n, P m n) m (λk IH,
-  by {induction k with k ih, exact H0,
-      exact λn, H1 _ _ (succ_pos _) (IH _ (mod_lt _ (succ_pos _)) _)}) n
-
-theorem gcd_dvd (m n : ℕ) : (gcd m n ∣ m) ∧ (gcd m n ∣ n) :=
-gcd.induction m n
-  (λn, by rw gcd_zero_left; exact ⟨dvd_zero n, dvd_refl n⟩)
-  (λm n npos, by rw ←gcd_rec; exact λ ⟨IH₁, IH₂⟩, ⟨IH₂, (dvd_mod_iff IH₂).1 IH₁⟩)
--/
