@@ -1,8 +1,9 @@
 --TODO
 -- convert to well founded instead of ℕ
--- change to require only decidability for (x=0) (get rid of decidable_euclidean_domain entirely?)
 -- do I do well founded on the valuation or just the inputs? 
 -- Fix loads of unfolds
+-- In general we don't have 0 % a = 0
+-- Does the sizeof defintion issue hold everywhere?
 
 -- Clean up:
 -- indentation style?
@@ -288,7 +289,114 @@ gcd.induction a b
 --     b % a = 0 :=
 -- dvd.elim H (λ z H1, by {rw [H1], sorry})
 
--- theorem gcd_comm (m n : ℕ) : gcd m n = gcd n m :=
--- dvd_antisymm
---   (dvd_gcd (gcd_dvd_right m n) (gcd_dvd_left m n))
---   (dvd_gcd (gcd_dvd_right n m) (gcd_dvd_left n m))
+--  theorem gcd_comm {α : Type} [ed: decidable_euclidean_domain α] (a b : α) : gcd a b = gcd b a :=
+-- begin
+--     have := gcd.induction a b
+--     begin
+--         intro x,
+--     end
+
+-- end
+#reduce (abs (-5:int))
+#check int.nat_abs
+
+def weird_int_euclidean_domain : euclidean_domain ℤ :=
+{
+    quotient := λ a b, if a=0 then (if b=1 then 1 else a/b) else a/b,
+    remainder := λ a b, if a = 0 then (if b=1 then -1 else a%b) else a%b,
+    witness :=
+    begin
+    intros a b,
+    cases decidable.em (a=0),
+    {
+        simp [h],
+        cases decidable.em (b=1),
+        {
+            simp [h_1],
+        },
+        {
+            simp [h_1],
+        }
+    },
+    {
+        simp [h],
+        have hab := int.mod_add_div a b,
+        rw mul_comm at hab,
+        exact hab,
+    }
+    end,
+    valuation := {
+        val :=  λ a : ℤ, if a = 0 ∨ a = -1 then int.nat_abs a else (int.nat_abs a) + 1,
+        property :=
+        begin
+            intros a b,
+            cases decidable.em (b=0),
+            {left, assumption},
+            {
+                right,
+                cases decidable.em (a=0),
+                {
+                    simp [h_1],
+                    cases decidable.em (b=1),
+                    {
+                        have one_neq : (1:int) ≠ -1, from dec_trivial, 
+                        simp [h_2, one_neq],
+                        
+                        unfold has_well_founded.r,
+                        unfold sizeof_measure,
+                        unfold sizeof,
+                        unfold measure,
+                        unfold inv_image,
+                        sorry --unfold has_sizeof.size, -- this doesn't work, some weird type class stuff is going on here (lean doesn't know what sizeof is because we're defining it here). The basic idea holds though
+                        --unfold nat.sizeof,
+                    },
+                    {
+                        simp [h_2,h],
+                        sorry -- follows from cases on b=-1 here
+                    }
+                    
+                },
+                {
+                    simp [h_1],
+                    cases decidable.em(b=1),
+                    {
+                        have one_neq : (1:ℤ) ≠ -1, from dec_trivial,
+                        simp [h_2, one_neq],
+                        sorry -- same sizeof issue, but it would follow from here
+                    },
+                    {
+                        simp [h],
+                        cases decidable.em (b=-1),
+                        {
+                            simp [h_3],
+                            sorry -- follows again
+                        },
+                        {
+                            simp [h_3],
+                            cases decidable.em (a % b = 0 ∨ a % b = -1),
+                            {
+                                simp [h_4],
+                                cases h_4,
+                                {
+                                    rw [h_4],
+                                    sorry -- follows from here
+                                },
+                                {
+                                    rw [h_4],
+                                    sorry -- follows from here since the only things -1 is not less than are itself and 0 and b+1 can't be 0 since b≠-1
+                                }
+                            },
+                            {
+                                simp [h_4],
+                                sorry -- follows (we subtract 1 from both sides and then we have what we want from int's being a ED)
+                            }
+                        }
+                    }
+                }
+            }
+        end
+    }
+}
+
+
+
