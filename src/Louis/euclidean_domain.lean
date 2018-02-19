@@ -103,7 +103,6 @@ theorem gcd.induction {α : Type} [ed: decidable_euclidean_domain α]
     by {cases decidable.em (k=0), rw h, exact H0,
         exact λ n, H1 k n (h) (IH (n%k) (neq_zero_lt_mod_lt n k h) k)}) n
 
-@[reducible] def coprime {α : Type} [ed: decidable_euclidean_domain α]  (a b : α) : Prop := gcd a b = 1
 
 /- more gcd stuff (generalized mathlib/data/nat/gcd.lean) -/
 
