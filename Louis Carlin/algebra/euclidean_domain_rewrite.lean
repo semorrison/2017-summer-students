@@ -5,6 +5,26 @@ def xgcd_aux {α} [decidable_euclidean_domain α] : α → α → α → α → 
     else have has_well_founded.r (r' % r) r, from neq_zero_lt_mod_lt r' r r_zero,
     let q := r' / r in xgcd_aux (r' % r) (s' - q * s) (t' - q * t) r s t
 
+@[simp] theorem xgcd_zero_left {α} [decidable_euclidean_domain α] {s t r' s' t' : α} :
+    xgcd_aux (0:α) s t r' s' t' = (r', s', t') :=
+by rw xgcd_aux; simp
+
+@[simp] theorem xgcd_aux_rec {α} [decidable_euclidean_domain α] {r s t r' s' t' : α} (h : has_well_founded.r 0 r) : xgcd_aux r s t r' s' t' = xgcd_aux (r' % r) (s' - (r' / r) * s) (t' - (r' / r) * t) r s t :=
+begin
+    cases decidable.em (r = 0),
+    {
+        rw h_1 at h,
+        exact absurd h (lt_irrefl ((euclidean_domain.valuation α).val 0)),
+    },
+    {
+        rw xgcd_aux,
+        simp [h_1],
+    }
+end
+
+
+
+--by simp [xgcd_aux]
 
 
 --TODO
