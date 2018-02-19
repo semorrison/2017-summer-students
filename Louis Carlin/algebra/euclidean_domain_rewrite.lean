@@ -1,5 +1,12 @@
 import Louis.euclidean_domain
 
+def xgcd_aux {α} [decidable_euclidean_domain α] : α → α → α → α → α → α → α × α × α
+| r s t r' s' t' := if r_zero : r = 0 then (r', s', t') 
+    else have has_well_founded.r (r' % r) r, from neq_zero_lt_mod_lt r' r r_zero,
+    let q := r' / r in xgcd_aux (r' % r) (s' - q * s) (t' - q * t) r s t
+
+
+
 --TODO
 -- convert to well founded instead of ℕ
 -- do I do well founded on the valuation or just the inputs? 
@@ -87,7 +94,7 @@ instance weird_int_euclidean_domain : euclidean_domain ℤ :=
         begin
             intros a b,
             cases decidable.em (b=0),
-            {left, assumption},
+            {left, exact h},
             {
                 right,
                 cases decidable.em (a=0),
