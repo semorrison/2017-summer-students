@@ -1,6 +1,6 @@
 
 import data.set.basic init.function data.equiv init.logic 
-import mitchell.group_theory.coset mitchell.group_theory.subgroup
+import group_theory.coset group_theory.subgroup
 
 universes u v
 variables {G : Type u} {H : Type v}

@@ -1,5 +1,5 @@
 import data.set.basic init.function data.equiv init.logic 
-import mitchell.group_theory.homomorphism
+import group_theory.homomorphism
 
 open set
 
