@@ -1,5 +1,14 @@
 import Louis.euclidean_domain
 
+theorem gcd_rec {α} [decidable_euclidean_domain α] (m n : α) : m ≠ 0 → gcd m n = gcd (n % m) m :=
+begin
+    intro hm,
+    rw gcd,
+    simp [hm],
+end
+
+/- extended euclidean algorithm -/
+
 def xgcd_aux {α} [decidable_euclidean_domain α] : α → α → α → α → α → α → α × α × α
 | r s t r' s' t' := if r_zero : r = 0 then (r', s', t') 
     else have has_well_founded.r (r' % r) r, from neq_zero_lt_mod_lt r' r r_zero,
@@ -23,8 +32,61 @@ begin
 end
 
 
+/-- Use the extended GCD algorithm to generate the `a` and `b` values
+  satisfying `gcd x y = x * a + y * b`. -/
+def xgcd {α} [decidable_euclidean_domain α] (x y : α) : α × α := (xgcd_aux x 1 0 y 0 1).2
 
---by simp [xgcd_aux]
+/-- The extended GCD `a` value in the equation `gcd x y = x * a + y * b`. -/
+def gcd_a {α} [decidable_euclidean_domain α] (x y : α) : α := (xgcd x y).1
+
+/-- The extended GCD `b` value in the equation `gcd x y = x * a + y * b`. -/
+def gcd_b {α} [decidable_euclidean_domain α] (x y : α) : α := (xgcd x y).2
+
+@[simp] theorem xgcd_aux_fst {α} [decidable_euclidean_domain α] (x y : α) :
+    ∀ s t s' t', (xgcd_aux x s t y s' t').1 = gcd x y :=
+gcd.induction x y 
+(begin
+    intros, 
+    unfold xgcd_aux,
+    simp,
+end)
+(λ x y h IH s t s' t',
+begin 
+  unfold xgcd_aux,
+  simp [h,IH],
+  exact eq.symm (gcd_rec x y h)
+end)
+
+theorem xgcd_aux_val {α} [decidable_euclidean_domain α] (x y : α) : xgcd_aux x 1 0 y 0 1 = (gcd x y, xgcd x y) :=
+by rw [xgcd, ← xgcd_aux_fst x y 1 0 0 1]; cases xgcd_aux x 1 0 y 0 1; refl
+
+theorem xgcd_val {α} [decidable_euclidean_domain α] (x y : α) : xgcd x y = (gcd_a x y, gcd_b x y) :=
+by unfold gcd_a gcd_b; cases xgcd x y; refl
+
+section
+parameters {α : Type} [decidable_euclidean_domain α] (a b : α)
+
+/- mathlib defines parameters for a and b at this point, maybe I should be doing that? -/
+private def P : α × α × α → Prop | (r, s, t) := r = a * s + b * t
+
+theorem xgcd_aux_P  {r r' : α} : ∀ {s t s' t'}, P (r, s, t) → P (r', s', t') → P (xgcd_aux r s t r' s' t') :=
+gcd.induction r r' 
+begin
+intros,
+simp,
+exact a_2,
+end
+ $ λ x y h IH s t s' t' p p', begin
+  rw [xgcd_aux_rec h], refine IH _ p, dsimp [P] at *,
+  rw [int.mod_def], generalize : (y / x : ℤ) = k,
+  rw [p, p'], simp [mul_add, mul_comm, mul_left_comm]
+end
+
+theorem gcd_eq_gcd_ab : (gcd a b : ℤ) = a * gcd_a a b + b * gcd_b a b :=
+by have := @xgcd_aux_P a b a b 1 0 0 1 (by simp [P]) (by simp [P]);
+   rwa [xgcd_aux_val, xgcd_val] at this
+end
+
 
 
 --TODO
