@@ -1,5 +1,8 @@
 import Louis.euclidean_domain
 
+-- As is this definition isn't right. You could define this with a unit instead of one?
+-- @[reducible] def coprime {α : Type} [ed: decidable_euclidean_domain α]  (a b : α) : Prop := gcd a b = 1
+
 theorem gcd_rec {α} [decidable_euclidean_domain α] (m n : α) : m ≠ 0 → gcd m n = gcd (n % m) m :=
 begin
     intro hm,
@@ -18,17 +21,10 @@ def xgcd_aux {α} [decidable_euclidean_domain α] : α → α → α → α → 
     xgcd_aux (0:α) s t r' s' t' = (r', s', t') :=
 by rw xgcd_aux; simp
 
-@[simp] theorem xgcd_aux_rec {α} [decidable_euclidean_domain α] {r s t r' s' t' : α} (h : has_well_founded.r 0 r) : xgcd_aux r s t r' s' t' = xgcd_aux (r' % r) (s' - (r' / r) * s) (t' - (r' / r) * t) r s t :=
+@[simp] theorem xgcd_aux_rec {α} [decidable_euclidean_domain α] {r s t r' s' t' : α} (h : r ≠ 0) : xgcd_aux r s t r' s' t' = xgcd_aux (r' % r) (s' - (r' / r) * s) (t' - (r' / r) * t) r s t :=
 begin
-    cases decidable.em (r = 0),
-    {
-        rw h_1 at h,
-        exact absurd h (lt_irrefl ((euclidean_domain.valuation α).val 0)),
-    },
-    {
-        rw xgcd_aux,
-        simp [h_1],
-    }
+    rw xgcd_aux,
+    simp [h],
 end
 
 
@@ -77,12 +73,13 @@ simp,
 exact a_2,
 end
  $ λ x y h IH s t s' t' p p', begin
-  rw [xgcd_aux_rec h], refine IH _ p, dsimp [P] at *,
-  rw [int.mod_def], generalize : (y / x : ℤ) = k,
+  rw [xgcd_aux_rec h], refine IH _ p, dsimp [P] at *, -- a % b = a - b * (a / b)
+  have mod_def : ∀ a b : α, a % b = a - b * (a / b), from sorry,
+  rw [mod_def], generalize : (y / x : α) = k,
   rw [p, p'], simp [mul_add, mul_comm, mul_left_comm]
 end
 
-theorem gcd_eq_gcd_ab : (gcd a b : ℤ) = a * gcd_a a b + b * gcd_b a b :=
+theorem gcd_eq_gcd_ab : (gcd a b : α) = a * gcd_a a b + b * gcd_b a b :=
 by have := @xgcd_aux_P a b a b 1 0 0 1 (by simp [P]) (by simp [P]);
    rwa [xgcd_aux_val, xgcd_val] at this
 end
