@@ -75,6 +75,7 @@ end
  $ λ x y h IH s t s' t' p p', begin
   rw [xgcd_aux_rec h], refine IH _ p, dsimp [P] at *, -- a % b = a - b * (a / b)
   have mod_def : ∀ a b : α, a % b = a - b * (a / b), from sorry,
+  --have := euclidean_domain.witness a b,
   rw [mod_def], generalize : (y / x : α) = k,
   rw [p, p'], simp [mul_add, mul_comm, mul_left_comm]
 end
