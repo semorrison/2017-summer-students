@@ -109,15 +109,11 @@ theorem gcd.induction {α : Type} [ed: decidable_euclidean_domain α]
 theorem gcd_dvd {α : Type} [ed: decidable_euclidean_domain α] (a b : α) : (gcd a b ∣ a) ∧ (gcd a b ∣ b) :=
 gcd.induction a b
     (λ b, by simp)
-    (λ a b bpos,
+    (λ a b aneq,
     begin
         intro h_dvd,
-        cases decidable.em (a=0),
         {
-            rw h, simp,
-        },
-        {
-            rw gcd, simp [h],
+            rw gcd, simp [aneq],
             cases h_dvd,
             split,
                 {exact h_dvd_right},
