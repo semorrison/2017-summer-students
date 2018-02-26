@@ -59,32 +59,89 @@ by rw [xgcd, ← xgcd_aux_fst x y 1 0 0 1]; cases xgcd_aux x 1 0 y 0 1; refl
 theorem xgcd_val {α} [decidable_euclidean_domain α] (x y : α) : xgcd x y = (gcd_a x y, gcd_b x y) :=
 by unfold gcd_a gcd_b; cases xgcd x y; refl
 
+-- private def P {α} [euclidean_domain α] (x y : α) : α × α × α × α × α → Prop
+-- | (a,b,r, s, t) := r = a * s + b * t
+
+-- theorem xgcd_aux_P  {α  [euclidean_domain α] (a b : α) {r r' } : ∀ {s t s' t'}, P (a,b,r, s, t) → P (a,b,r', s', t') → P (xgcd_aux r s t r' s' t') :=
+-- gcd.induction r r' 
+-- begin
+-- intros,
+-- simp,
+-- exact a_2,
+-- end
+--  $ λ x y h IH s t s' t' p p', begin
+--   rw [xgcd_aux_rec h], refine IH _ p, dsimp [P] at *, -- a % b = a - b * (a / b)
+--   have mod_def : ∀ a b : α, a % b = a - b * (a / b), from sorry,
+--   rw [mod_def], generalize : (y / x : α) = k,
+--   rw [p, p'], simp [mul_add, mul_comm, mul_left_comm]
+-- end
+
+-- theorem gcd_eq_gcd_ab : (gcd a b : α) = a * gcd_a a b + b * gcd_b a b :=
+-- by have := @xgcd_aux_P a b a b 1 0 0 1 (by simp [P]) (by simp [P]);
+--    rwa [xgcd_aux_val, xgcd_val] at this
+-- end
+
+
 section
-parameters {α : Type} [decidable_euclidean_domain α] (a b : α)
+parameters (α : Type) [decidable_euclidean_domain α] (a b : α)
 
 /- mathlib defines parameters for a and b at this point, maybe I should be doing that? -/
 private def P : α × α × α → Prop | (r, s, t) := r = a * s + b * t
 
-theorem xgcd_aux_P  {r r' : α} : ∀ {s t s' t'}, P (r, s, t) → P (r', s', t') → P (xgcd_aux r s t r' s' t') :=
-gcd.induction r r' 
+-- theorem gcd.induction {α : Type} [ed: decidable_euclidean_domain α] 
+--                     {P : α → α → Prop}
+--                     (m n : α)
+--                     (H0 : ∀ x, P 0 x)
+--                     (H1 : ∀ m n, m ≠ 0 → P (n%m) m → P m n) :
+--                 P m n := 
+-- @well_founded.induction _ _ (has_well_founded.wf α) (λm, ∀n, P m n) m (λk IH,
+--     by {cases decidable.em (k=0), rw h, exact H0,
+--         exact λ n, H1 k n (h) (IH (n%k) (neq_zero_lt_mod_lt n k h) k)}) n
+
+-- theorem gcd.induction {P : ℕ → ℕ → Prop}
+--                    (m n : ℕ)
+--                    (H0 : ∀n, P 0 n)
+--                    (H1 : ∀m n, 0 < m → P (n % m) m → P m n) :
+--                  P m n :=
+-- @induction _ _ lt_wf (λm, ∀n, P m n) m (λk IH,
+--   by {induction k with k ih, exact H0,
+--       exact λn, H1 _ _ (succ_pos _) (IH _ (mod_lt _ (succ_pos _)) _)}) n
+
+
+theorem xgcd_aux_P  {r r' }  : ∀ {s t s' t'}, P (r, s, t) → P (r', s', t') → P (xgcd_aux r s t r' s' t') := 
+@gcd.induction α _ (λ r r', ∀ {s t s' t'}, P (r, s, t) → P (r', s', t') → P (xgcd_aux r s t r' s' t')) r r' 
 begin
 intros,
 simp,
 exact a_2,
 end
- $ λ x y h IH s t s' t' p p', begin
-  rw [xgcd_aux_rec h], refine IH _ p, dsimp [P] at *, -- a % b = a - b * (a / b)
-  have mod_def : ∀ a b : α, a % b = a - b * (a / b), from sorry,
-  --have := euclidean_domain.witness a b,
+( λ x y h IH s t s' t' p p', -- what is going on with this extra prop : Prop?
+begin
+rw [xgcd_aux_rec h],
+refine IH  _  p,
+dsimp [P] at *, -- a % b = a - b * (a / b)
+  have mod_def : ∀ a b : α, a % b = a - b * (a / b), from sorry, -- why does this fail to mind has_sub?
   rw [mod_def], generalize : (y / x : α) = k,
   rw [p, p'], simp [mul_add, mul_comm, mul_left_comm]
-end
+end)
 
-theorem gcd_eq_gcd_ab : (gcd a b : α) = a * gcd_a a b + b * gcd_b a b :=
+-- theorem xgcd_aux_P {r r'} : ∀ {s t s' t'}, P (r, s, t) → P (r', s', t') → P (xgcd_aux r s t r' s' t') :=
+-- gcd.induction r r' (by simp) $ λ x y h IH s t s' t' p p', begin
+--   rw [xgcd_aux_rec h], refine IH _ p, dsimp [P] at *,
+--   rw [int.mod_def], generalize : (y / x : ℤ) = k,
+--   rw [p, p'], simp [mul_add, mul_comm, mul_left_comm]
+-- end
+
+
+theorem gcd_eq_gcd_ab : (gcd a b : α)  = a * gcd_a a b + b * gcd_b a b :=
 by have := @xgcd_aux_P a b a b 1 0 0 1 (by simp [P]) (by simp [P]);
    rwa [xgcd_aux_val, xgcd_val] at this
 end
 
+-- theorem gcd_eq_gcd_ab : (gcd a b : ℤ) = a * gcd_a a b + b * gcd_b a b :=
+-- by have := @xgcd_aux_P a b a b 1 0 0 1 (by simp [P]) (by simp [P]);
+--    rwa [xgcd_aux_val, xgcd_val] at this
+-- end
 
 
 --TODO

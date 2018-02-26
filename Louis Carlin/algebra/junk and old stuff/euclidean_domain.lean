@@ -11,6 +11,7 @@ class euclidean_domain (α : Type) extends integral_domain α :=
 ( quotient : α → α → α )
 ( remainder : α → α → α )
 ( witness : ∀ a b, (quotient a b) * b + (remainder a b) = a )
+(valuation : ∃ f : α → ℕ,∀ a b : α,  b = 0 ∨ f (remainder a b) < f b)
 ( valuation : trunc (valuation remainder))
 
 
