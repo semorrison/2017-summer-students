@@ -5,9 +5,27 @@
 
 .DS_Store
 
-*.aux
-*.fdb_latexmk
-*.fls
-*.log
-*.synctex.gz
-*.toc
+*.aux 
+*.log 
+*.out 
+*.thm 
+*.synctex.gz* 
+*.bbl 
+*.toc 
+*.texshop 
+*.snm 
+*.nav 
+*.blg 
+*.dvi 
+*.txt~ 
+*.tex~ 
+*.tex.backup 
+*.kate-swp 
+*.fdb_latexmk 
+*.fls 
+*.run.xml 
+*.ind 
+*.ilg 
+*.pdfsync 
+*-blx.bib 
+*.bcf
