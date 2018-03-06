@@ -3,7 +3,7 @@ import data.set.basic init.function algebra.group
 universes u v w
 variables {G : Type u} {H : Type v} {K : Type w}
 
-class group_hom [group G] [group H] (f : G → H) : Prop :=
+class is_group_hom [group G] [group H] (f : G → H) : Prop :=
     (hom_mul : ∀ a b, f (a * b) = f a * f b)
 
 attribute [simp] group_hom.hom_mul

@@ -76,32 +76,32 @@ instance center_normal_in : normal_subgroup (center G) := {
 end subgroup
 
 -- Homomorphism subgroups
-namespace group_hom
+namespace is_group_hom
 open subgroup
 variables [group G] [group H]
 
 @[simp]
-def kernel (f : G → H) [group_hom f] : set G := preimage f (trivial H)
+def kernel (f : G → H) [is_group_hom f] : set G := preimage f (trivial H)
 
-@[simp] lemma mem_ker_one {f : G → H} [group_hom f] {x : G} (h : x ∈ kernel f) : f x = 1 := by simp [kernel] at h; simp [h]
+@[simp] lemma mem_ker_one {f : G → H} [is_group_hom f] {x : G} (h : x ∈ kernel f) : f x = 1 := by simp [kernel] at h; simp [h]
 
-@[simp] lemma one_ker_inv {f : G → H} [group_hom f] {a b : G} (h : f (a * b⁻¹) = 1) : f a = f b := by rw ←inv_inv (f b); rw [hom_mul f, inv f] at h; exact eq_inv_of_mul_eq_one h
+@[simp] lemma one_ker_inv {f : G → H} [is_group_hom f] {a b : G} (h : f (a * b⁻¹) = 1) : f a = f b := by rw ←inv_inv (f b); rw [hom_mul f, inv f] at h; exact eq_inv_of_mul_eq_one h
 
-@[simp] lemma inv_ker_one {f : G → H} [group_hom f] {a b : G} (h : f a = f b) : f (a * b⁻¹) = 1 :=
+@[simp] lemma inv_ker_one {f : G → H} [is_group_hom f] {a b : G} (h : f a = f b) : f (a * b⁻¹) = 1 :=
     have f a * (f b)⁻¹ = 1, by rw h; apply mul_right_inv,
     by rw [←inv f, ←hom_mul f] at this; exact this
 
-@[simp] lemma ker_inv {f : G → H} [group_hom f] {a b : G} (h : a * b⁻¹ ∈ kernel f) : f a = f b := one_ker_inv $ mem_ker_one h
+@[simp] lemma ker_inv {f : G → H} [is_group_hom f] {a b : G} (h : a * b⁻¹ ∈ kernel f) : f a = f b := one_ker_inv $ mem_ker_one h
 
-@[simp] lemma inv_ker {f : G → H} [group_hom f] {a b : G} (h : f a = f b) : a * b⁻¹ ∈ kernel f := by simp [mem_set_of_eq]; exact inv_ker_one h
+@[simp] lemma inv_ker {f : G → H} [is_group_hom f] {a b : G} (h : f a = f b) : a * b⁻¹ ∈ kernel f := by simp [mem_set_of_eq]; exact inv_ker_one h
 
-lemma one_iff_ker_inv (f : G → H) [group_hom f] (a b : G) : f a = f b ↔ f (a * b⁻¹) = 1 :=
+lemma one_iff_ker_inv (f : G → H) [is_group_hom f] (a b : G) : f a = f b ↔ f (a * b⁻¹) = 1 :=
     ⟨inv_ker_one, one_ker_inv⟩
 
-lemma inv_iff_ker (f : G → H) [group_hom f] (a b : G) : f a = f b ↔ a * b⁻¹ ∈ kernel f :=
+lemma inv_iff_ker (f : G → H) [is_group_hom f] (a b : G) : f a = f b ↔ a * b⁻¹ ∈ kernel f :=
     ⟨inv_ker, ker_inv⟩
 
-instance image_in (f : G → H) [group_hom f] (S : set G) [subgroup S] : subgroup (f '' S) := {
+instance image_in (f : G → H) [is_group_hom f] (S : set G) [subgroup S] : subgroup (f '' S) := {
     subgroup .
     mul_mem := assume a₁ a₂ ⟨b₁, hb₁, eq₁⟩ ⟨b₂, hb₂, eq₂⟩,
     ⟨b₁ * b₂, mul_mem hb₁ hb₂, by simp [eq₁, eq₂, hom_mul f]⟩,
@@ -110,16 +110,16 @@ instance image_in (f : G → H) [group_hom f] (S : set G) [subgroup S] : subgrou
     ⟨b⁻¹, inv_mem hb, by rw inv f; simp *⟩ 
 }
 
-instance preimage_in (f : G → H) [group_hom f] (S : set H) [subgroup S] : subgroup (f ⁻¹' S) :=
+instance preimage_in (f : G → H) [is_group_hom f] (S : set H) [subgroup S] : subgroup (f ⁻¹' S) :=
     by refine {..}; simp [hom_mul f, one f, inv f] {contextual:=tt}
 
-instance preimage_norm_in (f : G → H) [group_hom f] (S : set H) [normal_subgroup S] : normal_subgroup (f ⁻¹' S) :=
+instance preimage_norm_in (f : G → H) [is_group_hom f] (S : set H) [normal_subgroup S] : normal_subgroup (f ⁻¹' S) :=
     by refine {..}; simp [hom_mul f, one f, inv f] {contextual:=tt}
 
-instance kernel_in (f : G → H) [group_hom f] : normal_subgroup (kernel f) := 
-    group_hom.preimage_norm_in f (trivial H)
+instance kernel_in (f : G → H) [is_group_hom f] : normal_subgroup (kernel f) := 
+    is_group_hom.preimage_norm_in f (trivial H)
 
-lemma inj_of_trivial_kernel {f : G → H} [group_hom f] (h : kernel f = trivial G) : function.injective f :=
+lemma inj_of_trivial_kernel {f : G → H} [is_group_hom f] (h : kernel f = trivial G) : function.injective f :=
     begin
     dsimp [function.injective] at *,
     intros a₁ a₂ hfa,
@@ -128,7 +128,7 @@ lemma inj_of_trivial_kernel {f : G → H} [group_hom f] (h : kernel f = trivial 
     rw [eq_inv_of_mul_eq_one ha, inv_inv a₂]
     end
 
-lemma trivial_kernel_of_inj {f : G → H} [group_hom f] (h : function.injective f) : kernel f = trivial G :=
+lemma trivial_kernel_of_inj {f : G → H} [is_group_hom f] (h : function.injective f) : kernel f = trivial G :=
     begin
     dsimp [function.injective] at *,
     simp [set_eq_def, mem_set_of_eq],
@@ -142,7 +142,7 @@ lemma trivial_kernel_of_inj {f : G → H} [group_hom f] (h : function.injective 
     { assume hx, simp [hx, one f] }
     end
 
-lemma inj_iff_trivial_kernel {f : G → H} [group_hom f] : function.injective f ↔ kernel f = trivial G :=
+lemma inj_iff_trivial_kernel {f : G → H} [is_group_hom f] : function.injective f ↔ kernel f = trivial G :=
     ⟨trivial_kernel_of_inj, inj_of_trivial_kernel⟩
 
-end group_hom
+end is_group_hom
