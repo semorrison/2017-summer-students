@@ -1,5 +1,40 @@
 import Louis.euclidean_domain
 
+example : integral_domain ℤ := by apply_instance
+
+/- instances -/
+instance int_euclidean_domain : decidable_euclidean_domain ℤ := {
+    ((by apply_instance) : integral_domain ℤ) with 
+    quotient := λ a b, a/b,
+    remainder := λ a b, a%b,
+    witness := 
+    begin
+        intros a b,
+        rw [add_comm, mul_comm],
+        exact int.mod_add_div a b,
+    end,
+    valuation :=
+    begin
+        split,
+        tactic.swap,
+        exact int.nat_abs,
+        intros,
+        cases decidable.em (b=0),
+        {
+            left, exact h,
+        },
+        {
+            right,
+            simp,
+            sorry,
+        }
+    end,
+    decidable_eq_zero := by apply_instance
+}
+#check nat.mod_add_div
+#check int.mod_lt
+#check int.nat_abs_abs
+
 -- As is this definition isn't right. You could define this with a unit instead of one?
 -- @[reducible] def coprime {α : Type} [ed: decidable_euclidean_domain α]  (a b : α) : Prop := gcd a b = 1
 
@@ -13,7 +48,7 @@ end
 /- extended euclidean algorithm -/
 
 def xgcd_aux {α} [decidable_euclidean_domain α] : α → α → α → α → α → α → α × α × α
-| r s t r' s' t' := if r_zero : r = 0 then (r', s', t') 
+| r s t r' s' t' := if r_zero : r = 0 then (r', s', t')
     else have has_well_founded.r (r' % r) r, from neq_zero_lt_mod_lt r' r r_zero,
     let q := r' / r in xgcd_aux (r' % r) (s' - q * s) (t' - q * t) r s t
 
@@ -40,14 +75,14 @@ def gcd_b {α} [decidable_euclidean_domain α] (x y : α) : α := (xgcd x y).2
 
 @[simp] theorem xgcd_aux_fst {α} [decidable_euclidean_domain α] (x y : α) :
     ∀ s t s' t', (xgcd_aux x s t y s' t').1 = gcd x y :=
-gcd.induction x y 
+gcd.induction x y
 (begin
-    intros, 
+    intros,
     unfold xgcd_aux,
     simp,
 end)
 (λ x y h IH s t s' t',
-begin 
+begin
   unfold xgcd_aux,
   simp [h,IH],
   exact eq.symm (gcd_rec x y h)
@@ -66,7 +101,7 @@ parameters {α : Type} [decidable_euclidean_domain α] (a b : α)
 private def P : α × α × α → Prop | (r, s, t) := r = a * s + b * t
 
 theorem xgcd_aux_P  {r r' : α} : ∀ {s t s' t'}, P (r, s, t) → P (r', s', t') → P (xgcd_aux r s t r' s' t') :=
-gcd.induction r r' 
+gcd.induction r r'
 begin
 intros,
 simp,
@@ -89,7 +124,7 @@ end
 
 --TODO
 -- convert to well founded instead of ℕ
--- do I do well founded on the valuation or just the inputs? 
+-- do I do well founded on the valuation or just the inputs?
 -- Fix loads of unfolds
 -- In general we don't have 0 % a = 0
 -- Does the sizeof defintion issue hold everywhere?
@@ -122,7 +157,7 @@ end
 -- {
 --     ordering := (<), --nat.lt,
 --     iwo := by apply_instance
--- } 
+-- }
 
 -- instance ed_has_well_founded {α : Type} [ed: decidable_euclidean_domain α] : has_well_founded α :=
 -- has_well_founded_of_has_wo ed.valuation.val
@@ -134,14 +169,14 @@ end
 --     exact this_wf, -- why can't lean work this out itself?
 -- end
 
-structure Well_Ordered_Type := 
+structure Well_Ordered_Type :=
 (β : Type)
 (lt : β → β → Prop)
 (w : is_well_order β lt)   -- TODO can β be made implicit in the defintion of is_well_order in mathlib?
 
 /-
  This is a counterexample to the claim that ∀ a, 0 % a = 0 in EDs.
- We have defined division such that 0 % 1 = -1 and defined a valuation  such that this is consistent with the ED definition 
+ We have defined division such that 0 % 1 = -1 and defined a valuation  such that this is consistent with the ED definition
 -/
 instance weird_int_euclidean_domain : euclidean_domain ℤ :=
 {
@@ -182,7 +217,7 @@ instance weird_int_euclidean_domain : euclidean_domain ℤ :=
                     simp [h_1],
                     cases decidable.em (b=1),
                     {
-                        have one_neq : (1:int) ≠ -1, from dec_trivial, 
+                        have one_neq : (1:int) ≠ -1, from dec_trivial,
                         simp [h_2, one_neq],
                         exact dec_trivial, -- is this the way you're meant to do this? (surely there's just a tactic)
                     },
@@ -198,7 +233,7 @@ instance weird_int_euclidean_domain : euclidean_domain ℤ :=
                                 exact dec_trivial,
                             }
                     }
-                    
+
                 },
                 {
                     simp [h_1],

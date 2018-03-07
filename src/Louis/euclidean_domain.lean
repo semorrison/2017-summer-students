@@ -6,7 +6,7 @@ definition euclidean_valuation {α} [has_zero α] (r : α → α → α) := { f 
 class euclidean_domain (α : Type) extends integral_domain α :=
 ( quotient : α → α → α )
 ( remainder : α → α → α )
-( witness : ∀ a b, (quotient a b) * b + (remainder a b) = a )
+( witness : ∀ a b, (quotient a b) * b + (remainder a b) = a ) -- this should probably be changed to the same order as int.mod_add_div
 ( valuation : euclidean_valuation remainder)
 
 class decidable_euclidean_domain (α : Type) extends euclidean_domain α:=
