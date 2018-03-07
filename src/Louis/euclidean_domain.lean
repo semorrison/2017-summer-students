@@ -7,10 +7,11 @@ class euclidean_domain (α : Type) extends integral_domain α :=
 ( witness : ∀ a b, (quotient a b) * b + (remainder a b) = a ) -- this should probably be changed to the same order as int.mod_add_div
 (valuation : α → ℕ)
 (val_mod : ∀ a b, b = 0 ∨  valuation (remainder a b) <  valuation b)
-(val_mul : ∀ a b, valuation a ≤ valuation a*b)
+(val_mul : ∀ a b, b = 0 ∨ valuation a ≤ valuation (a*b))
 /-
 val_mul is often not a required in definitions of a euclidean domain since given the other properties we can show there is a (noncomputable) euclidean domain α with the property val_mul.
 So potentially this definition could be split into two different ones (euclidean_domain_weak and euclidean_domain_strong) with a noncomputable function from weak to strong
+I've currently divided the lemmas depending on whether they require val_mul or not
 -/
 
 class decidable_euclidean_domain (α : Type) extends euclidean_domain α:=
@@ -23,7 +24,7 @@ It might be worth making it part of the original definition?
 instance decidable_eq_zero {α : Type} [ed : decidable_euclidean_domain α] (a : α) : decidable (a = 0) :=
  decidable_euclidean_domain.decidable_eq_zero a
 
-open euclidean_domain
+namespace euclidean_domain
 
 instance euclidean_domain_has_div {α : Type} [euclidean_domain α] : has_div α := {
     div := quotient
@@ -49,7 +50,7 @@ def gcd {α : Type} [decidable_euclidean_domain α] : α → α → α
          else have h : has_well_founded.r (y % x) x := gcd_decreasing x y x_zero,
               gcd (y%x) x
 
-/- misc lemmas -/
+/- weak lemmas -/
 
 @[simp] lemma mod_zero {α : Type} [ed : euclidean_domain α] (a : α)  : a % 0 = a :=
 begin
@@ -58,7 +59,88 @@ begin
     exact this,
 end
 
-/- gcd lemmas -/
+/- strong lemmas -/
+
+lemma val_lt_one {α : Type} [decidable_euclidean_domain α] (x : α) : 
+valuation x < valuation (1:α) → x = 0 :=
+begin
+    intro x_lt,
+    cases val_mul (1:α) x,
+        {exact h,},
+        {
+            simp at h,
+            have := not_le_of_lt x_lt,
+            contradiction
+        }
+end
+
+lemma val_dvd_le {α : Type} [decidable_euclidean_domain α] (a b : α) :
+    b ∣ a → a ≠ 0 → valuation b ≤ valuation a :=
+begin
+    intros b_dvd ha,
+    induction b_dvd with x hx, rw hx,
+    cases val_mul b x,
+        {
+            rw h at hx, simp at hx,
+            contradiction,
+        },
+        {
+            exact h,
+        }
+end
+
+@[simp] lemma mod_one {α : Type} [decidable_euclidean_domain α] (x : α) : x % 1 = 0 :=
+begin
+    cases val_mod x 1,
+    { 
+        have := one_ne_zero, 
+        contradiction,
+    },
+    {
+        exact val_lt_one (x % 1) h,
+    }
+end 
+
+@[simp] lemma zero_mod  {α : Type} [ed : decidable_euclidean_domain α] (b : α) : 0 % b = 0 :=
+begin
+    have h1 := witness 0 b,
+    have h2 : remainder 0 b = b * (-quotient 0 b ), from sorry,
+    -- have h2' : 0 % b = b * (- 0/b ), from sorry,
+    cases val_mul b (-euclidean_domain.quotient 0 b),
+    {
+        simp at h, rw h at h1, simp at h1,
+        exact h1,
+    },
+    {
+        rw [←h2] at h,
+        cases val_mod 0 b,
+        {
+            rw h_1, exact mod_zero (0:α),
+        },
+        {
+            have := not_le_of_lt h_1,
+            contradiction,
+        }
+    }
+    
+end
+
+@[simp] lemma zero_div {α : Type} [decidable_euclidean_domain α] (b : α) : b = 0 ∨ 0 / b = 0 :=
+begin
+    have h1 := zero_mod b, dsimp [(%)] at h1,
+    have h2 := euclidean_domain.witness 0 b,
+    rw h1 at h2,
+    simp at h2,
+    dsimp [(/)],
+    cases decidable.em (b=0),
+        {left, exact h},
+        {right,
+        cases eq_zero_or_eq_zero_of_mul_eq_zero h2,
+            {exact h_1},
+            {contradiction}}
+end
+
+/- weak gcd lemmas -/
 
 @[simp] theorem gcd_zero_left {α : Type} [decidable_euclidean_domain α] (x : α) : gcd 0 x = x := 
 begin
