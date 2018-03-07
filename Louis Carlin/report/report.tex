@@ -10,10 +10,14 @@
 \definecolor{sortcolor}{rgb}{0.1, 0.5, 0.1}      % green
 
 \usepackage{listings}
-\def\lstlanguagefiles{lstlean.tex}
+\def\lstlanguagefiles{lstlean.tex} 
 \lstset{language=lean}
 
 %My preamble
+\usepackage{graphicx}
+\usepackage{wrapfig}
+\usepackage[section]{placeins}
+
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsthm}
@@ -78,6 +82,8 @@
 %TODO
 %Do I call rings/EDs with the mathematical letters or lean letters?
 %Citation system?
+\section*{Introduction}
+In this report I detail the formalisation of Euclidean Domains in an interactive theorem proving language Lean. I start with a brief explanation of Lean and some of its features. I then give an overview of my work on Euclidean domains, with a particular focus on the Euclidean Algorithm and the role well-founded relations play in proving its properties. My finished work can be found at \url{https://github.com/semorrison/2017-summer-students/blob/master/src/Louis/euclidean\_domain.lean}.
 
 \section{An overview of Lean}
 
@@ -92,7 +98,7 @@ However, in type theory objects belong to a single type and are always identifie
 It is not possible to talk about an object $x$ in Lean without giving it a type.
 Nor is it really possible to talk about something as being an object of more than one type.
 So for example $5:\N$ and $5:\Z$ are distinct objects.
-Luckily lean has a fairly versatile coercion system which allows us to convert between objects of different types, although it can be somewhat clunky at times.
+Luckily lean has a fairly versatile coercion system which allows us to convert between objects of different types, although the process can be clunky at times.
 
 We can build types out of other types, so for example $\a \to \beta$ is the type of functions from $\a$ to $\beta$. 
 Lean's axiomatic system also extends simple type theory by implementing Types themselves as objects, meaning they themselves must have types.
@@ -104,11 +110,13 @@ This infinite type hierarchy is Lean's way of avoiding the contradictions brough
 %Lean also allows for the creation of dependent types, which are essentially paremeterized types.
 %So, for example a list of things of type $\a$ is of type \ct{list $\a$}.
 
-The main advantage of type theory is that it is much easier to model computationally.
+The main advantage of type theory in the context of Lean is that it is easier to model computationally.
+When we have some object represented as a bunch of bits it makes sense to give it a type so that we can interpret those bits.
+The propositions as types paradigm explained below also means type theory feels like a tidier axiomatic system than traditional set theory.
 %TODO say more
 
 \subsection{Propositions as types}
-Lean also treats propositions as types. 
+Lean treats propositions as types. 
 A proposition \ct{p : Prop} is the type of proofs of \ct{p}.
 So when we say \ct{h : p}, we mean that \ct{h} is a proof of \ct{p}.
 For example \ct{h : 5 > 3} is a proof that 5 is greater than 3.
@@ -156,16 +164,32 @@ Lean does define some syntactic sugar to make proofs read more like traditional 
 For example, we can write \ct{assume hp : p,} instead of \ct{$\lambda$ hp : p}, and \ct{lemma} and \ct{theorem} are synonyms for \ct{def}.
 However, the real strength of Lean in proving things is in tactics mode.
 
-A tactic is basically an algorithm which automates repetitive tasks in proving things.
+A tactic is a monad which we use to automate repetitive tasks in proving things by taking the current state (`context') of what we know and what we are aiming to prove, and performing some deductive step with it.
+One of the unique features that Lean offers is that tactics are written in Lean itself rather than an external meta-language.
+
 We tell Lean to enter tactics mode with a \ct{begin end} block.
 Once in tactics mode Lean gives us a printout of the current context, which is what we know at that point in the proof. 
+One can move the/cursor to different points and the printout will update with the context at that specific moment.
 The turnstile symbol $\vdash$ indicates what we are trying to show.
 
-Picture here!!!
 
+\begin{figure}
+    \center
+    \includegraphics[scale=1]{exampletactic.png}
+    \caption{An example of a proof in tactics mode.}
+    \center
+    \includegraphics[scale=1]{tactic.png}
+    \caption{An example context display from where the cursor is in Figure 1. The \ct{intro} tactic has been used to introduce the hypothesis \ct{hpq : p $\land$ q}.}
+\end{figure}
 
+There are several tactics which feature commonly in the proofs I wrote.
+The \ct{split} tactic turns a goal of the form \ct{p $\land$ q} to two goals \ct{p} and \ct{q}.
+\ct{intros} introduces any hypotheses needed to proved our goal, so if we had a goal of \ct{p $\to$ q $\to$ r}, then intros would give us hypotheses \ct{h\_1 :  p} and \ct{h\_2 : q} and change the goal to \ct{r}.
+Writing \ct{rw h} where \ct{h} is some proof of an equality allows us to rewrite by substituting for the right side of the equality whenever the left side appears in the goal.
+\ct{simp} tries to simplify the goal using predefined simplification lemmas which have been marked for its use.
+All these tactics can also be used on a hypothesis \ct{h} rather than the goal by writing \ct{at h} after invoking them.
 
-%constructivism
+\FloatBarrier
 \subsection{Constructivism}
 %Constructive mathematicians do indeed reject LEM. But this does not mean they accept its negation!
 Lean encourages a constructive approach to mathematics. 
@@ -179,41 +203,131 @@ However, it must be imported from a file `classical.lean' in Lean's library, and
 
 The law of the excluded middle follows from the axiom of choice in Lean's axiomatic system\footnote{see \url{https://en.wikipedia.org/wiki/Diaconescu\%27s\_theorem}} and is defined amongst other non-constructive principles as a theorem in `classical.lean'. 
 
-While trying to avoid using the axiom of choice and law of the excluded middle was initially unintuitive to me it has the substantial advantage that anything you write in Lean without them is computable.
+While trying to avoid using the axiom of choice and law of the excluded middle was initially unintuitive to me, it has the substantial advantage that anything you write in Lean without them is computable.
 So for example my implementation of the Euclidean Algorithm is not just an abstract proof that such an algorithm exists, but can actually be executed in arbitrary Euclidean Domains.
 
 \section{Euclidean domains}
-What is a Euclidean Domain?
-
-\subsection{Pre-existing structures in Lean}
-A commutative ring is defined in lean as...
-
-An Integral Domain extends this definition by...
+A euclidean domain $\a$ is an integral domain with a divison algorithm, such that for any two elements $a,b :\a$, there exists $q,r : \a$ such that $a=qb+r$.
+We require that $r$ is ``smaller'' than the thing we are dividing by by defining Euclidean Domains to have a valuation function val : $\a \to \N$ such that val $r < $ val $b$.
 
 \subsection{Defining Euclidean Domains in Lean}
-I defined Euclidean Domains as...
+Lean's typeclass system allows us to define new structures using the \ct{extend} keyword as pre-existing structures with additional requirements.
+Integral domains are already defined in Lean as an extension of commutative rings, so I defined Euclidean domains as an extension of them.
+\begin{lstlisting}
+class euclidean_domain (α : Type) extends integral_domain α :=
+( quotient : α → α → α )
+( remainder : α → α → α )
+( witness : ∀ a b, (quotient a b) * b + (remainder a b) = a )
+( valuation : euclidean_valuation remainder)
+\end{lstlisting}
+
+The first three fields of the \ct{euclidean\_domain} class are the quotient and remainder functions (sometimes denoted \ct{a/b} and \ct{a\%b} respectively) as well as a proof of the fact that the $q$ and $r$ these give us actually do satisfy $a=bq+r$. The fourth field refers to a \ct{euclidean\_valuation} which is defined as so:
+\begin{lstlisting}
+definition euclidean_valuation {α} [has_zero α] (r : α → α → α) := { f : α → ℕ // ∀ a b, b = 0 ∨  (f(r a b)) < (f b)}
+\end{lstlisting}
+
+The notation \ct{\{ f // g f\}} represents a dependent pair type, where the type of the second element depends on the first element.
+In this case we use it to define a \ct{euclidean\_valuation} as the pair consisting of a function to the natural numbers as well as a proof that \ct{b = 0 $\lor$ f(r a b) < f b}, where in this case $r$ will be our remainder function.
+
+There were a couple of key choices I had to make in the definition of \ct{euclidean\_domain}.
+Firstly note that we require an explicit \ct{quotient} and \ct{remainder} function, rather than just the fact that they exist or that it is in some way possible to write $a=bq+r$ for any $a,b$.
+The motivation for this is that given Lean's computational nature we want to be able to actually compute things (especially Euclid's algorithm) in arbitrary euclidean domains.
+
+The valuation function (and its proof) are also explicitly defined. This is somewhat unusual as the traditional definition just requires that a euclidean domain can be equipped with \textit{some} valuation function with the desired property. I initially defined it as follows:
+\begin{lstlisting}
+(valuation : ∃ f : α → ℕ,∀ a b : α,  b = 0 ∨ f (remainder a b) < f b)
+\end{lstlisting}
+The problem with this approach was that Lean didn't like me using the non-constructive axiom of choice to define a non-computable well-founded relation\footnote{explained below} and thus I couldn't prove the Euclidean Algorithm was a well-founded recursion. 
+The main disadvantage to the way I ended up doing it with an explicit valuation function is that we can no longer expect two euclidean domains of the same type with the same \ct{quotient} and \ct{remainder} functions to be equal (unless they happen to have the same valuation), and must instead reason about them as isomorphic.
+
+Finally, some definitions of euclidean domains require valuation functions to have the additional property that for all $a,b$ the valuation of $a$ is less than or equal to the valuation of $ba$. 
+Initially I excluded this from my definition because I read\footnote{\url{https://www.jstor.org/stable/2316324}} that given a valuation function $g:\a \to \N$, it is possible to define a valuation $f:\a \to \N$ with this second property as $f(a)=\min_{b:\a}g(ba)$.
+However, the problem with this valuation that we can only guarantee it acts as a valuation for \textit{some} divison algorithm.
+It is not necessarily defined in terms of the same \ct{quotient} and \ct{remainder} functions as our original valuation function.
+
+There are several results which match our intuition from integer division that this additional property allows us to prove, but that are not necessarily true without it.
+For example, that $0/a=0$ for any non-zero $a$.
+%\footnote{For example, consider the integers with the normal divison algorithm except defining $0/1=1$ and $0%1=-1$. If we equip this with the valuation function which takes $0$ and $-1$ to their absolute value and everything else to their absolute value plus one this is a perfectly good euclidean domain. }.
+
+The way I would approach fixing this is to define euclidean domains with this property as an extension of normal euclidean domains as well as define a function from a normal euclidean domains to (noncomputable) euclidean domains with this property using the valuation function one can construct.
 
 %explicit vs non-explicit valuation (exists, trunc, inhabited)
 
 %valuation being to natural numbers vs well-ordered set
 
-%Do I talk about EF2 here?
-
 \section{The Euclidean Algorithm}
 %some history?
 
+%\subsection{The basic concept}
 The Euclidean Algorithm is one of the main motivations of the definition of Euclidean Domains. 
 It takes any two elements $a,b$ of a Euclidean Domain $R$ and gives a ``greatest common divisor'' of $a$ and $b$. 
-An element $d \in R$ is a greatest common divisor of $a$ and $b$ if $d \divides a$, $d \divides b$ and $\forall x \in R, x \divides a \and x \divides b \implies x \divides d$.
-We common write $\gcd(a,b)$ to denote a particular greatest common divisor of $a$ and $b$.
-However it is important to note that greatest common divisors are not necessarily unique. In fact they are never unique in our definition of a Euclidean domain): if $d$ is a gcd of a $a$ and $b$ in a ring, then so is its additive inverse $-d$.
 
-\subsection{The basic concept}
+An element $d : R$ is a greatest common divisor of $a$ and $b$ if $d \divides a$, $d \divides b$ and $\forall x : R, x \divides a \land x \divides b \implies x \divides d$.
+We commonly write $\gcd(a,b)$ to denote a particular greatest common divisor of $a$ and $b$.
+However it is important to note that greatest common divisors are not necessarily unique. In fact they are never unique in our definition of a Euclidean domain: if $d$ is a gcd of a $a$ and $b$ in a ring, then so is its additive inverse $-d$.
+
+The Euclidean Algorithm works by calculating a sequence $r_0,r_1,\ldots,r_k$, where $r_0=a$, $r_1=b$ and for $n>1$, $r_n=r_{n-2}$ $\%$ $r_{n-1}$.
+The sequence terminates when we reach $r_k$ such that $r_k=0$ and the gcd is $r_{k-1}$.
+The proof that this is actually the gcd goes by induction. 
+If something divides $r_n$ and $r_{n-1}$ then we can show it divides $r_{n-2}$ and if something that divides $a$ and $b$ must divide $r_{n-2}$ and $r_{n-1}$ then we can show it must divide $r_n$.
+
+One thing to note is that the Euclidean Algorithm is not actually decidable in the definition of \ct{euclidean\_domain} which I gave in 2.1. %TODO Link?
+This is because Lean does not assume equality is decidable by default, and so it cannot actually tell when the sequence of $r_n$ ends since it cannot tell when something equals zero.
+I fixed this by extending \ct{euclidean\_domain} in \ct{decidable\_euclidean\_domain}:
+\begin{lstlisting}
+class decidable_euclidean_domain (α : Type) extends euclidean_domain α:=
+(decidable_eq_zero : ∀ a : α, decidable (a = 0))
+\end{lstlisting}
 
 \subsection{The Extended Euclidean Algorithm}
+The Extended Euclidean Algorithm adds to the Euclidean Algorithm by also returning two elements $x$ $y:\a$ (called B\'ezout coefficients) such that $ax+by=\gcd(a,b)$.
+It does this by defining two additional sequences $s_n$ and $t_n$.
+We define $s_0=1$, $s_1=0$, and $s_n=s_{n-2}-(r_n/r_{n-1})s_{n-1}$ for $n>1$.
+Similarly we define $t_0=0$, $t_1=1$, and $t_n=t_{n-2}-(r_n/r_{n-1})t_{n-1}$ for $n>1$.
+We show that these are the desired coefficients by using induction to show that for all $n$, $r_n=as_n+bt_n$.
 
-\subsection{Well-foundedness}
+\subsection{Well-founded recursion}
 %talk mostly about how things actually worked in Lean (factorial + something which doesn't work)
+Whenever we define a recursive function Lean requires us to show that it is actually well-defined. 
+Since the Euclidean Algorithm is defined recursively this was a necessary step.
+The method Lean provides for us to do this is demonstrating that the inputs used in the recursive call are smaller than current inputs according to some well-founded relation.
+
+To understand what this means one first needs to understand what a well-founded relation is. Lean defines a relation \ct{r : $\a \to \a \to \a$} as well-founded when all the elements of $\a$ are `accessible':
+\begin{lstlisting}
+inductive well_founded {α : Sort u} (r : α → α → Prop) : Prop
+| intro (h : ∀ a, acc r a) : well_founded
+\end{lstlisting}
+For an element to be accessible, all the other elements less than it (by the relation \ct{r}) must be accessible:
+\begin{lstlisting}
+inductive acc {α : Sort u} (r : α → α → Prop) : α → Prop
+| intro (x : α) (h : ∀ y, r y x → acc y) : acc x
+\end{lstlisting}
+
+How one can think of this is that there must be some `base' elements for which nothing is less than, and which are therefore accessible.
+We then build upwards from these foundations because the things which are only greater than them are therefore also accessible, and so on.
+It is important to note that there can be no infinite chains of less-than relations in a well-founded relation since we cannot show something is accessible without showing that if we descend down the tree of less-than relations far enough we will encounter only things with nothing less than them. %TODO formalise
+We cannot have any cycles for a similar reason.
+
+Conveniently, Lean can use its typeclass resolution system to show basic recursive functions decrease on a well-founded relation all by itself. For example this factorial function works fine as is:
+\begin{lstlisting}
+def fac : ℕ → ℕ
+| 0 := 1
+| (n + 1)  := fac n * (n+1)
+\end{lstlisting}
+However, it needs a bit of help for more complex recursive functions.
+This definition of natural number division\footnote{From \href{https://leanprover.github.io/theorem\_proving\_in\_lean/induction\_and\_recursion.html\#well-founded-recursion-and-induction}{Theorem Proving in Lean}} requires us to demonstrate that the first argument \ct{x - y} given in the recursive call is smaller than the current first argument \ct{x}:
+\begin{lstlisting}
+def div' : ℕ → ℕ → ℕ
+| x y :=
+  if h : 0 < y ∧ y ≤ x then
+    have x - y < x,
+      from sub_lt (lt_of_lt_of_le h.left h.right) h.left,
+    div' (x-y) y + 1
+  else 0
+\end{lstlisting}
+If we remove the proof that \ct{x - y < x} then Lean will give us the error \ct{failed to prove recursive application is decreasing}.
+
+In addition to their use in showing recursive functions `terminate', well-founded types allow us to perform well-founded induction, and prove some predicate $P$ is true for all objects of a well-founded type $\a$ by proving $\forall x : \a, (\forall y:\a, y < x \to P y) \to P x$.
 
 \subsection{The First implementation}
 In defining the Euclidean Algorithm in Lean it was important to not only have it return the gcd as expected, but also to have a proof that what it returned \textit{was} the gcd. 
@@ -243,13 +357,91 @@ structure eea_input {α : Type} (a b : α) [euclidean_domain α] :=
 (greatest_divisor : ∀ d : common_divisor a b, d.value ∣ rp ∧ d.value ∣ rc)
 \end{lstlisting}
 
-This approach wasn't particularly good. The actual statement of the algorithm ended up being almost two pages long because I had to write the proof transforming the proofs I took as input to the proofs I needed to give as output. This meant that when I ran into issues (primarily trying to use non-computable valuations to show it was well-founded recursion) it was difficult to work out exactly where the problems were. It would also have been much less intuitive to have to work with the structure \ct{bezout\_identity} I defined than to be simply given a gcd and only given the proofs of its properties if you asked for them.
+This approach wasn't particularly good. The actual statement of the algorithm ended up being almost two pages long because I had to write the functions transforming the proofs I took as input to the proofs I needed to give as output. This meant that when I ran into issues (primarily trying to use non-computable valuations to show it was well-founded recursion) it was difficult to work out exactly where the problems were. It would also have been much less intuitive to have to work with the structure \ct{bezout\_identity} I defined than to be simply given a gcd and only given the proofs of its properties if you asked for them.
 
 \subsection{The Second implementation}
-My second implementation was much simpler. I modelled it off the gcd function for natural numbers which already existed in Lean's mathlib library. The function is defined as follows:
+My second implementation was much simpler. I modelled it off the gcd function for natural numbers which already existed in Lean's mathlib library. The function does not take or give any proofs and is defined in only four lines. Note the use of the lemma \ct{gcd\_decreasing} to show that the first argument is decreasing.
 \begin{lstlisting}
-
+def gcd {α : Type} [ed : decidable_euclidean_domain α] : 
+    α → α → α
+| x y := if x_zero : x = 0 then y
+         else have h : has_well_founded.r (y % x) x := gcd_decreasing x y x_zero,
+              gcd (y%x) x
 \end{lstlisting}
+
+We prove the properties of this function externally. 
+The advantage of doing this is that it is a much more modular approach.
+We can prove each property individually and if there are problems it will be much more apparent which part of the code they appear in.
+In addition, if we want to prove further properties of the function we don't have to alter its return type as we can just write a new lemma.
+
+The method\footnote{based on a similar method for natural number gcds in mathlib} I used to prove most of the properties of gcd was to prove a new induction principle as follows:
+\begin{lstlisting}
+theorem gcd.induction {α : Type} [ed: decidable_euclidean_domain α] 
+                    {P : α → α → Prop}
+                    (m n : α)
+                    (H0 : ∀ x, P 0 x)
+                    (H1 : ∀ m n, m ≠ 0 → P (n%m) m → P m n) :
+                P m n := 
+@well_founded.induction _ _ (has_well_founded.wf α) (λm, ∀n, P m n) m (λk IH,
+    by {cases decidable.em (k=0), rw h, exact H0,
+        exact λ n, H1 k n (h) (IH (n%k) (neq_zero_lt_mod_lt n k h) k)}) n
+\end{lstlisting}
+
+This code is somewhat cryptic, but the basic idea is we prove a less powerful but more specific induction principle from the principle of well-founded induction.
+We can think of \lstinline{H0 : ∀ x, P 0 x} as the base case, \lstinline{H1 : ∀ m n, m ≠ 0 → P (n%m) m → P m n} as the inductive step, and the return type \ct{P m n} as what our new induction principle lets us conclude given these two things.
+
+With this induction principle the proof that our algorithm returns something which divides $a$ and $b$ is as follows:
+\begin{lstlisting}
+theorem gcd_dvd {α : Type} [ed: decidable_euclidean_domain α] (a b : α) : (gcd a b ∣ a) ∧ (gcd a b ∣ b) :=
+gcd.induction a b
+  (λ b, by simp)
+  (λ a b aneq,
+  begin
+  intro h_dvd,
+    rw gcd, simp [aneq],
+    cases h_dvd,
+    split,
+    {exact h_dvd_right},
+    {
+      conv {for b [2] {rw ←(euclidean_domain.witness b a)}},
+      have h_dvd_right_a:= dvd_mul_of_dvd_right h_dvd_right (b/a),
+      exact dvd_add h_dvd_right_a h_dvd_left
+    }
+  end )
+\end{lstlisting}
+The first lambda function is a proof of the base case using the handy tactic \ct{simp} which simplifies the goal using pre-defined lemmas which have been marked for it to use. 
+In this case it simplifies using the fact that \ct{gcd(0,b) = b}, then knows that \ct{b | 0} and \ct{b | b}.
+
+The second lambda function proves the inductive step by substituting the definition of \ct{gcd} in, simplifying with \ct{aneq : a $\neq$ 0}, then showing that if something divides \ct{b\%a} and \ct{a} then it also divides \ct{b}. The \ct{conv} tactic allows us to apply the tactic we give it -- in this case \ct{rw} -- to a specific term in the goal. We use it here to rewrite a single specific term and not the other instances of said term in the goal.
+
+We show that the \ct{gcd} is the `greatest' divisor as follows:
+\begin{lstlisting}
+theorem dvd_gcd {α : Type} [ed: decidable_euclidean_domain α] {a b c : α} : c ∣ a → c ∣ b → c ∣ gcd a b :=
+gcd.induction a b
+  (λ b,
+  begin
+    intros dvd_0 dvd_b,
+    simp, exact dvd_b
+  end)
+  (λ a b hna,
+  begin
+    intros d dvd_a dvd_b,
+    rw gcd, simp [hna],
+    exact d (dvd_mod dvd_b dvd_a) dvd_a,
+  end)
+\end{lstlisting}
+
+My implementation of the Extended Euclidean Algorithm was extremly similar to the pre-existing one for natural numbers in Lean. It is called by \ct{xgcd} and uses an auxilary inner function as \ct{xgcd\_aux} to perform the actual recursion.
+\begin{lstlisting}
+def xgcd_aux {α} [decidable_euclidean_domain α] : α → α → α → α → α → α → α × α × α
+| r s t r' s' t' := if r_zero : r = 0 then (r', s', t') 
+    else have has_well_founded.r (r' % r) r, from neq_zero_lt_mod_lt r' r r_zero,
+    let q := r' / r in xgcd_aux (r' % r) (s' - q * s) (t' - q * t) r s t
+
+def xgcd {α} [decidable_euclidean_domain α] (x y : α) : α × α := (xgcd_aux x 1 0 y 0 1).2
+\end{lstlisting}
+
+I went on to prove the properties we desire its output to have with similar proofs to the previous ones using \ct{gcd.induction}.
 
 %much simpler
 %had to define an induction principle
