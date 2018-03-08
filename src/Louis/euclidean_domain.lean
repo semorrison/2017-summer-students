@@ -133,12 +133,38 @@ begin
     simp at h2,
     dsimp [(/)],
     cases decidable.em (b=0),
-        {left, exact h},
-        {right,
+    {left, exact h},
+    {
+        right,
         cases eq_zero_or_eq_zero_of_mul_eq_zero h2,
-            {exact h_1},
-            {contradiction}}
+        {exact h_1},
+        {contradiction}
+    }
 end
+
+@[simp] lemma mod_self {α : Type} [ed : decidable_euclidean_domain α] (x : α) : x % x = 0 :=
+begin
+    have := witness x x,
+    have divides : x ∣ x % x, from sorry,
+    induction divides with m x_mul,
+    cases val_mul x m,
+    {
+        rw h at x_mul,
+        rw mul_zero at x_mul,
+        exact x_mul,
+    },
+    {
+        cases  val_mod x x, 
+        {rw h_1, exact mod_zero (0:α)},
+        {
+            have := not_le_of_lt h_1,
+            dsimp [(%)] at x_mul,
+            rw x_mul at this,
+            contradiction,
+        }
+    }
+
+end 
 
 /- weak gcd lemmas -/
 
