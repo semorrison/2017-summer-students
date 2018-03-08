@@ -38,7 +38,8 @@ open coset_notation
 variable [semigroup G]
 
 lemma lcoset_assoc (S : set G) (a b : G) : a * (b * S) = (a * b) * S :=
-    have h : (λ x : G, a * x) ∘ (λ x : G, b * x) = (λ x : G, (a * b) * x), from funext (λ c : G, calc
+    have h : (λ x : G, a * x) ∘ (λ x : G, b * x) = (λ x : G, (a * b) * x), from funext (λ c : G, 
+    calc
         ((λ x : G, a * x) ∘ (λ x : G, b * x)) c = a * (b * c)               : by simp
         ...                                     = (λ x : G, (a * b) * x) c  : by rw ← mul_assoc; simp ),
     calc
@@ -46,7 +47,8 @@ lemma lcoset_assoc (S : set G) (a b : G) : a * (b * S) = (a * b) * S :=
         ...         = (a * b) * S                                           : by rw [lcoset, h]
 
 lemma rcoset_assoc (S : set G) (a b : G) : S * a * b = S * (a * b) :=
-    have h : (λ x : G, x * b) ∘ (λ x : G, x * a) = (λ x : G, x * (a * b)), from funext (λ c : G, calc
+    have h : (λ x : G, x * b) ∘ (λ x : G, x * a) = (λ x : G, x * (a * b)), from funext (λ c : G, 
+    calc
         ((λ x : G, x * b) ∘ (λ x : G, x * a)) c = c * a * b                 : by simp
         ...                                     = (λ x : G, x * (a * b)) c  : by rw mul_assoc; simp),
     calc
@@ -54,7 +56,8 @@ lemma rcoset_assoc (S : set G) (a b : G) : S * a * b = S * (a * b) :=
         ...         = S * (a * b)                                           : by rw [rcoset, h]
 
 lemma lcoset_rcoset (S : set G) (a b : G) : a * S * b = a * (S * b) := 
-    have h : (λ x : G, x * b) ∘ (λ x : G, a * x) = (λ x : G, a * (x * b)), from funext (λ c : G, calc
+    have h : (λ x : G, x * b) ∘ (λ x : G, a * x) = (λ x : G, a * (x * b)), from funext (λ c : G, 
+    calc
         ((λ x : G, x * b) ∘ (λ x : G, a * x)) c = a * c * b                 : by simp
         ...                                     = (λ x : G, a * (c * b)) c  : by rw mul_assoc; simp),
     calc
