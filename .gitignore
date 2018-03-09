@@ -4,3 +4,28 @@
 
 
 .DS_Store
+
+*.aux 
+*.log 
+*.out 
+*.thm 
+*.synctex.gz* 
+*.bbl 
+*.toc 
+*.texshop 
+*.snm 
+*.nav 
+*.blg 
+*.dvi 
+*.txt~ 
+*.tex~ 
+*.tex.backup 
+*.kate-swp 
+*.fdb_latexmk 
+*.fls 
+*.run.xml 
+*.ind 
+*.ilg 
+*.pdfsync 
+*-blx.bib 
+*.bcf
