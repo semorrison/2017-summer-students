@@ -63,6 +63,19 @@ begin
     exact this,
 end
 
+
+lemma dvd_mod_self [decidable_euclidean_domain α] (a : α) : a ∣ a % a :=
+begin
+    let d := (a/a)*a, -- ring tactic can't solve things without this
+    have : a%a = a - (a/a)*a, from
+        calc
+            a%a = d + a%a  - d : by ring
+            ... = (a/a)*a + a%a - (a/a)*a : by dsimp [d]; refl
+            ... = a - (a/a)*a : by dsimp [(%),(/)]; rw [witness a a],
+    rw this,
+    exact dvd_sub (dvd_refl a) (dvd_mul_left a (a/a)),
+end
+
 /- strong lemmas -/
 
 lemma val_lt_one [decidable_euclidean_domain α] (a : α) : 
@@ -108,7 +121,11 @@ end
 @[simp] lemma zero_mod  [decidable_euclidean_domain α] (b : α) : 0 % b = 0 :=
 begin
     have h1 := witness 0 b,
-    have h2 : remainder 0 b = b * (-quotient 0 b ), from sorry, -- lemma?
+    rw [] at h1,
+    have h2 : remainder 0 b = b * (-quotient 0 b ), from
+        calc
+            remainder 0 b = quotient 0 b * b + remainder 0 b + b * (-quotient 0 b ) : by ring
+            ...                       = b * (-quotient 0 b ) : by rw [h1, zero_add],
     cases val_mul b (-quotient 0 b),
     {
         simp at h, rw h at h1, simp at h1,
@@ -125,10 +142,7 @@ begin
             contradiction,
         }
     }
-    
 end
-
-#check nat.zero_div
 
 @[simp] lemma zero_div [decidable_euclidean_domain α] (b : α) (hnb : b ≠ 0) : 0 / b = 0 :=
 begin
@@ -145,8 +159,7 @@ end
 @[simp] lemma mod_self [decidable_euclidean_domain α] (a : α) : a % a = 0 :=
 begin
     have := witness a a,
-    have divides : a ∣ a % a, from sorry,
-    induction divides with m a_mul,
+    cases (dvd_mod_self a) with m a_mul,
     cases val_mul a m,
     {
         rw [h, mul_zero] at a_mul,
