@@ -3,17 +3,18 @@ import tactic.ring
 
 universe u
 
+
 class euclidean_domain (α : Type u) extends integral_domain α :=
 ( quotient : α → α → α )
 ( remainder : α → α → α )
-( witness : ∀ a b, (quotient a b) * b + (remainder a b) = a ) -- this should probably be changed to the same order as int.mod_add_div
+( witness : ∀ a b, (quotient a b) * b + (remainder a b) = a ) -- This could be changed to the same order as int.mod_add_div. We normally write qb+r rather than r + qb though.
 (valuation : α → ℕ)
 (val_mod : ∀ a b, b = 0 ∨  valuation (remainder a b) <  valuation b)
 (val_mul : ∀ a b, b = 0 ∨ valuation a ≤ valuation (a*b))
 /-
 val_mul is often not a required in definitions of a euclidean domain since given the other properties we can show there is a (noncomputable) euclidean domain α with the property val_mul.
-So potentially this definition could be split into two different ones (euclidean_domain_weak and euclidean_domain_strong) with a noncomputable function from weak to strong
-I've currently divided the lemmas depending on whether they require val_mul or not
+So potentially this definition could be split into two different ones (euclidean_domain_weak and euclidean_domain_strong) with a noncomputable function from weak to strong.
+I've currently divided the lemmas into strong and weak depending on whether they require val_mul or not.
 -/
 
 class decidable_euclidean_domain (α : Type u) extends euclidean_domain α:=
@@ -23,38 +24,39 @@ We use this for basically everything.
 It might be worth making it part of the original definition?
 -/
 
-instance decidable_eq_zero {α : Type u} [ed : decidable_euclidean_domain α] (a : α) : decidable (a = 0) :=
+namespace euclidean_domain
+variable {α : Type u}
+
+instance decidable_eq_zero  [ed : decidable_euclidean_domain α] (a : α) : decidable (a = 0) :=
  decidable_euclidean_domain.decidable_eq_zero a
 
-namespace euclidean_domain
-
-instance euclidean_domain_has_div {α : Type u} [euclidean_domain α] : has_div α := { 
+instance euclidean_domain_has_div [euclidean_domain α] : has_div α := { 
     div := quotient
 }
 
-instance euclidean_domain_has_mod {α : Type u} [euclidean_domain α] : has_mod α := {
+instance euclidean_domain_has_mod [euclidean_domain α] : has_mod α := {
     mod := remainder
 }
 
-instance ed_has_sizeof {α : Type u} [euclidean_domain α] : has_sizeof α := {
+instance ed_has_sizeof [euclidean_domain α] : has_sizeof α := {
     sizeof := λ x : α, valuation x,
 }
 
-definition gcd_decreasing  {α : Type u} [euclidean_domain α] (x y : α) (w : x ≠ 0) : has_well_founded.r (y % x) x := 
+definition gcd_decreasing [euclidean_domain α] (a b : α) (w : a ≠ 0) : has_well_founded.r (b % a) a := 
 begin
-cases val_mod y x,
-                { contradiction },
-                { exact h }
+    cases val_mod b a,
+    { contradiction },
+    { exact h }
 end
 
-def gcd {α : Type u} [decidable_euclidean_domain α] : α → α → α
-| x y := if x_zero : x = 0 then y
-         else have h : has_well_founded.r (y % x) x := gcd_decreasing x y x_zero,
-              gcd (y%x) x
+def gcd [decidable_euclidean_domain α] : α → α → α
+| a b := if a_zero : a = 0 then b
+         else have h : has_well_founded.r (b % a) a := gcd_decreasing a b a_zero,
+              gcd (b%a) a
 
 /- weak lemmas -/
 
-@[simp] lemma mod_zero {α : Type u} [ed : euclidean_domain α] (a : α)  : a % 0 = a :=
+@[simp] lemma mod_zero [ed : euclidean_domain α] (a : α)  : a % 0 = a :=
 begin
     have := euclidean_domain.witness a 0,
     simp at this,
@@ -63,47 +65,47 @@ end
 
 /- strong lemmas -/
 
-lemma val_lt_one {α : Type u} [decidable_euclidean_domain α] (x : α) : 
-valuation x < valuation (1:α) → x = 0 :=
+lemma val_lt_one [decidable_euclidean_domain α] (a : α) : 
+valuation a < valuation (1:α) → a = 0 :=
 begin
-    intro x_lt,
-    cases val_mul (1:α) x,
-        {exact h,},
-        {
-            simp at h,
-            have := not_le_of_lt x_lt,
-            contradiction
-        }
+    intro a_lt,
+    cases val_mul (1:α) a,
+    { exact h },
+    {
+        simp at h,
+        have := not_le_of_lt a_lt,
+        contradiction
+    }
 end
 
-lemma val_dvd_le {α : Type u} [decidable_euclidean_domain α] (a b : α) :
+lemma val_dvd_le [decidable_euclidean_domain α] (a b : α) :
     b ∣ a → a ≠ 0 → valuation b ≤ valuation a :=
 begin
     intros b_dvd ha,
     induction b_dvd with x hx, rw hx,
     cases val_mul b x,
-        {
-            rw h at hx, simp at hx,
-            contradiction,
-        },
-        {
-            exact h,
-        }
+    {
+        rw h at hx, simp at hx,
+        contradiction,
+    },
+    {
+        exact h,
+    }
 end
 
-@[simp] lemma mod_one {α : Type u} [decidable_euclidean_domain α] (x : α) : x % 1 = 0 :=
+@[simp] lemma mod_one [decidable_euclidean_domain α] (a : α) : a % 1 = 0 :=
 begin
-    cases val_mod x 1,
+    cases val_mod a 1,
     { 
         have := one_ne_zero, 
         contradiction,
     },
     {
-        exact val_lt_one (x % 1) h,
+        exact val_lt_one (a % 1) h,
     }
 end 
 
-@[simp] lemma zero_mod  {α : Type u} [decidable_euclidean_domain α] (b : α) : 0 % b = 0 :=
+@[simp] lemma zero_mod  [decidable_euclidean_domain α] (b : α) : 0 % b = 0 :=
 begin
     have h1 := witness 0 b,
     have h2 : remainder 0 b = b * (-quotient 0 b ), from sorry, -- lemma?
@@ -126,97 +128,88 @@ begin
     
 end
 
-@[simp] lemma zero_div {α : Type u} [decidable_euclidean_domain α] (b : α) : b = 0 ∨ 0 / b = 0 :=
+#check nat.zero_div
+
+@[simp] lemma zero_div [decidable_euclidean_domain α] (b : α) (hnb : b ≠ 0) : 0 / b = 0 :=
 begin
     have h1 := zero_mod b, dsimp [(%)] at h1,
     have h2 := euclidean_domain.witness 0 b,
     rw h1 at h2,
     simp at h2,
     dsimp [(/)],
-    cases decidable.em (b=0),
-    {left, exact h},
-    {
-        right,
-        cases eq_zero_or_eq_zero_of_mul_eq_zero h2,
-        {exact h_1},
-        {contradiction}
-    }
+    cases eq_zero_or_eq_zero_of_mul_eq_zero h2,
+    {exact h},
+    {contradiction}
 end
 
-@[simp] lemma mod_self {α : Type u} [decidable_euclidean_domain α] (x : α) : x % x = 0 :=
+@[simp] lemma mod_self [decidable_euclidean_domain α] (a : α) : a % a = 0 :=
 begin
-    have := witness x x,
-    have divides : x ∣ x % x, from sorry,
-    induction divides with m x_mul,
-    cases val_mul x m,
+    have := witness a a,
+    have divides : a ∣ a % a, from sorry,
+    induction divides with m a_mul,
+    cases val_mul a m,
     {
-        rw h at x_mul,
-        rw mul_zero at x_mul,
-        exact x_mul,
+        rw [h, mul_zero] at a_mul,
+        exact a_mul,
     },
     {
-        cases  val_mod x x, 
+        cases  val_mod a a, 
         {rw h_1, exact mod_zero (0:α)},
         {
             have := not_le_of_lt h_1,
-            dsimp [(%)] at x_mul,
-            rw x_mul at this,
+            dsimp [(%)] at a_mul,
+            rw a_mul at this,
             contradiction,
         }
     }
-
 end 
 
-lemma div_self {α : Type u} [decidable_euclidean_domain α] (x : α) : x = 0 ∨ x / x = (1:α) :=
+lemma div_self [decidable_euclidean_domain α] (a : α) : a ≠ 0 → a / a = (1:α) :=
 begin
-    have wit_xx := witness x x,
-    have x_mod_x := mod_self x, 
-    dsimp [(%)] at x_mod_x,
-    rw x_mod_x at wit_xx, simp at wit_xx,
-    cases decidable.em (x=0),
-        {left, exact h},
-        {
-            right,
-            have h1 : 1 * x = x, from one_mul x,
-            conv at wit_xx {for x [4] {rw ←h1}},
-            exact eq_of_mul_eq_mul_right h wit_xx
-        }
+    intro hna,
+    have wit_aa := witness a a,
+    have a_mod_a := mod_self a, 
+    dsimp [(%)] at a_mod_a,
+    rw a_mod_a at wit_aa, simp at wit_aa,
+    have h1 : 1 * a = a, from one_mul a,
+    conv at wit_aa {for a [4] {rw ←h1}},
+    exact eq_of_mul_eq_mul_right hna wit_aa
 end
 
 /- weak gcd lemmas -/
 
-@[simp] theorem gcd_zero_left {α : Type u} [decidable_euclidean_domain α] (x : α) : gcd 0 x = x := 
+@[simp] theorem gcd_zero_left [decidable_euclidean_domain α] (a : α) : gcd 0 a = a := 
 begin
     rw gcd,
     simp,
 end
 
-lemma mod_lt {α : Type u} [decidable_euclidean_domain α]  :
-                     ∀ (x : α) {y : α}, valuation y > valuation (0:α) →  valuation (x%y) < valuation y :=
+lemma mod_lt [decidable_euclidean_domain α]  :
+                     ∀ (a : α) {b : α}, valuation b > valuation (0:α) →  valuation (a%b) < valuation b :=
 begin
-    intros,
-    cases decidable.em (y=0),
+    intros a b h,
+    cases decidable.em (b=0) with h',
     {
-        rw h at a,
+        rw h' at h,
         have := lt_irrefl (valuation (0:α)),
         contradiction,
     },
     {
-        cases val_mod x y with h h',
+        cases val_mod a b with h h',
         { contradiction },
         { exact h' }
     }
 end
 
-lemma neq_zero_lt_mod_lt {α : Type u} [decidable_euclidean_domain α]  (a b : α) :  b ≠ 0 → valuation (a%b) < valuation b :=
+lemma neq_zero_lt_mod_lt [decidable_euclidean_domain α]  (a b : α) :  b ≠ 0 → valuation (a%b) < valuation b :=
 begin
     intro hnb,
     cases val_mod a b,
-        {contradiction},
-        {exact h}
+    { contradiction },
+    { exact h }
 end
 
-lemma dvd_mod {α : Type u} [decidable_euclidean_domain α] {a b c : α} : c ∣ a → c ∣ b → c ∣ a % b :=
+lemma dvd_mod [decidable_euclidean_domain α] {a b c : α} : c ∣ a → c ∣ b → c ∣ a % b :=
 begin
     intros dvd_a dvd_b,
     have : remainder a b = a - quotient a b * b, from
@@ -228,42 +221,42 @@ begin
 end
 
 @[elab_as_eliminator]
-theorem gcd.induction {α : Type u} [decidable_euclidean_domain α] 
+theorem gcd.induction [decidable_euclidean_domain α] 
                     {P : α → α → Prop}
-                    (m n : α)
+                    (a b : α)
                     (H0 : ∀ x, P 0 x)
-                    (H1 : ∀ m n, m ≠ 0 → P (n%m) m → P m n) :
-                P m n := 
-@well_founded.induction _ _ (has_well_founded.wf α) (λm, ∀n, P m n) m (λk IH,
-    by {cases decidable.em (k=0), rw h, exact H0,
-        exact λ n, H1 k n (h) (IH (n%k) (neq_zero_lt_mod_lt n k h) k)}) n
+                    (H1 : ∀ a b, a ≠ 0 → P (b%a) a → P a b) :
+                P a b := 
+@well_founded.induction _ _ (has_well_founded.wf α) (λa, ∀b, P a b) a (λc IH,
+    by {cases decidable.em (c=0), rw h, exact H0,
+        exact λ b, H1 c b (h) (IH (b%c) (neq_zero_lt_mod_lt b c h) c)}) b
 
 /- more gcd stuff (generalized mathlib/data/nat/gcd.lean) -/
 
-theorem gcd_dvd {α : Type u} [decidable_euclidean_domain α] (a b : α) : (gcd a b ∣ a) ∧ (gcd a b ∣ b) :=
+theorem gcd_dvd [decidable_euclidean_domain α] (a b : α) : (gcd a b ∣ a) ∧ (gcd a b ∣ b) :=
 gcd.induction a b
     (λ b, by simp)
     (λ a b aneq,
     begin
         intro h_dvd,
         rw gcd, simp [aneq],
-        cases h_dvd,
+        induction h_dvd,
         split,
-            {exact h_dvd_right},
-            {
-                conv {for b [2] {rw ←(witness b a)}},
-                have h_dvd_right_a:= dvd_mul_of_dvd_right h_dvd_right (b/a),
-                exact dvd_add h_dvd_right_a h_dvd_left
-            }
+        { exact h_dvd_right },
+        {
+            conv {for b [2] {rw ←(witness b a)}},
+            have h_dvd_right_a:= dvd_mul_of_dvd_right h_dvd_right (b/a),
+            exact dvd_add h_dvd_right_a h_dvd_left
+        }
     end )
 
-theorem gcd_dvd_left {α : Type u} [decidable_euclidean_domain α] (a b : α) :
+theorem gcd_dvd_left [decidable_euclidean_domain α] (a b : α) :
     gcd a b ∣ a := (gcd_dvd a b).left
 
-theorem gcd_dvd_right {α : Type u} [decidable_euclidean_domain α] (a b : α) :
+theorem gcd_dvd_right [decidable_euclidean_domain α] (a b : α) :
     gcd a b ∣ b := (gcd_dvd a b).right
 
-theorem dvd_gcd {α : Type u} [decidable_euclidean_domain α] {a b c : α} : c ∣ a → c ∣ b → c ∣ gcd a b :=
+theorem dvd_gcd [decidable_euclidean_domain α] {a b c : α} : c ∣ a → c ∣ b → c ∣ gcd a b :=
 gcd.induction a b
     (λ b,
     begin
@@ -279,9 +272,9 @@ gcd.induction a b
 
 /- strong gcd lemmas -/
 
-@[simp] theorem gcd_zero_right {α : Type u} [decidable_euclidean_domain α]  (n : α) : gcd n 0 = n :=
+@[simp] theorem gcd_zero_right [decidable_euclidean_domain α]  (a : α) : gcd a 0 = a :=
 begin
-    cases decidable.em (n=0),
+    cases decidable.em (a=0),
     {
         rw h,
         simp,
@@ -292,15 +285,15 @@ begin
     }
 end
 
-@[simp] theorem gcd_one_left {α : Type} [decidable_euclidean_domain α] (n : α) : gcd 1 n = 1 := 
+@[simp] theorem gcd_one_left [decidable_euclidean_domain α] (a : α) : gcd 1 a = 1 := 
 begin
     rw [gcd],
     simp,
 end
 
-theorem gcd_next {α : Type} [decidable_euclidean_domain α] (x y : α) : gcd x y = gcd (y % x) x :=
+theorem gcd_next [decidable_euclidean_domain α] (a b : α) : gcd a b = gcd (b % a) a :=
 begin
-    cases decidable.em (x=0),
+    cases decidable.em (a=0),
     {
         simp [h],
     },
@@ -310,7 +303,7 @@ begin
     }
 end
 
-@[simp] theorem gcd_self {α : Type} [decidable_euclidean_domain α] (n : α) : gcd n n = n :=
-by rw [gcd_next n n, mod_self n, gcd_zero_left]
+@[simp] theorem gcd_self [decidable_euclidean_domain α] (a : α) : gcd a a = a :=
+by rw [gcd_next a a, mod_self a, gcd_zero_left]
 
 end euclidean_domain
