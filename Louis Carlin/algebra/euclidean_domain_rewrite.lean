@@ -2,6 +2,9 @@ import Louis.euclidean_domain
 
 example : integral_domain ℤ := by apply_instance
 
+
+
+
 /- instances -/
 instance int_euclidean_domain : decidable_euclidean_domain ℤ := {
     ((by apply_instance) : integral_domain ℤ) with 
@@ -123,33 +126,8 @@ parameters (α : Type) [decidable_euclidean_domain α] (a b : α)
 /- mathlib defines parameters for a and b at this point, maybe I should be doing that? -/
 private def P : α × α × α → Prop | (r, s, t) := r = a * s + b * t
 
-<<<<<<< HEAD
 theorem xgcd_aux_P  {r r' : α} : ∀ {s t s' t'}, P (r, s, t) → P (r', s', t') → P (xgcd_aux r s t r' s' t') :=
 gcd.induction r r'
-=======
--- theorem gcd.induction {α : Type} [ed: decidable_euclidean_domain α] 
---                     {P : α → α → Prop}
---                     (m n : α)
---                     (H0 : ∀ x, P 0 x)
---                     (H1 : ∀ m n, m ≠ 0 → P (n%m) m → P m n) :
---                 P m n := 
--- @well_founded.induction _ _ (has_well_founded.wf α) (λm, ∀n, P m n) m (λk IH,
---     by {cases decidable.em (k=0), rw h, exact H0,
---         exact λ n, H1 k n (h) (IH (n%k) (neq_zero_lt_mod_lt n k h) k)}) n
-
--- theorem gcd.induction {P : ℕ → ℕ → Prop}
---                    (m n : ℕ)
---                    (H0 : ∀n, P 0 n)
---                    (H1 : ∀m n, 0 < m → P (n % m) m → P m n) :
---                  P m n :=
--- @induction _ _ lt_wf (λm, ∀n, P m n) m (λk IH,
---   by {induction k with k ih, exact H0,
---       exact λn, H1 _ _ (succ_pos _) (IH _ (mod_lt _ (succ_pos _)) _)}) n
-
-
-theorem xgcd_aux_P  {r r' }  : ∀ {s t s' t'}, P (r, s, t) → P (r', s', t') → P (xgcd_aux r s t r' s' t') := 
-@gcd.induction α _ (λ r r', ∀ {s t s' t'}, P (r, s, t) → P (r', s', t') → P (xgcd_aux r s t r' s' t')) r r' 
->>>>>>> 4ad3a254a77617cc5c3b776e63103857313eb028
 begin
 intros,
 simp,
@@ -340,3 +318,68 @@ instance weird_int_euclidean_domain : euclidean_domain ℤ :=
     }
 }
 #reduce (euclidean_domain.remainder (0:int) 1)
+
+lemma dvd_mod_zero {α : Type} [ed : decidable_euclidean_domain α] (a b : α) :  b ∣ a → a % b = 0 :=
+begin
+    intro b_dvd,
+
+    cases decidable.em (b=0),
+    {
+        rw h at b_dvd,
+        induction b_dvd with x hx,
+        rw hx, simp,
+    },
+    {
+        cases  val_mod a b,
+        {contradiction},
+        {
+            induction b_dvd with x hx,
+            have wit_ab := witness a b,
+            conv at wit_ab {for a [1] {rw hx}},
+            -- conv at wit_xx {for x [4] {rw ←h1}},
+            -- conv {for b [2] {rw ←(witness b a)}},
+            -- have b_dvd_mod : b ∣ (a%b), from sorry, -- this follows from a = b * x = (a/b)*b + (a%b)
+            
+            -- have := val_mul a b,
+            sorry
+        }
+    }
+end
+
+--  @[simp] theorem mul_mod_right {α : Type} [ed: decidable_euclidean_domain α] (a b : α) : (a * b) % a = 0 :=
+--  begin
+
+--  end
+
+-- theorem mod_eq_zero_of_dvd {α : Type} [ed: decidable_euclidean_domain α] {a b : α} (H : a ∣ b) :
+--     b % a = 0 :=
+-- dvd.elim H (λ z H1, by {rw [H1], sorry})
+
+-- theorem mod_eq_zero_of_dvd {m n : ℕ} (H : m ∣ n) : n % m = 0 :=
+-- dvd.elim H (λ z H1, by rw [H1, mul_mod_right])
+
+-- @[simp] theorem mul_mod_right (m n : ℕ) : (m * n) % m = 0 :=
+-- by rw [← zero_add (m*n), add_mul_mod_self_left, zero_mod]
+
+
+theorem gcd_comm {α : Type} [ed: decidable_euclidean_domain α] (a b : α) : gcd a b = gcd b a :=
+gcd.induction a b
+    (λ b, by simp)
+    (λ a b hna,
+    begin
+        intro h,
+        rw gcd,
+        simp[hna],
+        cases decidable.em(b=0),
+        {
+            rw h_1,
+            simp,
+        },
+        {
+            apply eq.symm, -- This is a work-around as for some reason rw doesn't change the gcd on the right side
+            rw gcd, 
+            simp [h_1],
+            --exact eq.symm h,
+
+        }
+    end)
