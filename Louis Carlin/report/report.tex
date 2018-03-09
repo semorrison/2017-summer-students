@@ -66,6 +66,7 @@
 
 \author{Louis Carlin}
 \title{Euclidean Domains in Lean}
+\date{}
 
 \usepackage[pdftex]{hyperref}
 \hypersetup{colorlinks,%
@@ -83,13 +84,13 @@
 %Do I call rings/EDs with the mathematical letters or lean letters?
 %Citation system?
 \section*{Introduction}
-In this report I detail the formalisation of Euclidean Domains in an interactive theorem proving language Lean. I start with a brief explanation of Lean and some of its features. I then give an overview of my work on Euclidean domains, with a particular focus on the Euclidean Algorithm and the role well-founded relations play in proving its properties. My finished work can be found at \url{https://github.com/semorrison/2017-summer-students/blob/master/src/Louis/euclidean\_domain.lean}.
+In this report I detail the formalisation of Euclidean domains in the interactive theorem proving language Lean. I start with a brief explanation of Lean and some of its features. I then give an overview of my work on Euclidean domains, with a particular focus on the Euclidean algorithm and the role well-founded relations play in proving its properties. My finished work can be found at \url{https://github.com/semorrison/2017-summer-students/blob/master/src/Louis/euclidean\_domain.lean}.
 
 \section{An overview of Lean}
 
 %how to tie type theory in?
 \subsection{A quick look at type theory}
-Lean is based on type-theoretic system, rather than the set theory traditionally used by most mathematicians. 
+Lean is based on a type-theoretic system, rather than the set theory traditionally used by most mathematicians. 
 Initially, working with type theory is not too different to working with sets. 
 We write $x:\a$ to mean ``$x$ is something of type $\a$'' rather than $x \in \a$ to mean ``$x$ is an element of $\a$''. 
 We can also reason about many of the sets we are familiar with such as $\N$ or $\Z$ as types.
@@ -98,10 +99,10 @@ However, in type theory objects belong to a single type and are always identifie
 It is not possible to talk about an object $x$ in Lean without giving it a type.
 Nor is it really possible to talk about something as being an object of more than one type.
 So for example $5:\N$ and $5:\Z$ are distinct objects.
-Luckily lean has a fairly versatile coercion system which allows us to convert between objects of different types, although the process can be clunky at times.
+Luckily Lean has a fairly versatile coercion system which allows us to convert between objects of different types, although the process can be clunky at times.
 
 We can build types out of other types, so for example $\a \to \beta$ is the type of functions from $\a$ to $\beta$. 
-Lean's axiomatic system also extends simple type theory by implementing Types themselves as objects, meaning they themselves must have types.
+Lean's axiomatic system also extends simple type theory by defining types as objects, meaning they themselves must have types.
 So, for example \ct{$\N:$ Type} and \ct{Type : Type 1}.
 In fact, in general \ct{Type $u$ : Type $(u+1)$}. 
 This infinite type hierarchy is Lean's way of avoiding the contradictions brought about by ``the type of all types''.
@@ -130,7 +131,7 @@ One other thing to note is that under the principle of ``proof irrelevance'' Lea
 
 The most important notation to understand in Lean is function definition.
 The following example is the ``if then else'' function as it appears in Lean.
-The function takes a decidable proposition \ct{c} as input as well as return values \ct{t e : $\a$}.
+The function takes a decidable proposition \ct{c} as input as well as values \ct{t e : $\a$}.
 If \ct{c} is true then it returns \ct{t}, otherwise it returns \ct{e}.
 \begin{lstlisting}
 def ite (c : Prop) [h : decidable c] {α : Sort u} (t e : α) : α 
@@ -155,17 +156,18 @@ Finally, the part after the \ct{:=} is the definition of the function.
 In this case it makes use of a recursion principle \ct{rec\_on} which Lean defines automatically for inductive types.
 The notation \ct{$\lambda$ hc, t} is how we write a function which takes an argument \ct{hc} and returns the value \ct{t}.
 While normally we might have to write, \ct{$\lambda$ hc : c, t : $\a$}, Lean has enough information in this case to figure out these types itself so we can omit them.
-
+%Lean defines some syntactic sugar to make proofs read more like traditional mathematical proofs.
+%For example, we can write \ct{assume hp : p,} instead of \ct{$\lambda$ hp : p}, and \ct{lemma} and \ct{theorem} are synonyms for \ct{def}.
 
 %tactics mode (probably don't bother talking about monads)
 \subsection{Tactics}
-Writing out long proofs consisting entirely of anonymous $\lambda$ functions is time-consuming and finicky.
-Lean does define some syntactic sugar to make proofs read more like traditional mathematical proofs.
-For example, we can write \ct{assume hp : p,} instead of \ct{$\lambda$ hp : p}, and \ct{lemma} and \ct{theorem} are synonyms for \ct{def}.
-However, the real strength of Lean in proving things is in tactics mode.
+Writing out long proofs consisting entirely of anonymous $\lambda$ functions can be time-consuming and finicky.
+This is where tactics mode can come in handy.
+%Tactics mode allows 
+%TODO
 
 A tactic is a monad which we use to automate repetitive tasks in proving things by taking the current state (`context') of what we know and what we are aiming to prove, and performing some deductive step with it.
-One of the unique features that Lean offers is that tactics are written in Lean itself rather than an external meta-language.
+One of the unique features that Lean offers is that new tactics can be written in Lean itself rather than an external meta-language.
 
 We tell Lean to enter tactics mode with a \ct{begin end} block.
 Once in tactics mode Lean gives us a printout of the current context, which is what we know at that point in the proof. 
@@ -184,7 +186,7 @@ The turnstile symbol $\vdash$ indicates what we are trying to show.
 
 There are several tactics which feature commonly in the proofs I wrote.
 The \ct{split} tactic turns a goal of the form \ct{p $\land$ q} to two goals \ct{p} and \ct{q}.
-\ct{intros} introduces any hypotheses needed to proved our goal, so if we had a goal of \ct{p $\to$ q $\to$ r}, then intros would give us hypotheses \ct{h\_1 :  p} and \ct{h\_2 : q} and change the goal to \ct{r}.
+The \ct{intros} tactic introduces any hypotheses needed to proved our goal, so if we had a goal of \ct{p $\to$ q $\to$ r}, then intros would give us hypotheses \ct{h\_1 :  p} and \ct{h\_2 : q} and change the goal to \ct{r}.
 Writing \ct{rw h} where \ct{h} is some proof of an equality allows us to rewrite by substituting for the right side of the equality whenever the left side appears in the goal.
 \ct{simp} tries to simplify the goal using predefined simplification lemmas which have been marked for its use.
 All these tactics can also be used on a hypothesis \ct{h} rather than the goal by writing \ct{at h} after invoking them.
@@ -204,11 +206,11 @@ However, it must be imported from a file `classical.lean' in Lean's library, and
 The law of the excluded middle follows from the axiom of choice in Lean's axiomatic system\footnote{see \url{https://en.wikipedia.org/wiki/Diaconescu\%27s\_theorem}} and is defined amongst other non-constructive principles as a theorem in `classical.lean'. 
 
 While trying to avoid using the axiom of choice and law of the excluded middle was initially unintuitive to me, it has the substantial advantage that anything you write in Lean without them is computable.
-So for example my implementation of the Euclidean Algorithm is not just an abstract proof that such an algorithm exists, but can actually be executed in arbitrary Euclidean Domains.
+So for example my implementation of the Euclidean algorithm is not just an abstract proof that such an algorithm exists, but can actually be executed in arbitrary Euclidean domains.
 
-\section{Euclidean domains}
-A euclidean domain $\a$ is an integral domain with a divison algorithm, such that for any two elements $a,b :\a$, there exists $q,r : \a$ such that $a=qb+r$.
-We require that $r$ is ``smaller'' than the thing we are dividing by by defining Euclidean Domains to have a valuation function val : $\a \to \N$ such that val $r < $ val $b$.
+\section{Euclidean Domains}
+A Euclidean domain $\a$ is an integral domain with a divison algorithm, such that for any two elements $a,b :\a$, we have $q,r : \a$ such that $a=qb+r$.
+We require that $r$ is ``smaller'' than the thing we are dividing by defining Euclidean domains to have\footnote{Strictly speaking most of the time we just require that there \textit{exists} a valuation function. We don't actually need to compute it often} a valuation function val : $\a \to \N$ such that val $r < $ val $b$.
 
 \subsection{Defining Euclidean Domains in Lean}
 Lean's typeclass system allows us to define new structures using the \ct{extend} keyword as pre-existing structures with additional requirements.
@@ -221,7 +223,7 @@ class euclidean_domain (α : Type) extends integral_domain α :=
 ( valuation : euclidean_valuation remainder)
 \end{lstlisting}
 
-The first three fields of the \ct{euclidean\_domain} class are the quotient and remainder functions (sometimes denoted \ct{a/b} and \ct{a\%b} respectively) as well as a proof of the fact that the $q$ and $r$ these give us actually do satisfy $a=bq+r$. The fourth field refers to a \ct{euclidean\_valuation} which is defined as so:
+The first three fields of the \ct{euclidean\_domain} class are the quotient and remainder functions (sometimes denoted \ct{a/b} and \ct{a\%b} respectively) as well as a proof of the fact that the $q$ and $r$ these give us actually do satisfy $a=bq+r$. The fourth field refers to a \ct{euclidean\_valuation} which is defined as:
 \begin{lstlisting}
 definition euclidean_valuation {α} [has_zero α] (r : α → α → α) := { f : α → ℕ // ∀ a b, b = 0 ∨  (f(r a b)) < (f b)}
 \end{lstlisting}
@@ -231,25 +233,25 @@ In this case we use it to define a \ct{euclidean\_valuation} as the pair consist
 
 There were a couple of key choices I had to make in the definition of \ct{euclidean\_domain}.
 Firstly note that we require an explicit \ct{quotient} and \ct{remainder} function, rather than just the fact that they exist or that it is in some way possible to write $a=bq+r$ for any $a,b$.
-The motivation for this is that given Lean's computational nature we want to be able to actually compute things (especially Euclid's algorithm) in arbitrary euclidean domains.
+The motivation for this is that given Lean's computational nature we want to be able to actually compute things (especially Euclid's algorithm) in arbitrary Euclidean domains.
 
-The valuation function (and its proof) are also explicitly defined. This is somewhat unusual as the traditional definition just requires that a euclidean domain can be equipped with \textit{some} valuation function with the desired property. I initially defined it as follows:
+The valuation function (and its proof) are also explicitly defined. This is somewhat unusual as the traditional definition just requires that a Euclidean domain can be equipped with \textit{some} valuation function with the desired property. I initially defined it as follows:
 \begin{lstlisting}
 (valuation : ∃ f : α → ℕ,∀ a b : α,  b = 0 ∨ f (remainder a b) < f b)
 \end{lstlisting}
-The problem with this approach was that Lean didn't like me using the non-constructive axiom of choice to define a non-computable well-founded relation\footnote{explained below} and thus I couldn't prove the Euclidean Algorithm was a well-founded recursion. 
-The main disadvantage to the way I ended up doing it with an explicit valuation function is that we can no longer expect two euclidean domains of the same type with the same \ct{quotient} and \ct{remainder} functions to be equal (unless they happen to have the same valuation), and must instead reason about them as isomorphic.
+The problem with this approach was that Lean didn't like me using the non-constructive axiom of choice to define a non-computable well-founded relation\footnote{explained below} and thus I couldn't prove the Euclidean algorithm was a well-founded recursion. 
+The main disadvantage to the way I ended up doing it with an explicit valuation function is that we can no longer expect two Euclidean domains of the same type with the same \ct{quotient} and \ct{remainder} functions to be equal (unless they happen to have the same valuation), and must instead reason about them as isomorphic.
 
-Finally, some definitions of euclidean domains require valuation functions to have the additional property that for all $a,b$ the valuation of $a$ is less than or equal to the valuation of $ba$. 
+Finally, some definitions of Euclidean domains require valuation functions to have the additional property that for all $a,b$ the valuation of $a$ is less than or equal to the valuation of $ba$. 
 Initially I excluded this from my definition because I read\footnote{\url{https://www.jstor.org/stable/2316324}} that given a valuation function $g:\a \to \N$, it is possible to define a valuation $f:\a \to \N$ with this second property as $f(a)=\min_{b:\a}g(ba)$.
 However, the problem with this valuation that we can only guarantee it acts as a valuation for \textit{some} divison algorithm.
 It is not necessarily defined in terms of the same \ct{quotient} and \ct{remainder} functions as our original valuation function.
 
 There are several results which match our intuition from integer division that this additional property allows us to prove, but that are not necessarily true without it.
 For example, that $0/a=0$ for any non-zero $a$.
-%\footnote{For example, consider the integers with the normal divison algorithm except defining $0/1=1$ and $0%1=-1$. If we equip this with the valuation function which takes $0$ and $-1$ to their absolute value and everything else to their absolute value plus one this is a perfectly good euclidean domain. }.
+%\footnote{For example, consider the integers with the normal divison algorithm except defining $0/1=1$ and $0%1=-1$. If we equip this with the valuation function which takes $0$ and $-1$ to their absolute value and everything else to their absolute value plus one this is a perfectly good Euclidean domain. }.
 
-The way I would approach fixing this is to define euclidean domains with this property as an extension of normal euclidean domains as well as define a function from a normal euclidean domains to (noncomputable) euclidean domains with this property using the valuation function one can construct.
+The way I would approach fixing this is to define Euclidean domains with this property as an extension of normal Euclidean domains as well as define a function from a normal Euclidean domains to (noncomputable) Euclidean domains with this property using the valuation function one can construct.
 
 %explicit vs non-explicit valuation (exists, trunc, inhabited)
 
@@ -259,28 +261,28 @@ The way I would approach fixing this is to define euclidean domains with this pr
 %some history?
 
 %\subsection{The basic concept}
-The Euclidean Algorithm is one of the main motivations of the definition of Euclidean Domains. 
-It takes any two elements $a,b$ of a Euclidean Domain $R$ and gives a ``greatest common divisor'' of $a$ and $b$. 
+The Euclidean algorithm is one of the main motivations of the definition of Euclidean domains. 
+It takes any two elements $a,b$ of a Euclidean domain $R$ and gives a ``greatest common divisor'' of $a$ and $b$. 
 
-An element $d : R$ is a greatest common divisor of $a$ and $b$ if $d \divides a$, $d \divides b$ and $\forall x : R, x \divides a \land x \divides b \implies x \divides d$.
+An element $d : R$ is a greatest common divisor of $a$ and $b$ if $d \divides a$, $d \divides b$ and $\forall x : R,$ $x \divides a \land x \divides b \implies x \divides d$.
 We commonly write $\gcd(a,b)$ to denote a particular greatest common divisor of $a$ and $b$.
 However it is important to note that greatest common divisors are not necessarily unique. In fact they are never unique in our definition of a Euclidean domain: if $d$ is a gcd of a $a$ and $b$ in a ring, then so is its additive inverse $-d$.
 
-The Euclidean Algorithm works by calculating a sequence $r_0,r_1,\ldots,r_k$, where $r_0=a$, $r_1=b$ and for $n>1$, $r_n=r_{n-2}$ $\%$ $r_{n-1}$.
+The Euclidean algorithm works by calculating a sequence $r_0,r_1,\ldots,r_k$, where $r_0=a$, $r_1=b$ and for $n>1$, $r_n=r_{n-2}$ $\%$ $r_{n-1}$.
 The sequence terminates when we reach $r_k$ such that $r_k=0$ and the gcd is $r_{k-1}$.
 The proof that this is actually the gcd goes by induction. 
 If something divides $r_n$ and $r_{n-1}$ then we can show it divides $r_{n-2}$ and if something that divides $a$ and $b$ must divide $r_{n-2}$ and $r_{n-1}$ then we can show it must divide $r_n$.
 
-One thing to note is that the Euclidean Algorithm is not actually decidable in the definition of \ct{euclidean\_domain} which I gave in 2.1. %TODO Link?
+One thing to note is that the Euclidean algorithm is not actually computable in the definition of \ct{euclidean\_domain} which I gave in 2.1. %TODO Link?
 This is because Lean does not assume equality is decidable by default, and so it cannot actually tell when the sequence of $r_n$ ends since it cannot tell when something equals zero.
-I fixed this by extending \ct{euclidean\_domain} in \ct{decidable\_euclidean\_domain}:
+I fixed this by extending \ct{euclidean\_domain} with \ct{decidable\_euclidean\_domain}:
 \begin{lstlisting}
 class decidable_euclidean_domain (α : Type) extends euclidean_domain α:=
 (decidable_eq_zero : ∀ a : α, decidable (a = 0))
 \end{lstlisting}
 
 \subsection{The Extended Euclidean Algorithm}
-The Extended Euclidean Algorithm adds to the Euclidean Algorithm by also returning two elements $x$ $y:\a$ (called B\'ezout coefficients) such that $ax+by=\gcd(a,b)$.
+The Extended Euclidean algorithm adds to the Euclidean algorithm by also returning two elements $x,y:\a$ (called B\'ezout coefficients) such that $ax+by=\gcd(a,b)$.
 It does this by defining two additional sequences $s_n$ and $t_n$.
 We define $s_0=1$, $s_1=0$, and $s_n=s_{n-2}-(r_n/r_{n-1})s_{n-1}$ for $n>1$.
 Similarly we define $t_0=0$, $t_1=1$, and $t_n=t_{n-2}-(r_n/r_{n-1})t_{n-1}$ for $n>1$.
@@ -289,7 +291,7 @@ We show that these are the desired coefficients by using induction to show that 
 \subsection{Well-founded recursion}
 %talk mostly about how things actually worked in Lean (factorial + something which doesn't work)
 Whenever we define a recursive function Lean requires us to show that it is actually well-defined. 
-Since the Euclidean Algorithm is defined recursively this was a necessary step.
+Since the Euclidean algorithm is defined recursively this was a necessary step.
 The method Lean provides for us to do this is demonstrating that the inputs used in the recursive call are smaller than current inputs according to some well-founded relation.
 
 To understand what this means one first needs to understand what a well-founded relation is. Lean defines a relation \ct{r : $\a \to \a \to \a$} as well-founded when all the elements of $\a$ are `accessible':
@@ -303,7 +305,7 @@ inductive acc {α : Sort u} (r : α → α → Prop) : α → Prop
 | intro (x : α) (h : ∀ y, r y x → acc y) : acc x
 \end{lstlisting}
 
-How one can think of this is that there must be some `base' elements for which nothing is less than, and which are therefore accessible.
+How one can think of this is that there must be some `base' elements which nothing is less than, and which are therefore accessible.
 We then build upwards from these foundations because the things which are only greater than them are therefore also accessible, and so on.
 It is important to note that there can be no infinite chains of less-than relations in a well-founded relation since we cannot show something is accessible without showing that if we descend down the tree of less-than relations far enough we will encounter only things with nothing less than them. %TODO formalise
 We cannot have any cycles for a similar reason.
@@ -330,8 +332,8 @@ If we remove the proof that \ct{x - y < x} then Lean will give us the error \ct{
 In addition to their use in showing recursive functions `terminate', well-founded types allow us to perform well-founded induction, and prove some predicate $P$ is true for all objects of a well-founded type $\a$ by proving $\forall x : \a, (\forall y:\a, y < x \to P y) \to P x$.
 
 \subsection{The First implementation}
-In defining the Euclidean Algorithm in Lean it was important to not only have it return the gcd as expected, but also to have a proof that what it returned \textit{was} the gcd. 
-My first implementation of the Euclidean Algorithm satisfied this requirement by taking proofs as part of its input and returning a value paired with the fact that that value was actually a gcd. 
+In defining the Euclidean algorithm in Lean it was important to not only have it return the gcd as expected, but also to have a proof that what it returned \textit{was} the gcd. 
+My first implementation of the Euclidean algorithm satisfied this requirement by taking proofs as part of its input and returning a value paired with the fact that that value was actually a gcd. 
 This is how I defined the input and output types:
 \begin{lstlisting}
 structure common_divisor {α : Type} [R: comm_ring α] (a b : α) :=
@@ -431,7 +433,7 @@ gcd.induction a b
   end)
 \end{lstlisting}
 
-My implementation of the Extended Euclidean Algorithm was extremly similar to the pre-existing one for natural numbers in Lean. It is called by \ct{xgcd} and uses an auxilary inner function as \ct{xgcd\_aux} to perform the actual recursion.
+My implementation of the Extended Euclidean algorithm was extremly similar to the pre-existing one for natural numbers in Lean. It is called by \ct{xgcd} and uses an auxilary inner function as \ct{xgcd\_aux} to perform the actual recursion.
 \begin{lstlisting}
 def xgcd_aux {α} [decidable_euclidean_domain α] : α → α → α → α → α → α → α × α × α
 | r s t r' s' t' := if r_zero : r = 0 then (r', s', t') 
@@ -442,6 +444,15 @@ def xgcd {α} [decidable_euclidean_domain α] (x y : α) : α × α := (xgcd_aux
 \end{lstlisting}
 
 I went on to prove the properties we desire its output to have with similar proofs to the previous ones using \ct{gcd.induction}.
+
+\section*{Further Work}
+There are a few areas where my work with Euclidean domains could be expanded. An extension of Euclidean domains requiring the additional property of the valuation discussed earlier could be implemented. If this was done then it would make sense to have a (noncomputable) function from a normal Euclidean domains to this extended definition\footnote{as per the proof in \url{https://www.jstor.org/stable/2316324}}.
+
+I focused mainly on what was required to implement the Euclidean algorithm, so there are most likely properties which could be proved about Euclidean domains which I did not implement.
+
+Finally, I have not currently provided any concrete instances of Euclidean domains\footnote{Other than a relatively useless one used as a counterexample to a property which was only true if we assumed the second property of the Euclidean valuation.}.
+I plan to provide an instance of \ct{euclidean\_domain $\Z$} with the standard division algorithm and valuation.
+I would like to provide the proofs that any field is an integral domain and that a ring of polynomials with field coefficients is an integral domain.
 
 %much simpler
 %had to define an induction principle
